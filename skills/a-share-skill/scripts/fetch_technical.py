@@ -19,6 +19,11 @@ import argparse
 import json
 import sys
 
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(__file__))
+
 import numpy as np
 import pandas as pd
 
@@ -42,12 +47,7 @@ def normalize_code(code: str) -> str:
 
 
 def fetch_kline(code: str, freq: str, count: int) -> pd.DataFrame:
-    try:
-        from ashares import get_price
-    except ImportError:
-        print("请先安装：pip install ashares", file=sys.stderr)
-        sys.exit(1)
-
+    from Ashare import get_price
     normalized = normalize_code(code)
     df = get_price(normalized, frequency=freq, count=count)
     if df is None or df.empty:

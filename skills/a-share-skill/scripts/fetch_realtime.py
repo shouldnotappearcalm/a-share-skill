@@ -24,6 +24,11 @@ import sys
 import urllib.request
 from datetime import datetime, timedelta
 
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(__file__))
+
 import pandas as pd
 import akshare as ak
 
@@ -122,12 +127,7 @@ def cmd_quote(code: str, output_json: bool):
 
 
 def cmd_kline(code: str, freq: str, count: int, output_json: bool):
-    try:
-        from ashares import get_price
-    except ImportError:
-        print("请先安装：pip install ashares")
-        sys.exit(1)
-
+    from Ashare import get_price
     normalized = normalize_code(code)
     df = get_price(normalized, frequency=freq, count=count)
     if df is None or df.empty:

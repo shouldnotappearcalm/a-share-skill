@@ -18,7 +18,7 @@ description: A股市场全场景数据分析技能。支持实时行情快照、
 ## 环境安装
 
 ```bash
-pip install akshare ashares MyTT baostock pandas numpy requests
+pip install akshare MyTT baostock pandas numpy requests
 ```
 
 ## 脚本路径
