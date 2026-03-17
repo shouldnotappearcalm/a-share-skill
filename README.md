@@ -1,6 +1,6 @@
 # a-share-skill
 
-这是一个基于 **Cursor Skill** 的 A 股数据技能包目录，约定结构为：
+这是一个基于A 股的 Skill，约定结构为：
 
 ```bash
 a-share-skill/
