@@ -29,6 +29,11 @@ a-share-skill/
     - 盘中情绪与热点跟踪（指数、涨跌停统计、热点板块、北向资金、龙虎榜）  
     - 为量化 / 回测准备历史行情与财务因子数据
 
+- `ai-stock-pick-skill`：AI 辅助 A 股选股/策略执行框架 Skill（支持先接入外部信号源，例如 Telegram 公开频道）  
+  - **主要能力**（当前第一步）：  
+    - 从 `https://t.me/s/<channel>` 拉取指定时间范围内的公开消息  
+    - 输出结构化 JSON（消息文本、链接、发布时间等），用于后续 A 股选股/概念映射
+
 ## scripts 与 references 说明
 
 - `scripts/`：可执行脚本，供 Agent 通过 Skill 工具调用  
