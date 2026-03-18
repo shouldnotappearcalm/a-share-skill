@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
 A股实时行情数据脚本
-数据源：东方财富 / 新浪财经（通过 akshare）+ Ashare（腾讯/新浪实时K线）
+数据源：东方财富 / 新浪财经（通过 akshare）+ 腾讯/新浪实时K线（直接API）
 
-依赖安装：pip install akshare ashares pandas requests
+依赖安装：pip install akshare pandas requests
 
 用法示例：
   python3 fetch_realtime.py --quote 600519
   python3 fetch_realtime.py --kline 600519 --freq 1d --count 30
+  python3 fetch_realtime.py --intraday-kline 600519 --freq 5m
+  python3 fetch_realtime.py --multi-quote 600519,000001,300750
   python3 fetch_realtime.py --index
   python3 fetch_realtime.py --hot-sectors --top 20
   python3 fetch_realtime.py --north-money
@@ -22,112 +24,280 @@ import argparse
 import json
 import sys
 import urllib.request
-from datetime import datetime, timedelta
-
-import os
-import sys
-
-sys.path.insert(0, os.path.dirname(__file__))
+from datetime import datetime, timedelta, date, time as time_type
 
 import pandas as pd
+import requests
 import akshare as ak
 
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-    "Referer": "https://www.eastmoney.com",
-    "Accept-Language": "zh-CN,zh;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+}
+
+SINA_KLINE_URL = "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
+TENCENT_DAY_URL = "http://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
+TENCENT_MIN_URL = "http://ifzq.gtimg.cn/appstock/app/kline/mkline"
+
+SINA_FREQ_MAP = {
+    '5m': 5, '15m': 15, '30m': 30, '60m': 60,
+    '1d': 240, '1w': 1200, '1M': 7200,
+}
+TENCENT_DAY_FREQ_MAP = {
+    '1d': 'day', '1w': 'week', '1M': 'month',
 }
 
 
 def normalize_code(code: str) -> str:
     code = code.strip()
-    if "." in code:
-        parts = code.split(".")
-        prefix, suffix = parts[0].lower(), parts[1].upper()
-        if prefix in ("sh", "sz") and suffix.isdigit():
-            return f"{prefix}{suffix}"
-        if suffix == "XSHG":
-            return f"sh{prefix}"
-        if suffix == "XSHE":
-            return f"sz{prefix}"
-    if code.lower().startswith(("sh", "sz")):
+    if '.XSHG' in code:
+        return 'sh' + code.replace('.XSHG', '')
+    if '.XSHE' in code:
+        return 'sz' + code.replace('.XSHE', '')
+    if '.' in code:
+        parts = code.split('.')
+        if len(parts) == 2:
+            prefix, suffix = parts[0].lower(), parts[1]
+            if prefix in ('sh', 'sz') and suffix.isdigit():
+                return f"{prefix}{suffix}"
+    if code.lower().startswith(('sh', 'sz')):
         return code.lower()
     if code.isdigit():
-        return f"sh{code}" if code.startswith("6") else f"sz{code}"
-    return code
+        if code.startswith('6'):
+            return f"sh{code}"
+        elif code.startswith(('0', '2', '3')):
+            return f"sz{code}"
+    return code.lower()
 
 
-def _fetch_url(url: str, extra_headers: dict = None, timeout: int = 10) -> str:
-    req = urllib.request.Request(url, headers=HEADERS)
-    if extra_headers:
-        for k, v in extra_headers.items():
-            req.add_header(k, v)
+def _get_price_sina(code: str, count: int, frequency: str) -> pd.DataFrame:
+    freq_min = SINA_FREQ_MAP.get(frequency, 240)
+    params = {"symbol": code, "scale": freq_min, "ma": 5, "datalen": count}
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read().decode("utf-8", errors="replace")
+        session = requests.Session()
+        session.headers.update(HEADERS)
+        resp = session.get(SINA_KLINE_URL, params=params, timeout=10)
+        data = json.loads(resp.content)
+        if not data or isinstance(data, dict):
+            return None
+        df = pd.DataFrame(data, columns=['day', 'open', 'high', 'low', 'close', 'volume'])
+        for col in ['open', 'high', 'low', 'close', 'volume']:
+            df[col] = df[col].astype(float)
+        df['day'] = pd.to_datetime(df['day'])
+        df = df.set_index('day')
+        df.index.name = ''
+        return df
     except Exception:
-        return ""
+        return None
 
 
-def _get_eastmoney_quote(code: str) -> dict:
+def _get_price_day_tx(code: str, count: int, frequency: str) -> pd.DataFrame:
+    unit = TENCENT_DAY_FREQ_MAP.get(frequency, 'day')
+    end_date = ''
+    url = f"{TENCENT_DAY_URL}?param={code},{unit},,{end_date},{count},qfq"
+    try:
+        session = requests.Session()
+        session.headers.update(HEADERS)
+        resp = session.get(url, timeout=10)
+        st = json.loads(resp.content)
+        if 'data' not in st or code not in st['data']:
+            return None
+        stk = st['data'][code]
+        ms = 'qfq' + unit
+        buf = stk[ms] if ms in stk else stk.get(unit)
+        if not buf:
+            return None
+        df = pd.DataFrame(buf, columns=['time', 'open', 'close', 'high', 'low', 'volume'], dtype='float')
+        df['time'] = pd.to_datetime(df['time'])
+        df = df.set_index('time')
+        df.index.name = ''
+        return df
+    except Exception:
+        return None
+
+
+def _get_price_min_tx(code: str, count: int, frequency: str) -> pd.DataFrame:
+    ts = int(frequency[:-1]) if frequency[:-1].isdigit() else 1
+    url = f"{TENCENT_MIN_URL}?param={code},m{ts},,{count}"
+    try:
+        session = requests.Session()
+        session.headers.update(HEADERS)
+        resp = session.get(url, timeout=10)
+        st = json.loads(resp.content)
+        if 'data' not in st or code not in st['data']:
+            return None
+        mkey = 'm' + str(ts)
+        buf = st['data'][code].get(mkey)
+        if not buf:
+            return None
+        df = pd.DataFrame(buf, columns=['time', 'open', 'close', 'high', 'low', 'volume', 'n1', 'n2'])
+        df = df[['time', 'open', 'close', 'high', 'low', 'volume']]
+        df[['open', 'close', 'high', 'low', 'volume']] = df[['open', 'close', 'high', 'low', 'volume']].astype(float)
+        df['time'] = pd.to_datetime(df['time'])
+        df = df.set_index('time')
+        df.index.name = ''
+        if 'qt' in st['data'][code] and code in st['data'][code].get('qt', {}):
+            try:
+                df['close'].iloc[-1] = float(st['data'][code]['qt'][code][3])
+            except Exception:
+                pass
+        return df
+    except Exception:
+        return None
+
+
+def get_price(code: str, frequency: str = '1d', count: int = 60) -> pd.DataFrame:
+    """
+    通过腾讯/新浪 API 获取股票K线数据，与 Ashare.get_price 行为等价。
+    """
     normalized = normalize_code(code)
-    market = 1 if normalized.startswith("sh") else 0
-    clean = normalized[2:]
-    url = (
-        f"http://push2.eastmoney.com/api/qt/stock/get"
-        f"?secid={market}.{clean}"
-        f"&fields=f43,f44,f45,f46,f47,f48,f57,f58,f60,f107,f169,f170,f171"
-    )
-    raw = _fetch_url(url)
-    if raw:
-        try:
-            obj = json.loads(raw)
-            d = obj.get("data", {}) or {}
-            if d.get("f43"):
-                prev = d["f60"] / 100
-                curr = d["f43"] / 100
-                return {
-                    "代码": code,
-                    "名称": d.get("f58", ""),
-                    "最新价": round(curr, 2),
-                    "涨跌额": round(d["f169"] / 100, 2),
-                    "涨跌幅(%)": round(d["f170"] / 100, 2),
-                    "今开": round(d["f46"] / 100, 2),
-                    "最高": round(d["f44"] / 100, 2),
-                    "最低": round(d["f45"] / 100, 2),
-                    "昨收": round(prev, 2),
-                    "成交量(手)": d.get("f47", 0),
-                    "成交额(亿)": round(d.get("f48", 0) / 1e8, 2),
-                    "换手率(%)": round(d.get("f171", 0) / 100, 2),
-                    "数据源": "东方财富",
-                    "更新时间": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                }
-        except Exception:
-            pass
-    return {}
+
+    if frequency in ('1d', '1w', '1M'):
+        df = _get_price_sina(normalized, count, frequency)
+        if df is not None and not df.empty:
+            return df
+        df = _get_price_day_tx(normalized, count, frequency)
+        if df is not None and not df.empty:
+            return df
+    elif frequency == '1m':
+        df = _get_price_min_tx(normalized, count, frequency)
+        if df is not None and not df.empty:
+            return df
+    else:
+        df = _get_price_sina(normalized, count, frequency)
+        if df is not None and not df.empty:
+            return df
+        df = _get_price_min_tx(normalized, count, frequency)
+        if df is not None and not df.empty:
+            return df
+
+    return None
+
+
+def _get_market_status() -> str:
+    now = datetime.now()
+    current_time = now.time()
+    if now.weekday() >= 5:
+        return 'closed'
+    morning_start = time_type(9, 30)
+    morning_end = time_type(11, 30)
+    afternoon_start = time_type(13, 0)
+    afternoon_end = time_type(15, 0)
+    if morning_start <= current_time <= morning_end:
+        return 'trading'
+    elif afternoon_start <= current_time <= afternoon_end:
+        return 'trading'
+    elif time_type(9, 0) <= current_time < morning_start:
+        return 'pre_market'
+    elif current_time > afternoon_end:
+        return 'post_market'
+    else:
+        return 'closed'
+
+
+def _aggregate_intraday_data(df_min: pd.DataFrame, today: date) -> dict:
+    df_today = df_min[df_min.index.date == today].copy()
+    if df_today.empty:
+        return None
+    return {
+        'open': df_today.iloc[0]['open'],
+        'high': df_today['high'].max(),
+        'low': df_today['low'].min(),
+        'close': df_today.iloc[-1]['close'],
+        'volume': df_today['volume'].sum(),
+    }
 
 
 def cmd_quote(code: str, output_json: bool):
-    data = _get_eastmoney_quote(code)
-    if not data:
-        print(f"获取 {code} 行情失败")
+    """
+    实时行情快照，使用分钟K线聚合方式：
+    1. 日线获取昨收
+    2. 5分钟K线聚合今日 OHLCV
+    3. 计算涨跌幅
+    4. 附带市场状态
+    """
+    normalized = normalize_code(code)
+    today = date.today()
+
+    df_day = get_price(normalized, frequency='1d', count=120)
+    if df_day is None or df_day.empty or len(df_day) < 2:
+        print(f"获取 {code} 日线数据失败")
         sys.exit(1)
+
+    last_date = df_day.index[-1].date()
+    if last_date == today:
+        prev_close = df_day.iloc[-2]['close']
+    else:
+        prev_close = df_day.iloc[-1]['close']
+
+    today_data = None
+    df_min = get_price(normalized, frequency='5m', count=320)
+    if df_min is not None and not df_min.empty:
+        today_data = _aggregate_intraday_data(df_min, today)
+
+    if today_data is None:
+        df_min15 = get_price(normalized, frequency='15m', count=320)
+        if df_min15 is not None and not df_min15.empty:
+            today_data = _aggregate_intraday_data(df_min15, today)
+
+    if today_data:
+        latest_price = today_data['close']
+        today_open = today_data['open']
+        today_high = today_data['high']
+        today_low = today_data['low']
+        today_volume = today_data['volume']
+        display_date = today.strftime('%Y-%m-%d')
+        date_label = '今日'
+    else:
+        latest_row = df_day.iloc[-1]
+        latest_price = latest_row['close']
+        today_open = latest_row['open']
+        today_high = latest_row['high']
+        today_low = latest_row['low']
+        today_volume = latest_row['volume']
+        display_date = last_date.strftime('%Y-%m-%d')
+        date_label = '最近'
+
+    change = latest_price - prev_close
+    change_pct = (change / prev_close * 100) if prev_close > 0 else 0
+
+    market_status = _get_market_status()
+    status_map = {'trading': '交易中', 'closed': '休市', 'pre_market': '盘前', 'post_market': '盘后'}
+    status_label = status_map.get(market_status, market_status)
+
+    data = {
+        "代码": code,
+        "日期": display_date,
+        "最新价": round(latest_price, 2),
+        "涨跌额": round(change, 2),
+        "涨跌幅(%)": round(change_pct, 2),
+        "今开": round(today_open, 2),
+        "最高": round(today_high, 2),
+        "最低": round(today_low, 2),
+        "昨收": round(prev_close, 2),
+        "成交量": int(today_volume),
+        "市场状态": status_label,
+        "数据源": "新浪/腾讯",
+        "更新时间": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    if today_data is None:
+        data["备注"] = f"非交易日或休市，显示{date_label}交易日数据"
+
     if output_json:
         print(json.dumps(data, ensure_ascii=False, indent=2))
     else:
         sign = "+" if data["涨跌额"] >= 0 else ""
         print(f"{'='*50}")
-        print(f"  {data['名称']}（{data['代码']}）")
+        print(f"  {data['代码']}  {data['日期']}  [{data['市场状态']}]")
         print(f"{'='*50}")
         print(f"  最新价：{data['最新价']}  {sign}{data['涨跌幅(%)']}%  {sign}{data['涨跌额']}")
         print(f"  今开：{data['今开']}  最高：{data['最高']}  最低：{data['最低']}  昨收：{data['昨收']}")
-        print(f"  成交量：{data['成交量(手)']:,} 手  成交额：{data['成交额(亿)']} 亿  换手率：{data['换手率(%)']}%")
-        print(f"  数据源：{data['数据源']}  更新：{data['更新时间']}")
+        print(f"  成交量：{data['成交量']:,}  数据源：{data['数据源']}  更新：{data['更新时间']}")
+        if "备注" in data:
+            print(f"  备注：{data['备注']}")
 
 
 def cmd_kline(code: str, freq: str, count: int, output_json: bool):
-    from Ashare import get_price
     normalized = normalize_code(code)
     df = get_price(normalized, frequency=freq, count=count)
     if df is None or df.empty:
@@ -142,7 +312,92 @@ def cmd_kline(code: str, freq: str, count: int, output_json: bool):
     if output_json:
         print(df.to_json(orient="records", force_ascii=False, date_format="iso"))
     else:
-        print(f"【{code} K线数据】频率={freq} 条数={len(df)}  数据源：Ashare(腾讯/新浪)")
+        print(f"【{code} K线数据】频率={freq} 条数={len(df)}  数据源：腾讯/新浪")
+        print(df.to_string(index=False))
+
+
+def cmd_intraday_kline(code: str, freq: str, output_json: bool):
+    valid_freqs = ['1m', '5m', '15m', '30m', '60m']
+    if freq not in valid_freqs:
+        print(f"分钟K线频率无效：{freq}，支持：{valid_freqs}")
+        sys.exit(1)
+
+    normalized = normalize_code(code)
+    today = date.today()
+
+    df = get_price(normalized, frequency=freq, count=320)
+    if df is None or df.empty:
+        print(f"未找到 {code} 的分钟K线数据")
+        sys.exit(1)
+
+    df_today = df[df.index.date == today].copy()
+    if df_today.empty:
+        print(f"股票 {code} 今日（{today}）暂无分钟K线数据")
+        return
+
+    df_today = df_today.reset_index()
+    df_today.columns = ["时间", "开盘", "最高", "最低", "收盘", "成交量"]
+    for col in ["开盘", "最高", "最低", "收盘"]:
+        df_today[col] = df_today[col].round(2)
+
+    if output_json:
+        print(df_today.to_json(orient="records", force_ascii=False, date_format="iso"))
+    else:
+        print(f"【{code} 今日分钟K线】频率={freq} 条数={len(df_today)}  数据源：腾讯/新浪")
+        print(df_today.to_string(index=False))
+
+
+def cmd_multi_quote(codes_str: str, output_json: bool):
+    codes = [c.strip() for c in codes_str.split(',') if c.strip()]
+    if not codes:
+        print("请提供股票代码，用逗号分隔")
+        sys.exit(1)
+    if len(codes) > 10:
+        print("批量查询最多支持10只股票")
+        sys.exit(1)
+
+    today = date.today()
+    results = []
+
+    for code in codes:
+        normalized = normalize_code(code)
+        try:
+            df_day = get_price(normalized, frequency='1d', count=120)
+            if df_day is None or df_day.empty or len(df_day) < 2:
+                results.append({"代码": code, "最新价": "N/A", "涨跌幅(%)": None, "昨收": "N/A", "状态": "无数据"})
+                continue
+
+            last_date = df_day.index[-1].date()
+            prev_close = df_day.iloc[-2]['close'] if last_date == today else df_day.iloc[-1]['close']
+
+            latest_price = None
+            df_min = get_price(normalized, frequency='5m', count=320)
+            if df_min is not None and not df_min.empty:
+                df_t = df_min[df_min.index.date == today]
+                if not df_t.empty:
+                    latest_price = df_t.iloc[-1]['close']
+
+            if latest_price is None:
+                latest_price = df_day.iloc[-1]['close']
+
+            change_pct = ((latest_price - prev_close) / prev_close * 100) if prev_close > 0 else 0
+            results.append({
+                "代码": code,
+                "最新价": round(latest_price, 2),
+                "涨跌幅(%)": round(change_pct, 2),
+                "昨收": round(prev_close, 2),
+                "状态": "成功",
+            })
+        except Exception as e:
+            results.append({"代码": code, "最新价": "N/A", "涨跌幅(%)": None, "昨收": "N/A", "状态": f"失败: {e}"})
+
+    results.sort(key=lambda x: x["涨跌幅(%)"] if x["涨跌幅(%)"] is not None else float('-inf'), reverse=True)
+
+    if output_json:
+        print(json.dumps(results, ensure_ascii=False, indent=2))
+    else:
+        print(f"【批量行情】{datetime.now().strftime('%H:%M:%S')}  数据源：腾讯/新浪")
+        df = pd.DataFrame(results)
         print(df.to_string(index=False))
 
 
@@ -230,7 +485,7 @@ def cmd_lhb(start: str, end: str, top: int, output_json: bool):
     try:
         df = ak.stock_lhb_detail_em(start_date=start, end_date=end)
         if df is None or df.empty:
-            print(f"未找到 {start}~{end} 的龙虎榜数据")
+            print(f"未找到 {start}~{end} 的龙虎榜数据（可能当日数据尚未发布或该日期无龙虎榜数据）")
             return
         cols_map = {
             "代码": "代码", "名称": "名称", "上榜日": "上榜日",
@@ -248,8 +503,12 @@ def cmd_lhb(start: str, end: str, top: int, output_json: bool):
             print(f"【龙虎榜】{start}~{end}  数据源：东方财富")
             print(df.to_string(index=False))
     except Exception as e:
-        print(f"获取龙虎榜失败：{e}")
-        sys.exit(1)
+        error_msg = str(e)
+        if 'NoneType' in error_msg:
+            print(f"未找到 {start}~{end} 的龙虎榜数据（可能当日数据尚未发布或该日期无龙虎榜数据）")
+        else:
+            print(f"获取龙虎榜失败：{error_msg}")
+            sys.exit(1)
 
 
 def cmd_limit_stats(output_json: bool):
@@ -272,13 +531,13 @@ def cmd_limit_stats(output_json: bool):
         print(f"  涨停：{up_count} 只  跌停：{down_count} 只")
 
 
-def cmd_limit_up_pool(date: str, top: int, output_json: bool):
-    if not date:
-        date = datetime.now().strftime("%Y%m%d")
+def cmd_limit_up_pool(date_str: str, top: int, output_json: bool):
+    if not date_str:
+        date_str = datetime.now().strftime("%Y%m%d")
     try:
-        df = ak.stock_zt_pool_em(date=date)
+        df = ak.stock_zt_pool_em(date=date_str)
         if df is None or df.empty:
-            print(f"未找到 {date} 的涨停股数据")
+            print(f"未找到 {date_str} 的涨停股数据")
             return
         keep = ["序号", "代码", "名称", "涨跌幅", "最新价", "成交额", "换手率", "封板资金", "连板数", "所属行业"]
         available = [c for c in keep if c in df.columns]
@@ -289,7 +548,7 @@ def cmd_limit_up_pool(date: str, top: int, output_json: bool):
         if output_json:
             print(df.to_json(orient="records", force_ascii=False))
         else:
-            print(f"【涨停股池】{date}  共 {len(df)} 只  数据源：东方财富")
+            print(f"【涨停股池】{date_str}  共 {len(df)} 只  数据源：东方财富")
             print(df.to_string(index=False))
     except Exception as e:
         print(f"获取涨停股池失败：{e}")
@@ -322,13 +581,13 @@ def cmd_fund_flow(code: str, days: int, output_json: bool):
         sys.exit(1)
 
 
-def cmd_consecutive_limit(date: str, top: int, output_json: bool):
-    if not date:
-        date = datetime.now().strftime("%Y%m%d")
+def cmd_consecutive_limit(date_str: str, top: int, output_json: bool):
+    if not date_str:
+        date_str = datetime.now().strftime("%Y%m%d")
     try:
-        df = ak.stock_zt_pool_previous_em(date=date)
+        df = ak.stock_zt_pool_previous_em(date=date_str)
         if df is None or df.empty:
-            print(f"未找到 {date} 的连板股数据")
+            print(f"未找到 {date_str} 的连板股数据")
             return
         keep = ["序号", "代码", "名称", "涨跌幅", "最新价", "成交额", "换手率", "昨日连板数", "所属行业"]
         available = [c for c in keep if c in df.columns]
@@ -339,7 +598,7 @@ def cmd_consecutive_limit(date: str, top: int, output_json: bool):
         if output_json:
             print(df.to_json(orient="records", force_ascii=False))
         else:
-            print(f"【连板股】{date}  共 {len(df)} 只  数据源：东方财富")
+            print(f"【连板股】{date_str}  共 {len(df)} 只  数据源：东方财富")
             print(df.to_string(index=False))
     except Exception as e:
         print(f"获取连板股失败：{e}")
@@ -347,14 +606,16 @@ def cmd_consecutive_limit(date: str, top: int, output_json: bool):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="A股实时行情数据 (akshare + ashares)")
-    parser.add_argument("--quote", metavar="CODE", help="实时行情快照")
-    parser.add_argument("--kline", metavar="CODE", help="实时K线")
+    parser = argparse.ArgumentParser(description="A股实时行情数据 (akshare + 腾讯/新浪直接API)")
+    parser.add_argument("--quote", metavar="CODE", help="实时行情快照（分钟K线聚合，含市场状态）")
+    parser.add_argument("--kline", metavar="CODE", help="K线数据")
     parser.add_argument("--freq", default="1d", help="K线频率：1m/5m/15m/30m/60m/1d/1w/1M（默认1d）")
     parser.add_argument("--count", type=int, default=60, help="K线条数（默认60）")
+    parser.add_argument("--intraday-kline", metavar="CODE", help="今日分钟K线（需配合 --freq 指定分钟级别）")
+    parser.add_argument("--multi-quote", metavar="CODES", help="批量实时行情，逗号分隔，最多10只")
     parser.add_argument("--index", action="store_true", help="大盘指数")
     parser.add_argument("--hot-sectors", action="store_true", help="热点概念板块")
-    parser.add_argument("--top", type=int, default=20, help="热点板块/涨停池返回数量（默认20）")
+    parser.add_argument("--top", type=int, default=20, help="返回数量（默认20）")
     parser.add_argument("--north-money", action="store_true", help="北向资金")
     parser.add_argument("--lhb", action="store_true", help="龙虎榜")
     parser.add_argument("--start", help="开始日期，格式YYYYMMDD")
@@ -372,6 +633,11 @@ def main():
         cmd_quote(args.quote, args.output_json)
     elif args.kline:
         cmd_kline(args.kline, args.freq, args.count, args.output_json)
+    elif args.intraday_kline:
+        freq = args.freq if args.freq in ['1m', '5m', '15m', '30m', '60m'] else '5m'
+        cmd_intraday_kline(args.intraday_kline, freq, args.output_json)
+    elif args.multi_quote:
+        cmd_multi_quote(args.multi_quote, args.output_json)
     elif args.index:
         cmd_index(args.output_json)
     elif args.hot_sectors:

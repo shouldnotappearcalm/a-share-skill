@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 - 2026-03-18
+
+- `fetch_realtime.py` 重写实时行情获取逻辑（对齐 a-share-mcp 修复）：
+  - `--quote`：改用分钟K线聚合方式（先拿日线获取昨收，再用5m K线聚合今日OHLCV，计算涨跌幅），输出含市场状态（交易中/盘前/盘后/休市）。
+  - 移除 `sys.path.insert` hack 和 `from Ashare import get_price` 依赖，内联腾讯/新浪 API 调用（`get_price()` 函数），不再需要 `ashares` 包。
+  - `--lhb`：修复 akshare 返回 None 时抛出 `NoneType is not subscriptable` 的问题，改为友好提示。
+  - 新增 `--intraday-kline CODE --freq 5m`：只返回今日分钟K线数据。
+  - 新增 `--multi-quote 600519,000001,300750`：批量查询最多10只股票，按涨跌幅降序排列。
+- SKILL.md：同步更新依赖说明和命令文档。
+
 ## 0.1.0 - 2026-03-18
 
 - 新增 `skills/a-share-skill` Skill：

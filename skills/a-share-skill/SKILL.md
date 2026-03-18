@@ -1,8 +1,9 @@
 ---
 name: a-share-skill
-description: A股市场全场景数据分析技能。支持实时行情快照、分钟/日/周K线、MACD/KDJ/RSI/BOLL等12种技术指标、
-  盈利/成长/偿债/现金流/杜邦六维财务报表、热点概念板块、北向资金、龙虎榜、涨停板/连板股、个股资金流向、
-  沪深300/上证50/中证500指数成分股、存款利率/货币供应量等宏观数据。数据源覆盖东方财富、新浪财经、Baostock。
+description: A股市场全场景数据分析技能。支持实时行情快照（分钟K线聚合+市场状态）、今日分钟K线、批量行情、分钟/日/周K线、
+  MACD/KDJ/RSI/BOLL等12种技术指标、盈利/成长/偿债/现金流/杜邦六维财务报表、热点概念板块、北向资金、龙虎榜、
+  涨停板/连板股、个股资金流向、沪深300/上证50/中证500指数成分股、存款利率/货币供应量等宏观数据。
+  数据源覆盖东方财富、新浪财经、腾讯财经、Baostock。
   Use when: 用户查询A股行情、个股分析、技术指标、财务报表、热点板块、资金面数据、宏观经济数据，或需要精准的历史数据支撑分析。
 ---
 
@@ -11,9 +12,9 @@ description: A股市场全场景数据分析技能。支持实时行情快照、
 ## 角色定位
 
 本 skill 提供 A 股市场全场景数据查询，优先于直接爬取网页。数据来源：
-- **实时数据**：东方财富 + 新浪财经（通过 akshare / ashares）
+- **实时数据**：腾讯/新浪直接 API（K线聚合方式，无需第三方 Ashare 库）+ 东方财富（通过 akshare）
 - **历史数据**：Baostock（当日 17:30 后更新）
-- **技术指标**：Ashare 实时K线 + MyTT 计算
+- **技术指标**：腾讯/新浪实时K线 + MyTT 计算
 
 ## 环境安装
 
@@ -47,13 +48,20 @@ python3 "$SKILL_DIR/scripts/fetch_technical.py" [参数]
 
 ## 脚本一：fetch_realtime.py（实时行情）
 
-**依赖**：akshare + ashares
+**依赖**：akshare + requests（无需 ashares 库，直接调用腾讯/新浪 API）
 
 ```bash
-# 实时行情快照（最新价/涨跌幅/换手率）
+# 实时行情快照（分钟K线聚合方式：昨收+5m聚合今日OHLCV，含市场状态）
 python3 fetch_realtime.py --quote 600519
 
-# 实时K线（支持分钟线）
+# 今日分钟K线（只返回今日数据）
+python3 fetch_realtime.py --intraday-kline 600519 --freq 5m
+python3 fetch_realtime.py --intraday-kline 000001 --freq 1m
+
+# 批量实时行情（最多10只，按涨跌幅排序）
+python3 fetch_realtime.py --multi-quote 600519,000001,300750
+
+# K线数据（历史+实时连续）
 python3 fetch_realtime.py --kline 600519 --freq 1d --count 60
 python3 fetch_realtime.py --kline 000001 --freq 5m --count 30
 
@@ -66,7 +74,7 @@ python3 fetch_realtime.py --hot-sectors --top 20
 # 北向资金
 python3 fetch_realtime.py --north-money
 
-# 龙虎榜（默认近3日）
+# 龙虎榜（默认近3日；当日数据未发布时给出友好提示）
 python3 fetch_realtime.py --lhb --start 20260310 --end 20260318 --top 20
 
 # 涨跌停统计
@@ -86,6 +94,11 @@ python3 fetch_realtime.py --quote 600519 --json
 ```
 
 **K线频率参数**：`1m` / `5m` / `15m` / `30m` / `60m` / `1d`（默认）/ `1w` / `1M`
+
+**市场状态说明**（`--quote` 输出字段）：
+- `交易中`：当前在交易时段（9:30-11:30 / 13:00-15:00）
+- `盘前` / `盘后`：盘前（9:00-9:30）或盘后（15:00 后）
+- `休市`：非交易日或节假日
 
 ---
 
@@ -147,7 +160,7 @@ python3 fetch_history.py --money-supply --period year   # 年度货币供应量
 
 ## 脚本三：fetch_technical.py（技术指标）
 
-**依赖**：ashares + MyTT  
+**依赖**：MyTT + requests（直接调用腾讯/新浪 API，无需 ashares 库）  
 **特点**：使用实时K线数据计算指标，盘中可用，自动输出信号解读
 
 ```bash

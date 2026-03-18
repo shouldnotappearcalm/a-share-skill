@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 A股技术指标分析脚本
-数据源：Ashare（腾讯/新浪实时K线）+ MyTT（指标计算）
+数据源：腾讯/新浪实时K线（直接API）+ MyTT（指标计算）
 
-依赖安装：pip install ashares MyTT pandas numpy
+依赖安装：pip install MyTT pandas numpy requests
 
 支持指标：MA / EMA / MACD / KDJ / RSI / WR / BOLL / BIAS / CCI / ATR / DMI / TAQ
 
@@ -19,35 +19,13 @@ import argparse
 import json
 import sys
 
-import os
-import sys
-
-sys.path.insert(0, os.path.dirname(__file__))
-
 import numpy as np
 import pandas as pd
 
-
-def normalize_code(code: str) -> str:
-    code = code.strip()
-    if "." in code:
-        parts = code.split(".")
-        prefix, suffix = parts[0].lower(), parts[1].upper()
-        if prefix in ("sh", "sz") and suffix.isdigit():
-            return f"{prefix}{suffix}"
-        if suffix == "XSHG":
-            return f"sh{prefix}"
-        if suffix == "XSHE":
-            return f"sz{prefix}"
-    if code.lower().startswith(("sh", "sz")):
-        return code.lower()
-    if code.isdigit():
-        return f"sh{code}" if code.startswith("6") else f"sz{code}"
-    return code
+from fetch_realtime import get_price, normalize_code
 
 
 def fetch_kline(code: str, freq: str, count: int) -> pd.DataFrame:
-    from Ashare import get_price
     normalized = normalize_code(code)
     df = get_price(normalized, frequency=freq, count=count)
     if df is None or df.empty:
