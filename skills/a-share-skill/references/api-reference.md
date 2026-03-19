@@ -53,6 +53,15 @@
 ### --consecutive-limit [--date YYYYMMDD] [--top N]
 连板股（昨日连板今日表现），数据源：东方财富。
 
+### --market-news [--news-limit N] [--news-offset N]
+市场新闻（DangInvest），数据源：DangInvest 开放接口。
+
+接口：`https://dang-invest.com/api/market/news?limit=N&offset=M`
+
+输出：
+- 未加 `--json`：打印前若干条（最多 20 条）摘要，避免输出过长
+- 加 `--json`：输出 `{"meta": {...}, "data": [...]}`，其中 `data` 内包含 `id/source/published_at/title/content/url` 等字段
+
 ---
 
 ## fetch_history.py 参数详解
