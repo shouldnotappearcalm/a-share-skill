@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 - 2026-03-18
+
+- `fetch_realtime.py` 新增 `--boards-summary` / `--boards-detail`：
+  - `--boards-summary`：调用 DangInvest `https://dang-invest.com/api/market/boards/summary` 获取行业板块概览，并支持 `--boards-limit` / `--boards-sort`
+  - `--boards-detail`：调用 DangInvest `https://dang-invest.com/api/market/boards/detail` 获取指定板块的成分明细，并支持 `--boards-group-key` / `--boards-items-limit` / `--boards-items-offset`、`--json`
+- `SKILL.md`：同步更新命令示例与能力描述。
+
 ## 0.3.0 - 2026-03-18
 
 - `fetch_realtime.py` 新增 `--market-news`：调用 DangInvest 开放接口 `https://dang-invest.com/api/market/news` 获取市场新闻，并支持 `--news-limit` / `--news-offset`、`--json` 输出。

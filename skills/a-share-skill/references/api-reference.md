@@ -64,6 +64,22 @@
 
 ---
 
+### --boards-summary [--boards-mode industry] [--boards-limit N] [--boards-sort sortKey]
+行业板块概览（DangInvest），接口：
+`https://dang-invest.com/api/market/boards/summary?mode=industry&limit=N&sort=sortKey`
+
+未加 `--json`：打印前若干条（最多 20 条）聚合摘要（`groupLabel / changePct / count / totalMarketCapYuan / totalTurnoverYuan`）  
+加 `--json`：输出 `{"meta": {...}, "data": [...]}`（`data` 为 `items[]`）
+
+### --boards-detail --boards-group-key KEY [--boards-mode industry] [--boards-sort sortKey] [--boards-items-limit N] [--boards-items-offset M]
+行业板块成分明细（DangInvest），接口：
+`https://dang-invest.com/api/market/boards/detail?mode=industry&groupKey=KEY&sort=sortKey&items_limit=N&items_offset=M`
+
+未加 `--json`：打印板块汇总 + 前若干条成分（最多 20 条）  
+加 `--json`：输出 `{"meta": {...}, "data": {...}}`（`data` 包含 `summary/items/itemsMeta`）
+
+---
+
 ## fetch_history.py 参数详解
 
 ### --kline CODE --start YYYY-MM-DD --end YYYY-MM-DD

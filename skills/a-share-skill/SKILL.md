@@ -2,7 +2,7 @@
 name: a-share-skill
 description: A股市场全场景数据分析技能。支持实时行情快照（分钟K线聚合+市场状态）、今日分钟K线、批量行情、分钟/日/周K线、
   MACD/KDJ/RSI/BOLL等12种技术指标、盈利/成长/偿债/现金流/杜邦六维财务报表、热点概念板块、北向资金、龙虎榜、
-  市场新闻（DangInvest）、涨停板/连板股、个股资金流向、沪深300/上证50/中证500指数成分股、存款利率/货币供应量等宏观数据。
+  市场新闻（DangInvest）、行业板块概览/成分明细（boards）、涨停板/连板股、个股资金流向、沪深300/上证50/中证500指数成分股、存款利率/货币供应量等宏观数据。
   数据源覆盖东方财富、新浪财经、腾讯财经、DangInvest、Baostock。
   Use when: 用户查询A股行情、个股分析、技术指标、财务报表、热点板块、资金面数据、宏观经济数据，或需要精准的历史数据支撑分析。
 ---
@@ -77,6 +77,13 @@ python3 fetch_realtime.py --north-money
 
 # 市场新闻（DangInvest）
 python3 fetch_realtime.py --market-news --news-limit 50 --news-offset 0
+
+# 行业板块概览（DangInvest）
+python3 fetch_realtime.py --boards-summary --boards-limit 20 --boards-sort market_cap_desc
+
+# 行业板块成分明细（DangInvest）
+python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 50 --boards-items-offset 0
+python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 50 --boards-items-offset 0 --json
 
 # 龙虎榜（默认近3日；当日数据未发布时给出友好提示）
 python3 fetch_realtime.py --lhb --start 20260310 --end 20260318 --top 20
