@@ -18,6 +18,8 @@ A股实时行情数据脚本
   python3 fetch_realtime.py --limit-up-pool --date 20260318
   python3 fetch_realtime.py --fund-flow 600519
   python3 fetch_realtime.py --consecutive-limit
+  python3 fetch_realtime.py --market-news --news-limit 50 --news-offset 0
+  python3 fetch_realtime.py --market-news --news-limit 50 --news-offset 0 --json
 """
 
 import argparse
@@ -38,6 +40,7 @@ HEADERS = {
 SINA_KLINE_URL = "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
 TENCENT_DAY_URL = "http://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
 TENCENT_MIN_URL = "http://ifzq.gtimg.cn/appstock/app/kline/mkline"
+MARKET_NEWS_URL = "https://dang-invest.com/api/market/news"
 
 SINA_FREQ_MAP = {
     '5m': 5, '15m': 15, '30m': 30, '60m': 60,
@@ -511,6 +514,73 @@ def cmd_lhb(start: str, end: str, top: int, output_json: bool):
             sys.exit(1)
 
 
+def cmd_market_news(limit: int, offset: int, output_json: bool):
+    """
+    Fetch market news from DangInvest open endpoint.
+
+    接口示例：
+    https://dang-invest.com/api/market/news?limit=300&offset=0
+    """
+    if limit <= 0:
+        print("news-limit 必须为正整数")
+        sys.exit(1)
+    if offset < 0:
+        print("news-offset 不能小于 0")
+        sys.exit(1)
+
+    try:
+        resp = requests.get(
+            MARKET_NEWS_URL,
+            params={"limit": limit, "offset": offset},
+            headers=HEADERS,
+            timeout=20,
+        )
+        resp.raise_for_status()
+        try:
+            payload = resp.json()
+        except Exception:
+            payload = json.loads(resp.text)
+    except Exception as e:
+        print(f"获取市场新闻失败：{e}")
+        sys.exit(1)
+
+    items = payload.get("data") or []
+    meta = {
+        "url": MARKET_NEWS_URL,
+        "limit": limit,
+        "offset": offset,
+        "count": payload.get("count"),
+        "has_more": payload.get("has_more"),
+        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "data_source": "DangInvest",
+    }
+
+    if output_json:
+        out = {"meta": meta, "data": items}
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        return
+
+    total = len(items)
+    display_n = min(total, 20)
+    print(f"【市场新闻】{meta['update_time']}  返回 {total} 条（limit={limit}, offset={offset}） has_more={meta['has_more']}")
+    for i in range(display_n):
+        item = items[i] or {}
+        published_at = item.get("published_at", "")
+        source = item.get("source", "")
+        title = item.get("title", "") or ""
+        content = item.get("content", "") or ""
+        if title:
+            preview = title
+        else:
+            preview = content[:60]
+            if len(content) > 60:
+                preview = preview + "..."
+        if preview:
+            print(f"{i + 1}. {published_at} [{source}] {preview}")
+    if total > display_n:
+        print(f"... 已截断显示前 {display_n} 条（总返回 {total} 条）")
+
+
 def cmd_limit_stats(output_json: bool):
     today = datetime.now().strftime("%Y%m%d")
     try:
@@ -626,6 +696,9 @@ def main():
     parser.add_argument("--fund-flow", metavar="CODE", help="个股资金流向")
     parser.add_argument("--days", type=int, default=10, help="资金流向天数（默认10）")
     parser.add_argument("--consecutive-limit", action="store_true", help="连板股")
+    parser.add_argument("--market-news", action="store_true", help="市场新闻（DangInvest 开放接口）")
+    parser.add_argument("--news-limit", type=int, default=300, help="新闻条数（默认300）")
+    parser.add_argument("--news-offset", type=int, default=0, help="新闻偏移（默认0）")
     parser.add_argument("--json", action="store_true", dest="output_json", help="输出JSON格式")
     args = parser.parse_args()
 
@@ -654,6 +727,8 @@ def main():
         cmd_fund_flow(args.fund_flow, args.days, args.output_json)
     elif args.consecutive_limit:
         cmd_consecutive_limit(args.date, args.top, args.output_json)
+    elif args.market_news:
+        cmd_market_news(args.news_limit, args.news_offset, args.output_json)
     else:
         parser.print_help()
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0 - 2026-03-18
+
+- `fetch_realtime.py` 新增 `--market-news`：调用 DangInvest 开放接口 `https://dang-invest.com/api/market/news` 获取市场新闻，并支持 `--news-limit` / `--news-offset`、`--json` 输出。
+- `SKILL.md`：同步更新命令文档与能力描述。
+
 ## 0.2.0 - 2026-03-18
 
 - `fetch_realtime.py` 重写实时行情获取逻辑（对齐 a-share-mcp 修复）：
