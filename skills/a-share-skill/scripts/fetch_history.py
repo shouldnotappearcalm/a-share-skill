@@ -14,6 +14,8 @@ A股历史数据脚本（历史K线 / 财务报表 / 指数成分 / 宏观经济
   python3 fetch_history.py --financials sh.600519 --start 2024-01-01 --end 2026-01-01
   python3 fetch_history.py --profit sh.600519 --year 2024 --quarter 4
   python3 fetch_history.py --dividend sh.600519 --year 2024
+  python3 fetch_history.py --all-stocks
+  python3 fetch_history.py --all-stocks --market sh
   python3 fetch_history.py --hs300
   python3 fetch_history.py --industry --code sh.600519
   python3 fetch_history.py --trade-dates --start 2026-03-01 --end 2026-03-18
@@ -374,6 +376,91 @@ def cmd_industry(code: str, output_json: bool):
         print(df.to_string(index=False))
 
 
+def cmd_all_stocks(output_json: bool, market: str = None):
+    """
+    获取全市场股票列表（代码+名称）
+    数据源：新浪财经
+    
+    Args:
+        output_json: 是否输出JSON格式
+        market: 市场筛选，可选 'sh'(上海) / 'sz'(深圳) / None(全部)
+    """
+    import os
+    # 禁用代理避免连接问题
+    os.environ['NO_PROXY'] = '*'
+    os.environ.pop('HTTP_PROXY', None)
+    os.environ.pop('HTTPS_PROXY', None)
+    os.environ.pop('http_proxy', None)
+    os.environ.pop('https_proxy', None)
+    
+    # 新浪节点映射
+    node_map = {
+        None: 'hs_a',   # 全A股
+        'sh': 'sh_a',   # 上海
+        'sz': 'sz_a',   # 深圳
+    }
+    node = node_map.get(market, 'hs_a')
+    
+    # 获取总数
+    count_url = 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeStockCount'
+    try:
+        r = requests.get(count_url, params={'node': node}, timeout=10)
+        total = int(r.text.strip('"'))
+    except Exception:
+        total = 5000  # 默认值
+    
+    # 分页获取数据
+    all_stocks = []
+    page_size = 100  # 新浪接口限制每页最多100条
+    total_pages = (total + page_size - 1) // page_size
+    
+    data_url = 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData'
+    
+    try:
+        for page in range(1, total_pages + 1):
+            params = {
+                'page': page,
+                'num': page_size,
+                'sort': 'symbol',
+                'asc': 1,
+                'node': node,
+                'symbol': '',
+                '_s_r_a': 'page'
+            }
+            r = requests.get(data_url, params=params, timeout=15)
+            r.raise_for_status()
+            data = r.json()
+            
+            if not data:
+                break
+            
+            for s in data:
+                code = s.get('symbol', '')
+                name = s.get('name', '')
+                # 过滤掉北交所股票（bj开头）和无效数据
+                if code and name and not code.startswith('bj'):
+                    all_stocks.append({'代码': code, '名称': name})
+        
+        if not all_stocks:
+            print("未获取到股票列表数据")
+            return
+        
+        # 转换为 DataFrame 并排序
+        df = pd.DataFrame(all_stocks)
+        df = df.sort_values('代码').reset_index(drop=True)
+        
+        if output_json:
+            print(df.to_json(orient="records", force_ascii=False))
+        else:
+            market_label = {'sh': '上海', 'sz': '深圳'}.get(market, '全市场')
+            print(f"【{market_label}股票列表】共 {len(df)} 只  数据源：新浪财经")
+            print(df.to_string(index=False))
+            
+    except Exception as e:
+        print(f"获取股票列表失败：{e}")
+        sys.exit(1)
+
+
 def cmd_index_members(index: str, date: str, output_json: bool):
     func_map = {
         "hs300": bs.query_hs300_stocks,
@@ -494,6 +581,9 @@ def main():
     parser.add_argument("--industry", action="store_true", help="行业分类")
     parser.add_argument("--code", help="配合 --industry 指定股票代码")
 
+    parser.add_argument("--all-stocks", action="store_true", help="获取全市场股票列表（代码+名称）")
+    parser.add_argument("--market", choices=["sh", "sz"], help="配合 --all-stocks 筛选市场：sh=上海 / sz=深圳")
+
     parser.add_argument("--hs300", action="store_true", help="沪深300成分股")
     parser.add_argument("--sz50", action="store_true", help="上证50成分股")
     parser.add_argument("--zz500", action="store_true", help="中证500成分股")
@@ -552,6 +642,8 @@ def main():
         cmd_dividend(args.dividend, args.year, args.output_json)
     elif args.industry:
         cmd_industry(args.code, args.output_json)
+    elif args.all_stocks:
+        cmd_all_stocks(args.output_json, args.market)
     elif args.hs300:
         cmd_index_members("hs300", args.date, args.output_json)
     elif args.sz50:

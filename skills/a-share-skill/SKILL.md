@@ -31,6 +31,7 @@ SKILL_DIR="<本skill的绝对路径>"
 python3 "$SKILL_DIR/scripts/fetch_realtime.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_history.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_technical.py" [参数]
+python3 "$SKILL_DIR/scripts/fetch_stock_events.py" [参数]
 ```
 
 ## 股票代码格式
@@ -132,6 +133,11 @@ python3 fetch_history.py --perf-forecast sh.600519 --start 2024-01-01 --end 2026
 # 分红配送
 python3 fetch_history.py --dividend sh.600519 --year 2024
 
+# 全市场股票列表
+python3 fetch_history.py --all-stocks
+python3 fetch_history.py --all-stocks --market sh  # 只看上海
+python3 fetch_history.py --all-stocks --market sz  # 只看深圳
+
 # 行业分类
 python3 fetch_history.py --industry --code sh.600519
 python3 fetch_history.py --industry  # 全市场行业列表
@@ -176,6 +182,36 @@ python3 fetch_technical.py 300750 --freq 15m --count 60 --indicators MACD,KDJ,BO
 # 输出 JSON（不含信号解读）
 python3 fetch_technical.py 600519 --json
 ```
+
+---
+
+## 脚本四：fetch_stock_events.py（个股事件信息）
+
+**依赖**：akshare  
+**目标**：按个股输出以下 5 类信息
+- 业绩/预告
+- 增减持/回购
+- 监管事项
+- 重大订单合同
+- 舆情热度方向
+
+```bash
+# 文本预览输出
+python3 fetch_stock_events.py --code 600519
+
+# 指定业绩查询日期（避免扫太多周期）
+python3 fetch_stock_events.py --code 000001 --dates 20260331,20251231
+
+# JSON 输出（便于后续结构化处理）
+python3 fetch_stock_events.py --code 300750 --json
+```
+
+参数说明：
+- `--code`：股票代码，支持 `600519` / `sh600519` / `sh.600519`
+- `--dates`：业绩查询日期列表，逗号分隔，支持 `YYYYMMDD` 或 `YYYY-MM-DD`
+- `--limit`：每个类别最大返回条数，默认 `20`
+- `--preview`：文本模式每类预览条数，默认 `5`
+- `--json`：输出 JSON
 
 **可用指标**：
 
