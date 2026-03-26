@@ -33,9 +33,13 @@ import pandas as pd
 
 @contextmanager
 def bs_session():
-    lg = bs.login()
-    if lg.error_code != "0":
-        print(f"Baostock 登录失败：{lg.error_msg}", file=sys.stderr)
+    lg = None
+    for _ in range(3):
+        lg = bs.login()
+        if lg.error_code == "0":
+            break
+    if lg is None or lg.error_code != "0":
+        print(f"Baostock 登录失败：{getattr(lg, 'error_msg', 'unknown')}", file=sys.stderr)
         sys.exit(1)
     try:
         yield

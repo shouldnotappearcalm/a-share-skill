@@ -2,8 +2,8 @@
 name: a-share-skill
 description: A股市场全场景数据分析技能。支持实时行情快照（分钟K线聚合+市场状态）、今日分钟K线、批量行情、分钟/日/周K线、
   MACD/KDJ/RSI/BOLL等12种技术指标、盈利/成长/偿债/现金流/杜邦六维财务报表、热点概念板块、北向资金、龙虎榜、
-  市场新闻（DangInvest）、行业板块概览/成分明细（boards）、涨停板/连板股、个股资金流向、沪深300/上证50/中证500指数成分股、存款利率/货币供应量等宏观数据。
-  数据源覆盖东方财富、新浪财经、腾讯财经、DangInvest、Baostock。
+  涨停板/连板股、个股资金流向、沪深300/上证50/中证500指数成分股、存款利率/货币供应量等宏观数据。
+  数据源覆盖东方财富、新浪财经、腾讯财经、Baostock。
   Use when: 用户查询A股行情、个股分析、技术指标、财务报表、热点板块、资金面数据、宏观经济数据，或需要精准的历史数据支撑分析。
 ---
 
@@ -13,7 +13,6 @@ description: A股市场全场景数据分析技能。支持实时行情快照（
 
 本 skill 提供 A 股市场全场景数据查询，优先于直接爬取网页。数据来源：
 - **实时数据**：腾讯/新浪直接 API（K线聚合方式，无需第三方 Ashare 库）+ 东方财富（通过 akshare）
-- **市场新闻**：DangInvest 开放接口（可分页获取）
 - **历史数据**：Baostock（当日 17:30 后更新）
 - **技术指标**：腾讯/新浪实时K线 + MyTT 计算
 
@@ -74,16 +73,6 @@ python3 fetch_realtime.py --hot-sectors --top 20
 
 # 北向资金
 python3 fetch_realtime.py --north-money
-
-# 市场新闻（DangInvest）
-python3 fetch_realtime.py --market-news --news-limit 50 --news-offset 0
-
-# 行业板块概览（DangInvest）
-python3 fetch_realtime.py --boards-summary --boards-limit 20 --boards-sort market_cap_desc
-
-# 行业板块成分明细（DangInvest）
-python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 50 --boards-items-offset 0
-python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 50 --boards-items-offset 0 --json
 
 # 龙虎榜（默认近3日；当日数据未发布时给出友好提示）
 python3 fetch_realtime.py --lhb --start 20260310 --end 20260318 --top 20
@@ -250,6 +239,29 @@ python3 fetch_history.py --financials sh.600519 --start 2020-01-01 --end 2026-01
 ```
 
 ---
+
+## 稳定性增强（2026-03）
+
+已增强以下容错：
+- 实时脚本 `fetch_realtime.py`：
+  - 腾讯/新浪接口统一使用 HTTPS
+  - 内置重试（429/5xx/网络抖动自动重试）
+  - 日线增加 `ak.stock_zh_a_daily` 兜底（当腾讯/新浪主链路失败时）
+- 历史脚本 `fetch_history.py`：
+  - Baostock 登录增加重试
+
+### 快速验证（历史 + 实时）
+
+```bash
+# 实时验证（分钟聚合快照）
+python3 fetch_realtime.py --quote 600519
+
+# 实时K线验证（日线）
+python3 fetch_realtime.py --kline 600519 --freq 1d --count 30
+
+# 历史K线验证（Baostock）
+python3 fetch_history.py --kline 600519 --start 2026-01-01 --end 2026-03-20
+```
 
 ## 数据时效说明
 

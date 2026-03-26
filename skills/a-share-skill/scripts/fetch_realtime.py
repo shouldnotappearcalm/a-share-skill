@@ -18,13 +18,6 @@ A股实时行情数据脚本
   python3 fetch_realtime.py --limit-up-pool --date 20260318
   python3 fetch_realtime.py --fund-flow 600519
   python3 fetch_realtime.py --consecutive-limit
-  python3 fetch_realtime.py --market-news --news-limit 50 --news-offset 0
-  python3 fetch_realtime.py --market-news --news-limit 50 --news-offset 0 --json
-  # 板块概览（按市值/成交额等维度聚合）
-  python3 fetch_realtime.py --boards-summary --boards-limit 20 --boards-sort market_cap_desc
-  # 板块成分明细（例如半导体）
-  python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 50 --boards-items-offset 0
-  python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 50 --boards-items-offset 0 --json
 """
 
 import argparse
@@ -35,6 +28,8 @@ from datetime import datetime, timedelta, date, time as time_type
 
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import akshare as ak
 
 
@@ -42,12 +37,9 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 }
 
-SINA_KLINE_URL = "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
-TENCENT_DAY_URL = "http://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
-TENCENT_MIN_URL = "http://ifzq.gtimg.cn/appstock/app/kline/mkline"
-MARKET_NEWS_URL = "https://dang-invest.com/api/market/news"
-BOARDS_SUMMARY_URL = "https://dang-invest.com/api/market/boards/summary"
-BOARDS_DETAIL_URL = "https://dang-invest.com/api/market/boards/detail"
+SINA_KLINE_URL = "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
+TENCENT_DAY_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
+TENCENT_MIN_URL = "https://ifzq.gtimg.cn/appstock/app/kline/mkline"
 
 SINA_FREQ_MAP = {
     '5m': 5, '15m': 15, '30m': 30, '60m': 60,
@@ -56,6 +48,31 @@ SINA_FREQ_MAP = {
 TENCENT_DAY_FREQ_MAP = {
     '1d': 'day', '1w': 'week', '1M': 'month',
 }
+
+
+def _build_session() -> requests.Session:
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    retry = Retry(
+        total=3,
+        connect=3,
+        read=3,
+        backoff_factor=0.4,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=("GET",),
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+
+def _http_get_json(url: str, params: dict = None, timeout: int = 10):
+    session = _build_session()
+    resp = session.get(url, params=params, timeout=timeout)
+    resp.raise_for_status()
+    return resp.json()
 
 
 def normalize_code(code: str) -> str:
@@ -84,10 +101,7 @@ def _get_price_sina(code: str, count: int, frequency: str) -> pd.DataFrame:
     freq_min = SINA_FREQ_MAP.get(frequency, 240)
     params = {"symbol": code, "scale": freq_min, "ma": 5, "datalen": count}
     try:
-        session = requests.Session()
-        session.headers.update(HEADERS)
-        resp = session.get(SINA_KLINE_URL, params=params, timeout=10)
-        data = json.loads(resp.content)
+        data = _http_get_json(SINA_KLINE_URL, params=params, timeout=10)
         if not data or isinstance(data, dict):
             return None
         df = pd.DataFrame(data, columns=['day', 'open', 'high', 'low', 'close', 'volume'])
@@ -106,10 +120,7 @@ def _get_price_day_tx(code: str, count: int, frequency: str) -> pd.DataFrame:
     end_date = ''
     url = f"{TENCENT_DAY_URL}?param={code},{unit},,{end_date},{count},qfq"
     try:
-        session = requests.Session()
-        session.headers.update(HEADERS)
-        resp = session.get(url, timeout=10)
-        st = json.loads(resp.content)
+        st = _http_get_json(url, timeout=10)
         if 'data' not in st or code not in st['data']:
             return None
         stk = st['data'][code]
@@ -130,10 +141,7 @@ def _get_price_min_tx(code: str, count: int, frequency: str) -> pd.DataFrame:
     ts = int(frequency[:-1]) if frequency[:-1].isdigit() else 1
     url = f"{TENCENT_MIN_URL}?param={code},m{ts},,{count}"
     try:
-        session = requests.Session()
-        session.headers.update(HEADERS)
-        resp = session.get(url, timeout=10)
-        st = json.loads(resp.content)
+        st = _http_get_json(url, timeout=10)
         if 'data' not in st or code not in st['data']:
             return None
         mkey = 'm' + str(ts)
@@ -169,6 +177,19 @@ def get_price(code: str, frequency: str = '1d', count: int = 60) -> pd.DataFrame
         df = _get_price_day_tx(normalized, count, frequency)
         if df is not None and not df.empty:
             return df
+        # 最后兜底：akshare 新浪日线（仅1d可用）
+        if frequency == '1d':
+            try:
+                ak_df = ak.stock_zh_a_daily(symbol=normalized, adjust='')
+                if ak_df is not None and not ak_df.empty:
+                    ak_df = ak_df.tail(count).copy()
+                    ak_df = ak_df.rename(columns={'date': 'time'})
+                    ak_df['time'] = pd.to_datetime(ak_df['time'])
+                    ak_df = ak_df.set_index('time')
+                    ak_df.index.name = ''
+                    return ak_df[['open', 'high', 'low', 'close', 'volume']]
+            except Exception:
+                pass
     elif frequency == '1m':
         df = _get_price_min_tx(normalized, count, frequency)
         if df is not None and not df.empty:
@@ -521,255 +542,6 @@ def cmd_lhb(start: str, end: str, top: int, output_json: bool):
             sys.exit(1)
 
 
-def cmd_market_news(limit: int, offset: int, output_json: bool):
-    """
-    Fetch market news from DangInvest open endpoint.
-
-    接口示例：
-    https://dang-invest.com/api/market/news?limit=300&offset=0
-    """
-    if limit <= 0:
-        print("news-limit 必须为正整数")
-        sys.exit(1)
-    if offset < 0:
-        print("news-offset 不能小于 0")
-        sys.exit(1)
-
-    try:
-        resp = requests.get(
-            MARKET_NEWS_URL,
-            params={"limit": limit, "offset": offset},
-            headers=HEADERS,
-            timeout=20,
-        )
-        resp.raise_for_status()
-        try:
-            payload = resp.json()
-        except Exception:
-            payload = json.loads(resp.text)
-    except Exception as e:
-        print(f"获取市场新闻失败：{e}")
-        sys.exit(1)
-
-    items = payload.get("data") or []
-    meta = {
-        "url": MARKET_NEWS_URL,
-        "limit": limit,
-        "offset": offset,
-        "count": payload.get("count"),
-        "has_more": payload.get("has_more"),
-        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "data_source": "DangInvest",
-    }
-
-    if output_json:
-        out = {"meta": meta, "data": items}
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        return
-
-    total = len(items)
-    display_n = min(total, 20)
-    print(f"【市场新闻】{meta['update_time']}  返回 {total} 条（limit={limit}, offset={offset}） has_more={meta['has_more']}")
-    for i in range(display_n):
-        item = items[i] or {}
-        published_at = item.get("published_at", "")
-        source = item.get("source", "")
-        title = item.get("title", "") or ""
-        content = item.get("content", "") or ""
-        if title:
-            preview = title
-        else:
-            preview = content[:60]
-            if len(content) > 60:
-                preview = preview + "..."
-        if preview:
-            print(f"{i + 1}. {published_at} [{source}] {preview}")
-    if total > display_n:
-        print(f"... 已截断显示前 {display_n} 条（总返回 {total} 条）")
-
-
-def cmd_boards_summary(mode: str, limit: int, sort: str, output_json: bool):
-    """
-    Fetch boards overview (industry mode) from DangInvest.
-
-    接口示例：
-    https://dang-invest.com/api/market/boards/summary?mode=industry&limit=60&sort=market_cap_desc
-    """
-    if limit <= 0:
-        print("boards-limit 必须为正整数")
-        sys.exit(1)
-
-    try:
-        resp = requests.get(
-            BOARDS_SUMMARY_URL,
-            params={"mode": mode, "limit": limit, "sort": sort},
-            headers=HEADERS,
-            timeout=20,
-        )
-        resp.raise_for_status()
-        payload = resp.json()
-    except Exception as e:
-        print(f"获取板块概览失败：{e}")
-        sys.exit(1)
-
-    data = payload.get("data") or {}
-    items = data.get("items") or []
-    meta = {
-        "url": BOARDS_SUMMARY_URL,
-        "mode": mode,
-        "limit": limit,
-        "sort": sort,
-        "tradeDate": payload.get("tradeDate"),
-        "snapshotTsMs": payload.get("snapshotTsMs"),
-        "count": data.get("count"),
-        "total": data.get("total"),
-        "has_more": False,
-        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "data_source": "DangInvest",
-    }
-
-    if output_json:
-        out = {"meta": meta, "data": items}
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        return
-
-    display_n = min(len(items), 20)
-    print(
-        f"【板块概览】{meta['tradeDate']} 返回 {len(items)} 个（请求 limit={limit}，sort={sort}）"
-    )
-    for i in range(display_n):
-        item = items[i] or {}
-        groupLabel = item.get("groupLabel", "")
-        changePct = item.get("changePct")
-        count = item.get("count", 0)
-        totalMarketCapYuan = item.get("totalMarketCapYuan") or 0
-        totalTurnoverYuan = item.get("totalTurnoverYuan") or 0
-        mc_yi = round(float(totalMarketCapYuan) / 1e8, 2) if totalMarketCapYuan else 0
-        to_yi = round(float(totalTurnoverYuan) / 1e8, 2) if totalTurnoverYuan else 0
-        if changePct is None:
-            change_str = "N/A"
-        else:
-            change_str = f"{round(float(changePct), 2)}%"
-        sign = "+" if (changePct is not None and float(changePct) >= 0) else ""
-        if changePct is None:
-            sign = ""
-        print(f"{i + 1}. {groupLabel:<14} {sign}{change_str:<8} 数量={count:<4} 市值(亿)={mc_yi} 成交(亿)={to_yi}")
-
-    if len(items) > display_n:
-        print(f"... 已截断显示前 {display_n} 个（总返回 {len(items)} 个）")
-
-
-def cmd_boards_detail(
-    mode: str,
-    group_key: str,
-    sort: str,
-    items_limit: int,
-    items_offset: int,
-    output_json: bool,
-):
-    """
-    Fetch boards detail (industry mode) from DangInvest.
-
-    接口示例：
-    https://dang-invest.com/api/market/boards/detail?mode=industry&groupKey=半导体&sort=market_cap_desc&items_limit=300&items_offset=0
-    """
-    if not group_key:
-        print("boards-group-key 不能为空")
-        sys.exit(1)
-    if items_limit <= 0:
-        print("boards-items-limit 必须为正整数")
-        sys.exit(1)
-    if items_offset < 0:
-        print("boards-items-offset 不能小于 0")
-        sys.exit(1)
-
-    try:
-        resp = requests.get(
-            BOARDS_DETAIL_URL,
-            params={
-                "mode": mode,
-                "groupKey": group_key,
-                "sort": sort,
-                "items_limit": items_limit,
-                "items_offset": items_offset,
-            },
-            headers=HEADERS,
-            timeout=20,
-        )
-        resp.raise_for_status()
-        payload = resp.json()
-    except Exception as e:
-        print(f"获取板块成分失败：{e}")
-        sys.exit(1)
-
-    meta = {
-        "url": BOARDS_DETAIL_URL,
-        "mode": mode,
-        "groupKey": group_key,
-        "sort": sort,
-        "items_limit": items_limit,
-        "items_offset": items_offset,
-        "tradeDate": payload.get("tradeDate"),
-        "snapshotTsMs": payload.get("snapshotTsMs"),
-        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "data_source": "DangInvest",
-    }
-
-    data = payload.get("data") or {}
-    if output_json:
-        out = {"meta": meta, "data": data}
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        return
-
-    summary = data.get("summary") or {}
-    items = data.get("items") or []
-    groupLabel = payload.get("groupLabel") or group_key
-    print(
-        f"【板块成分】{meta['tradeDate']} {groupLabel} 返回 {len(items)} 只（请求 items_limit={items_limit}，offset={items_offset}）"
-    )
-    trade_count = summary.get("count")
-    if trade_count is None:
-        trade_count = len(items)
-    totalMarketCapYuan = summary.get("totalMarketCapYuan") or 0
-    totalTurnoverYuan = summary.get("totalTurnoverYuan") or 0
-    changePct = summary.get("changePct")
-    mc_yi = round(float(totalMarketCapYuan) / 1e8, 2) if totalMarketCapYuan else 0
-    to_yi = round(float(totalTurnoverYuan) / 1e8, 2) if totalTurnoverYuan else 0
-    if changePct is None:
-        change_str = "N/A"
-        sign = ""
-    else:
-        change_str = f"{round(float(changePct), 2)}%"
-        sign = "+" if float(changePct) >= 0 else ""
-    print(f"汇总：数量={trade_count} 市值(亿)={mc_yi} 成交(亿)={to_yi} 涨跌幅={sign}{change_str}")
-
-    display_n = min(len(items), 20)
-    for i in range(display_n):
-        item = items[i] or {}
-        code = item.get("code", "")
-        name = item.get("name", "")
-        price = item.get("price")
-        changePct_i = item.get("changePct")
-        turnoverYuan = item.get("turnoverYuan") or 0
-        marketCapYuan = item.get("marketCapYuan")
-        turnover_yi = round(float(turnoverYuan) / 1e8, 2) if turnoverYuan else 0
-        marketcap_yi = round(float(marketCapYuan) / 1e8, 2) if marketCapYuan else 0
-        if changePct_i is None:
-            change_str_i = "N/A"
-            sign_i = ""
-        else:
-            change_str_i = f"{round(float(changePct_i), 2)}%"
-            sign_i = "+" if float(changePct_i) >= 0 else ""
-        if price is None:
-            price_str = "N/A"
-        else:
-            price_str = round(float(price), 2)
-        print(f"{i + 1}. {code:<10} {name:<12} 现价={price_str:<8} {sign_i}{change_str_i:<8} 成交(亿)={turnover_yi} 市值(亿)={marketcap_yi}")
-
-    if len(items) > display_n:
-        print(f"... 已截断显示前 {display_n} 只（总返回 {len(items)} 只）")
-
-
 def cmd_limit_stats(output_json: bool):
     today = datetime.now().strftime("%Y%m%d")
     try:
@@ -885,17 +657,6 @@ def main():
     parser.add_argument("--fund-flow", metavar="CODE", help="个股资金流向")
     parser.add_argument("--days", type=int, default=10, help="资金流向天数（默认10）")
     parser.add_argument("--consecutive-limit", action="store_true", help="连板股")
-    parser.add_argument("--market-news", action="store_true", help="市场新闻（DangInvest 开放接口）")
-    parser.add_argument("--news-limit", type=int, default=300, help="新闻条数（默认300）")
-    parser.add_argument("--news-offset", type=int, default=0, help="新闻偏移（默认0）")
-    parser.add_argument("--boards-summary", action="store_true", help="行业板块概览（DangInvest）")
-    parser.add_argument("--boards-detail", action="store_true", help="行业板块成分明细（DangInvest）")
-    parser.add_argument("--boards-mode", default="industry", help="板块模式（默认industry）")
-    parser.add_argument("--boards-limit", type=int, default=60, help="板块概览返回条数（默认60）")
-    parser.add_argument("--boards-sort", default="market_cap_desc", help="板块排序（默认market_cap_desc）")
-    parser.add_argument("--boards-group-key", default="", help="板块 key（boards-detail 必填，例如半导体）")
-    parser.add_argument("--boards-items-limit", type=int, default=300, help="成分返回条数（默认300）")
-    parser.add_argument("--boards-items-offset", type=int, default=0, help="成分偏移（默认0）")
     parser.add_argument("--json", action="store_true", dest="output_json", help="输出JSON格式")
     args = parser.parse_args()
 
@@ -924,19 +685,6 @@ def main():
         cmd_fund_flow(args.fund_flow, args.days, args.output_json)
     elif args.consecutive_limit:
         cmd_consecutive_limit(args.date, args.top, args.output_json)
-    elif args.market_news:
-        cmd_market_news(args.news_limit, args.news_offset, args.output_json)
-    elif args.boards_summary:
-        cmd_boards_summary(args.boards_mode, args.boards_limit, args.boards_sort, args.output_json)
-    elif args.boards_detail:
-        cmd_boards_detail(
-            args.boards_mode,
-            args.boards_group_key,
-            args.boards_sort,
-            args.boards_items_limit,
-            args.boards_items_offset,
-            args.output_json,
-        )
     else:
         parser.print_help()
 
