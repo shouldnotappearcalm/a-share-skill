@@ -385,13 +385,9 @@ def cmd_all_stocks(output_json: bool, market: str = None):
         output_json: 是否输出JSON格式
         market: 市场筛选，可选 'sh'(上海) / 'sz'(深圳) / None(全部)
     """
-    import os
-    # 禁用代理避免连接问题
-    os.environ['NO_PROXY'] = '*'
-    os.environ.pop('HTTP_PROXY', None)
-    os.environ.pop('HTTPS_PROXY', None)
-    os.environ.pop('http_proxy', None)
-    os.environ.pop('https_proxy', None)
+    # 创建不使用代理的 session
+    session = requests.Session()
+    session.trust_env = False  # 忽略环境变量中的代理设置
     
     # 新浪节点映射
     node_map = {
@@ -404,7 +400,7 @@ def cmd_all_stocks(output_json: bool, market: str = None):
     # 获取总数
     count_url = 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeStockCount'
     try:
-        r = requests.get(count_url, params={'node': node}, timeout=10)
+        r = session.get(count_url, params={'node': node}, timeout=30)
         total = int(r.text.strip('"'))
     except Exception:
         total = 5000  # 默认值
@@ -427,7 +423,7 @@ def cmd_all_stocks(output_json: bool, market: str = None):
                 'symbol': '',
                 '_s_r_a': 'page'
             }
-            r = requests.get(data_url, params=params, timeout=15)
+            r = session.get(data_url, params=params, timeout=30)
             r.raise_for_status()
             data = r.json()
             

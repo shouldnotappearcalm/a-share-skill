@@ -11,13 +11,15 @@ A股实时行情数据脚本
   python3 fetch_realtime.py --intraday-kline 600519 --freq 5m
   python3 fetch_realtime.py --multi-quote 600519,000001,300750
   python3 fetch_realtime.py --index
-  python3 fetch_realtime.py --hot-sectors --top 20
   python3 fetch_realtime.py --north-money
   python3 fetch_realtime.py --lhb --start 20260310 --end 20260318
   python3 fetch_realtime.py --limit-stats
   python3 fetch_realtime.py --limit-up-pool --date 20260318
   python3 fetch_realtime.py --fund-flow 600519
   python3 fetch_realtime.py --consecutive-limit
+  python3 fetch_realtime.py --market-news --news-limit 50
+  python3 fetch_realtime.py --boards-summary --boards-limit 60 --boards-sort market_cap_desc
+  python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 300
 """
 
 import argparse
@@ -40,6 +42,9 @@ HEADERS = {
 SINA_KLINE_URL = "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
 TENCENT_DAY_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
 TENCENT_MIN_URL = "https://ifzq.gtimg.cn/appstock/app/kline/mkline"
+MARKET_NEWS_URL = "https://dang-invest.com/api/market/news"
+BOARDS_SUMMARY_URL = "https://dang-invest.com/api/market/boards/summary"
+BOARDS_DETAIL_URL = "https://dang-invest.com/api/market/boards/detail"
 
 SINA_FREQ_MAP = {
     '5m': 5, '15m': 15, '30m': 30, '60m': 60,
@@ -612,6 +617,168 @@ def cmd_fund_flow(code: str, days: int, output_json: bool):
         sys.exit(1)
 
 
+def cmd_market_news(limit: int, offset: int, output_json: bool):
+    try:
+        session = _build_session()
+        resp = session.get(MARKET_NEWS_URL, params={"limit": limit, "offset": offset}, timeout=20)
+        resp.raise_for_status()
+        payload = resp.json()
+    except Exception as e:
+        print(f"获取市场新闻失败：{e}")
+        sys.exit(1)
+
+    items = payload.get("data") or []
+    meta = {
+        "url": MARKET_NEWS_URL,
+        "limit": limit,
+        "offset": offset,
+        "count": payload.get("count"),
+        "has_more": payload.get("has_more"),
+        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "data_source": "DangInvest",
+    }
+
+    if output_json:
+        print(json.dumps({"meta": meta, "data": items}, ensure_ascii=False, indent=2))
+        return
+
+    display_n = min(len(items), 20)
+    print(f"【市场新闻】{meta['update_time']}  共 {len(items)} 条（limit={limit}, offset={offset}）  数据源：DangInvest")
+    for i, item in enumerate(items[:display_n]):
+        item = item or {}
+        published_at = item.get("published_at", "")
+        source = item.get("source", "")
+        title = item.get("title", "") or ""
+        content = item.get("content", "") or ""
+        preview = title if title else (content[:60] + ("..." if len(content) > 60 else ""))
+        print(f"  {i + 1}. {published_at} [{source}] {preview}")
+    if len(items) > display_n:
+        print(f"  ... 已截断，共 {len(items)} 条")
+
+
+def cmd_boards_summary(mode: str, limit: int, sort: str, output_json: bool):
+    try:
+        session = _build_session()
+        resp = session.get(
+            BOARDS_SUMMARY_URL,
+            params={"mode": mode, "limit": limit, "sort": sort},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+    except Exception as e:
+        print(f"获取板块概览失败：{e}")
+        sys.exit(1)
+
+    data = payload.get("data") or {}
+    items = data.get("items") or []
+    meta = {
+        "url": BOARDS_SUMMARY_URL,
+        "mode": mode,
+        "limit": limit,
+        "sort": sort,
+        "tradeDate": payload.get("tradeDate"),
+        "snapshotTsMs": payload.get("snapshotTsMs"),
+        "count": data.get("count"),
+        "total": data.get("total"),
+        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "data_source": "DangInvest",
+    }
+
+    if output_json:
+        print(json.dumps({"meta": meta, "data": items}, ensure_ascii=False, indent=2))
+        return
+
+    display_n = min(len(items), 20)
+    print(f"【板块概览】{meta['tradeDate']}  共 {len(items)} 个（limit={limit}, sort={sort}）  数据源：DangInvest")
+    for i, item in enumerate(items[:display_n]):
+        item = item or {}
+        label = item.get("groupLabel", "")
+        changePct = item.get("changePct")
+        count = item.get("count", 0)
+        mc_yi = round(float(item.get("totalMarketCapYuan") or 0) / 1e8, 2)
+        to_yi = round(float(item.get("totalTurnoverYuan") or 0) / 1e8, 2)
+        if changePct is None:
+            change_str = "N/A"
+            sign = ""
+        else:
+            sign = "+" if float(changePct) >= 0 else ""
+            change_str = f"{round(float(changePct), 2)}%"
+        print(f"  {i + 1:>3}. {label:<14} {sign}{change_str:<8} 数量={count:<4} 市值(亿)={mc_yi} 成交(亿)={to_yi}")
+    if len(items) > display_n:
+        print(f"  ... 已截断显示前 {display_n} 个（共 {len(items)} 个）")
+
+
+def cmd_boards_detail(mode: str, group_key: str, sort: str, items_limit: int, items_offset: int, output_json: bool):
+    if not group_key:
+        print("--boards-group-key 不能为空")
+        sys.exit(1)
+
+    try:
+        session = _build_session()
+        resp = session.get(
+            BOARDS_DETAIL_URL,
+            params={"mode": mode, "groupKey": group_key, "sort": sort, "items_limit": items_limit, "items_offset": items_offset},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+    except Exception as e:
+        print(f"获取板块成分失败：{e}")
+        sys.exit(1)
+
+    meta = {
+        "url": BOARDS_DETAIL_URL,
+        "mode": mode,
+        "groupKey": group_key,
+        "sort": sort,
+        "items_limit": items_limit,
+        "items_offset": items_offset,
+        "tradeDate": payload.get("tradeDate"),
+        "snapshotTsMs": payload.get("snapshotTsMs"),
+        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "data_source": "DangInvest",
+    }
+
+    data = payload.get("data") or {}
+    if output_json:
+        print(json.dumps({"meta": meta, "data": data}, ensure_ascii=False, indent=2))
+        return
+
+    summary = data.get("summary") or {}
+    items = data.get("items") or []
+    group_label = payload.get("groupLabel") or group_key
+    trade_count = summary.get("count") or len(items)
+    mc_yi = round(float(summary.get("totalMarketCapYuan") or 0) / 1e8, 2)
+    to_yi = round(float(summary.get("totalTurnoverYuan") or 0) / 1e8, 2)
+    changePct = summary.get("changePct")
+    if changePct is None:
+        change_str, sign = "N/A", ""
+    else:
+        sign = "+" if float(changePct) >= 0 else ""
+        change_str = f"{round(float(changePct), 2)}%"
+    print(f"【板块成分】{meta['tradeDate']}  {group_label}  数量={trade_count} 市值(亿)={mc_yi} 成交(亿)={to_yi} 涨跌幅={sign}{change_str}  数据源：DangInvest")
+
+    display_n = min(len(items), 20)
+    for i, item in enumerate(items[:display_n]):
+        item = item or {}
+        code = item.get("code", "")
+        name = item.get("name", "")
+        price = item.get("price")
+        cp = item.get("changePct")
+        to_yi_i = round(float(item.get("turnoverYuan") or 0) / 1e8, 2)
+        mc_yi_i = round(float(item.get("marketCapYuan") or 0) / 1e8, 2)
+        price_str = str(round(float(price), 2)) if price is not None else "N/A"
+        if cp is None:
+            cp_str, sign_i = "N/A", ""
+        else:
+            sign_i = "+" if float(cp) >= 0 else ""
+            cp_str = f"{round(float(cp), 2)}%"
+        print(f"  {i + 1:>3}. {code:<10} {name:<12} 现价={price_str:<8} {sign_i}{cp_str:<8} 成交(亿)={to_yi_i} 市值(亿)={mc_yi_i}")
+    if len(items) > display_n:
+        print(f"  ... 已截断显示前 {display_n} 只（共 {len(items)} 只）")
+
+
 def cmd_consecutive_limit(date_str: str, top: int, output_json: bool):
     if not date_str:
         date_str = datetime.now().strftime("%Y%m%d")
@@ -645,7 +812,6 @@ def main():
     parser.add_argument("--intraday-kline", metavar="CODE", help="今日分钟K线（需配合 --freq 指定分钟级别）")
     parser.add_argument("--multi-quote", metavar="CODES", help="批量实时行情，逗号分隔，最多10只")
     parser.add_argument("--index", action="store_true", help="大盘指数")
-    parser.add_argument("--hot-sectors", action="store_true", help="热点概念板块")
     parser.add_argument("--top", type=int, default=20, help="返回数量（默认20）")
     parser.add_argument("--north-money", action="store_true", help="北向资金")
     parser.add_argument("--lhb", action="store_true", help="龙虎榜")
@@ -657,6 +823,17 @@ def main():
     parser.add_argument("--fund-flow", metavar="CODE", help="个股资金流向")
     parser.add_argument("--days", type=int, default=10, help="资金流向天数（默认10）")
     parser.add_argument("--consecutive-limit", action="store_true", help="连板股")
+    parser.add_argument("--market-news", action="store_true", help="市场新闻（DangInvest）")
+    parser.add_argument("--news-limit", type=int, default=300, help="新闻条数（默认300）")
+    parser.add_argument("--news-offset", type=int, default=0, help="新闻偏移（默认0）")
+    parser.add_argument("--boards-summary", action="store_true", help="行业板块概览（DangInvest）")
+    parser.add_argument("--boards-detail", action="store_true", help="行业板块成分明细（DangInvest）")
+    parser.add_argument("--boards-mode", default="industry", help="板块模式（默认industry）")
+    parser.add_argument("--boards-limit", type=int, default=60, help="板块概览返回条数（默认60）")
+    parser.add_argument("--boards-sort", default="market_cap_desc", help="板块排序（默认market_cap_desc）")
+    parser.add_argument("--boards-group-key", default="", help="板块key，--boards-detail 必填（例如 半导体）")
+    parser.add_argument("--boards-items-limit", type=int, default=300, help="成分返回条数（默认300）")
+    parser.add_argument("--boards-items-offset", type=int, default=0, help="成分偏移（默认0）")
     parser.add_argument("--json", action="store_true", dest="output_json", help="输出JSON格式")
     args = parser.parse_args()
 
@@ -671,8 +848,6 @@ def main():
         cmd_multi_quote(args.multi_quote, args.output_json)
     elif args.index:
         cmd_index(args.output_json)
-    elif args.hot_sectors:
-        cmd_hot_sectors(args.top, args.output_json)
     elif args.north_money:
         cmd_north_money(args.output_json)
     elif args.lhb:
@@ -685,6 +860,12 @@ def main():
         cmd_fund_flow(args.fund_flow, args.days, args.output_json)
     elif args.consecutive_limit:
         cmd_consecutive_limit(args.date, args.top, args.output_json)
+    elif args.market_news:
+        cmd_market_news(args.news_limit, args.news_offset, args.output_json)
+    elif args.boards_summary:
+        cmd_boards_summary(args.boards_mode, args.boards_limit, args.boards_sort, args.output_json)
+    elif args.boards_detail:
+        cmd_boards_detail(args.boards_mode, args.boards_group_key, args.boards_sort, args.boards_items_limit, args.boards_items_offset, args.output_json)
     else:
         parser.print_help()
 

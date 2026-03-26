@@ -1,10 +1,10 @@
 ---
 name: a-share-skill
 description: A股市场全场景数据分析技能。支持实时行情快照（分钟K线聚合+市场状态）、今日分钟K线、批量行情、分钟/日/周K线、
-  MACD/KDJ/RSI/BOLL等12种技术指标、盈利/成长/偿债/现金流/杜邦六维财务报表、热点概念板块、北向资金、龙虎榜、
+  MACD/KDJ/RSI/BOLL等12种技术指标、盈利/成长/偿债/现金流/杜邦六维财务报表、行业板块概览/成分（DangInvest）、北向资金、龙虎榜、
   涨停板/连板股、个股资金流向、沪深300/上证50/中证500指数成分股、存款利率/货币供应量等宏观数据。
   数据源覆盖东方财富、新浪财经、腾讯财经、Baostock。
-  Use when: 用户查询A股行情、个股分析、技术指标、财务报表、热点板块、资金面数据、宏观经济数据，或需要精准的历史数据支撑分析。
+  Use when: 用户查询A股行情、个股分析、技术指标、财务报表、行业板块、资金面数据、宏观经济数据，或需要精准的历史数据支撑分析。
 ---
 
 # A股数据综合分析工具
@@ -69,9 +69,6 @@ python3 fetch_realtime.py --kline 000001 --freq 5m --count 30
 # 四大指数（上证/深证/创业板/科创50）
 python3 fetch_realtime.py --index
 
-# 热点概念板块 TOP20
-python3 fetch_realtime.py --hot-sectors --top 20
-
 # 北向资金
 python3 fetch_realtime.py --north-money
 
@@ -89,6 +86,19 @@ python3 fetch_realtime.py --fund-flow 600519 --days 10
 
 # 连板股（昨日连板今日表现）
 python3 fetch_realtime.py --consecutive-limit
+
+# 市场新闻（DangInvest，默认300条）
+python3 fetch_realtime.py --market-news
+python3 fetch_realtime.py --market-news --news-limit 50 --news-offset 0 --json
+
+# 行业板块概览（DangInvest，默认按市值排序，返回60个）
+python3 fetch_realtime.py --boards-summary
+python3 fetch_realtime.py --boards-summary --boards-limit 60 --boards-sort market_cap_desc
+python3 fetch_realtime.py --boards-summary --json
+
+# 行业板块成分明细（DangInvest，--boards-group-key 必填）
+python3 fetch_realtime.py --boards-detail --boards-group-key 半导体
+python3 fetch_realtime.py --boards-detail --boards-group-key 人工智能 --boards-items-limit 300 --json
 
 # 输出 JSON
 python3 fetch_realtime.py --quote 600519 --json
@@ -195,40 +205,45 @@ python3 fetch_technical.py 600519 --json
 - 重大订单合同
 - 舆情热度方向
 
+**增强检索**：支持多关键词（股票代码 + 公司简称）检索新闻，合并去重后分类，显著提升新闻覆盖面。
+
 ```bash
-# 文本预览输出
-python3 fetch_stock_events.py --code 600519
+# 文本预览输出（自动获取股票名称）
+python3 fetch_stock_events.py --code 300476
+
+# 手动指定公司名称，增强新闻检索
+python3 fetch_stock_events.py --code 300476 --name 胜宏科技
 
 # 指定业绩查询日期（避免扫太多周期）
 python3 fetch_stock_events.py --code 000001 --dates 20260331,20251231
 
+# 指定返回条数（每个类别最多 50 条，默认也是 50）
+python3 fetch_stock_events.py --code 300476 --name 胜宏科技 --limit 50
+
 # JSON 输出（便于后续结构化处理）
-python3 fetch_stock_events.py --code 300750 --json
+python3 fetch_stock_events.py --code 300750 --name 宁德时代 --json
+
+# 示例：查询"胜宏科技"最近事件并输出结构化结果
+python3 fetch_stock_events.py --code 300476 --name 胜宏科技 --dates 20260331,20251231,20250930 --limit 50 --json
 ```
 
 参数说明：
 - `--code`：股票代码，支持 `600519` / `sh600519` / `sh.600519`
+- `--name`：股票简称（可选），用于增强新闻检索。若不提供，将自动尝试获取
 - `--dates`：业绩查询日期列表，逗号分隔，支持 `YYYYMMDD` 或 `YYYY-MM-DD`
-- `--limit`：每个类别最大返回条数，默认 `20`
+- `--limit`：每个类别最大返回条数，默认 `50`
 - `--preview`：文本模式每类预览条数，默认 `5`
 - `--json`：输出 JSON
 
-**可用指标**：
+返回结构（`--json`）：
+- `code`：股票代码
+- `name`：股票简称
+- `performance`：业绩/预告（`forecast` + `express`）
+- `holder_change_buyback`：增减持/回购
+- `regulatory`：监管事项
+- `major_contracts`：重大订单合同
+- `sentiment`：舆情热度方向（含热榜快照/趋势）
 
-| 指标 | 说明 | 输出字段 |
-|---|---|---|
-| `MA` | 移动平均线 | MA5/MA10/MA20/MA60 |
-| `EMA` | 指数移动平均 | EMA12/EMA26 |
-| `MACD` | MACD | MACD_DIF/MACD_DEA/MACD |
-| `KDJ` | 随机指标 | KDJ_K/KDJ_D/KDJ_J |
-| `RSI` | 相对强弱 | RSI |
-| `WR` | 威廉指标 | WR10/WR6 |
-| `BOLL` | 布林带 | BOLL_UP/BOLL_MID/BOLL_LOW |
-| `BIAS` | 乖离率 | BIAS6/BIAS12/BIAS24 |
-| `CCI` | 商品通道 | CCI |
-| `ATR` | 真实波幅 | ATR |
-| `DMI` | 趋向指标 | DMI_PDI/DMI_MDI/DMI_ADX/DMI_ADXR |
-| `TAQ` | 唐安奇通道 | TAQ_UP/TAQ_MID/TAQ_DOWN |
 
 ---
 
@@ -252,7 +267,7 @@ python3 fetch_history.py --financials sh.600519 --start 2024-01-01 --end 2026-01
 ```bash
 python3 fetch_realtime.py --index
 python3 fetch_realtime.py --limit-stats
-python3 fetch_realtime.py --hot-sectors
+python3 fetch_realtime.py --boards-summary --boards-limit 20
 python3 fetch_realtime.py --north-money
 ```
 
@@ -305,7 +320,7 @@ python3 fetch_history.py --kline 600519 --start 2026-01-01 --end 2026-03-20
 |---|---|---|
 | 实时行情/大盘指数 | fetch_realtime.py | 交易时间内实时 |
 | 实时K线（含分钟线） | fetch_realtime.py --kline | 盘中即时 |
-| 热点板块/北向资金/龙虎榜 | fetch_realtime.py | 盘中/T+1 |
+| 行业板块/北向资金/龙虎榜 | fetch_realtime.py | 盘中/T+1 |
 | 历史日K线 | fetch_history.py --kline | 当日 17:30 后 |
 | 分钟K线（历史） | fetch_history.py --kline --freq 15 | 次日 11:00 |
 | 财务报表 | fetch_history.py --financials | 季报发布后 |
