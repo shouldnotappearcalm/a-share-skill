@@ -1,332 +1,96 @@
 ---
 name: a-share-skill
-description: >-
-  A股市场全场景数据分析技能。支持实时行情快照（分钟K线聚合+市场状态）、今日分钟K线、批量行情、分钟/日/周K线、
-  MACD/KDJ/RSI/BOLL等12种技术指标、盈利/成长/偿债/现金流/杜邦六维财务报表、行业板块概览/成分（DangInvest）、北向资金、龙虎榜、
-  涨停板/连板股、个股资金流向、沪深300/上证50/中证500指数成分股、存款利率/货币供应量等宏观数据。
-  数据源覆盖东方财富、新浪财经、腾讯财经、Baostock。
-  Use when: 用户查询A股行情、个股分析、技术指标、财务报表、行业板块、资金面数据、宏观经济数据，或需要精准的历史数据支撑分析。
+description: 查询A股实时行情、历史数据、技术指标、事件与资金面。Use when 用户提到股票代码、板块、技术分析、财务指标、指数成分、交易日历或宏观数据。
 ---
 
-# A股数据综合分析工具
+# A股数据综合分析
 
-## 角色定位
+## 目标
 
-本 skill 提供 A 股市场全场景数据查询，优先于直接爬取网页。数据来源：
-- **实时数据**：腾讯/新浪直接 API（K线聚合方式，无需第三方 Ashare 库）+ 东方财富（通过 akshare）
-- **历史数据**：Baostock（当日 17:30 后更新）
-- **技术指标**：腾讯/新浪实时K线 + MyTT 计算
+使用本技能时，优先调用本目录下脚本获取结构化数据，不依赖网页抓取。
 
-## 环境安装
+支持能力：
+- 实时行情与市场维度
+- 历史数据与财务维度
+- 技术指标
+- 个股事件
+
+## 环境与路径
 
 ```bash
-pip install akshare MyTT baostock pandas numpy requests
+pip install akshare MyTT pandas numpy requests
 ```
 
-## 脚本路径
-
-所有脚本位于本 skill 目录下的 `scripts/` 文件夹。调用时使用绝对路径：
-
 ```bash
-SKILL_DIR="<本skill的绝对路径>"
+SKILL_DIR="<本skill绝对路径>"
 python3 "$SKILL_DIR/scripts/fetch_realtime.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_history.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_technical.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_stock_events.py" [参数]
 ```
 
-## 股票代码格式
+## 代码格式约定
 
-三个脚本均自动识别多种格式：
+优先使用以下股票代码格式：
+- 纯数字：`600519`
+- 市场前缀：`sh600519` / `sz000001`
+- JoinQuant：`600519.XSHG`
 
-| 输入格式 | 示例 | 说明 |
-|---|---|---|
-| 纯数字 | `600519` | 自动判断市场（6开头→上海，0/3→深圳） |
-| Baostock | `sh.600519` | 历史数据推荐格式 |
-| 通达信 | `sh600519` | 均支持 |
-| JoinQuant | `600519.XSHG` | 均支持 |
+## 脚本路由规则
 
----
+按问题类型选脚本：
+- `fetch_realtime.py`：实时价格、分钟线、指数、北向、龙虎榜、涨跌停、板块、资金流、新闻
+- `fetch_history.py`：历史K线、财务、业绩、分红、行业、指数成分、交易日历、宏观
+- `fetch_technical.py`：MA/MACD/KDJ/RSI/BOLL等技术指标
+- `fetch_stock_events.py`：业绩、增减持/回购、监管、重大合同、舆情方向
 
-## 脚本一：fetch_realtime.py（实时行情）
+## 执行流程
 
-**依赖**：akshare + requests（无需 ashares 库，直接调用腾讯/新浪 API）
+1. 先识别用户意图是实时、历史、技术还是事件。
+2. 选择对应脚本并优先加 `--json`。
+3. 参数不足时补齐默认值后执行，不先空谈。
+4. 返回时给出关键字段结论，并附可复现命令。
+
+## 降级与容错规则
+
+- 历史能力统一走 `fetch_history.py`（已内置多源逻辑）。
+- 遇到上游限流或临时失败：
+  - 同类接口先重试 1-2 次。
+  - 可降级就降级，不能降级则明确标注为“上游数据源不可用”。
+- `--all-stocks` 已支持新浪/腾讯/雪球多源；若单一源失败，继续返回其他源合并结果。
+
+## 输出规范
+
+- 默认返回结构化要点，不堆长表。
+- 需要原始数据时再返回完整 JSON。
+- 明确数据源与时间点（如交易日、更新时间、盘中/休市状态）。
+
+## 常用命令最小集
 
 ```bash
-# 实时行情快照（分钟K线聚合方式：昨收+5m聚合今日OHLCV，含市场状态）
-python3 fetch_realtime.py --quote 600519
-
-# 今日分钟K线（只返回今日数据）
-python3 fetch_realtime.py --intraday-kline 600519 --freq 5m
-python3 fetch_realtime.py --intraday-kline 000001 --freq 1m
-
-# 批量实时行情（最多10只，按涨跌幅排序）
-python3 fetch_realtime.py --multi-quote 600519,000001,300750
-
-# K线数据（历史+实时连续）
-python3 fetch_realtime.py --kline 600519 --freq 1d --count 60
-python3 fetch_realtime.py --kline 000001 --freq 5m --count 30
-
-# 四大指数（上证/深证/创业板/科创50）
-python3 fetch_realtime.py --index
-
-# 北向资金
-python3 fetch_realtime.py --north-money
-
-# 龙虎榜（默认近3日；当日数据未发布时给出友好提示）
-python3 fetch_realtime.py --lhb --start 20260310 --end 20260318 --top 20
-
-# 涨跌停统计
-python3 fetch_realtime.py --limit-stats
-
-# 涨停股池
-python3 fetch_realtime.py --limit-up-pool --date 20260318 --top 30
-
-# 个股资金流向（近10日主力/大单/中单/小单净额）
-python3 fetch_realtime.py --fund-flow 600519 --days 10
-
-# 连板股（昨日连板今日表现）
-python3 fetch_realtime.py --consecutive-limit
-
-# 市场新闻（DangInvest，默认300条）
-python3 fetch_realtime.py --market-news
-python3 fetch_realtime.py --market-news --news-limit 50 --news-offset 0 --json
-
-# 行业板块概览（DangInvest，默认按市值排序，返回60个）
-python3 fetch_realtime.py --boards-summary
-python3 fetch_realtime.py --boards-summary --boards-limit 60 --boards-sort market_cap_desc
-python3 fetch_realtime.py --boards-summary --json
-
-# 行业板块成分明细（DangInvest，--boards-group-key 必填）
-python3 fetch_realtime.py --boards-detail --boards-group-key 半导体
-python3 fetch_realtime.py --boards-detail --boards-group-key 人工智能 --boards-items-limit 300 --json
-
-# 输出 JSON
+# 实时
 python3 fetch_realtime.py --quote 600519 --json
+python3 fetch_realtime.py --index --json
+python3 fetch_realtime.py --boards-summary --boards-limit 20 --json
+
+# 历史
+python3 fetch_history.py --kline 600519 --start 2025-01-01 --end 2025-03-31 --freq d --json
+python3 fetch_history.py --financials 600519 --start 2023-01-01 --end 2025-01-01 --json
+python3 fetch_history.py --industry 300271 --with-boards --json
+
+# 技术
+python3 fetch_technical.py 600519 --freq 1d --count 120 --indicators MA,MACD,KDJ,RSI,BOLL --json
+
+# 事件
+python3 fetch_stock_events.py --code 300476 --name 胜宏科技 --dates 20250331,20241231 --limit 20 --json
 ```
 
-**K线频率参数**：`1m` / `5m` / `15m` / `30m` / `60m` / `1d`（默认）/ `1w` / `1M`
+## 不要做的事
 
-**市场状态说明**（`--quote` 输出字段）：
-- `交易中`：当前在交易时段（9:30-11:30 / 13:00-15:00）
-- `盘前` / `盘后`：盘前（9:00-9:30）或盘后（15:00 后）
-- `休市`：非交易日或节假日
+- 不把本技能当成爬虫任务优先方案。
+- 不在无必要时输出超长原始表格。
+- 不使用已移除的旧流程文案。
 
----
+## 参考
 
-## 脚本二：fetch_history.py（历史与财务）
-
-**依赖**：baostock  
-**注意**：当日数据在 17:30 后入库，分钟线在次日 11:00 入库
-
-```bash
-# 历史K线（默认不复权，adjust=2 为前复权）
-python3 fetch_history.py --kline 600519 --start 2025-01-01 --end 2026-03-18
-python3 fetch_history.py --kline 600519 --start 2024-01-01 --end 2026-01-01 --adjust 2 --freq d
-
-# 股票基本信息（名称/行业/上市日期）
-python3 fetch_history.py --basic sh.600519
-
-# 综合财务指标（盈利/营运/成长/偿债/现金流/杜邦，一次全取）
-python3 fetch_history.py --financials sh.600519 --start 2023-01-01 --end 2026-01-01
-
-# 单项财务数据（按季度）
-python3 fetch_history.py --profit sh.600519 --year 2024 --quarter 4
-python3 fetch_history.py --growth sh.600519 --year 2024 --quarter 4
-python3 fetch_history.py --balance sh.600519 --year 2024 --quarter 4
-python3 fetch_history.py --cashflow sh.600519 --year 2024 --quarter 4
-python3 fetch_history.py --dupont sh.600519 --year 2024 --quarter 4
-
-# 业绩快报 / 业绩预告
-python3 fetch_history.py --perf-express sh.600519 --start 2024-01-01 --end 2026-01-01
-python3 fetch_history.py --perf-forecast sh.600519 --start 2024-01-01 --end 2026-01-01
-
-# 分红配送
-python3 fetch_history.py --dividend sh.600519 --year 2024
-
-# 全市场股票列表
-python3 fetch_history.py --all-stocks
-python3 fetch_history.py --all-stocks --market sh  # 只看上海
-python3 fetch_history.py --all-stocks --market sz  # 只看深圳
-
-# 行业分类
-python3 fetch_history.py --industry --code sh.600519
-python3 fetch_history.py --industry  # 全市场行业列表
-
-# 指数成分股
-python3 fetch_history.py --hs300           # 沪深300
-python3 fetch_history.py --sz50            # 上证50
-python3 fetch_history.py --zz500           # 中证500
-python3 fetch_history.py --hs300 --date 2025-12-31  # 历史成分
-
-# 交易日历
-python3 fetch_history.py --trade-dates --start 2026-03-01 --end 2026-03-31
-
-# 宏观经济数据
-python3 fetch_history.py --deposit-rate    # 存款基准利率
-python3 fetch_history.py --loan-rate       # 贷款基准利率
-python3 fetch_history.py --reserve-ratio   # 存款准备金率
-python3 fetch_history.py --money-supply --period month  # 月度货币供应量(M0/M1/M2)
-python3 fetch_history.py --money-supply --period year   # 年度货币供应量
-```
-
-**K线频率**：`d`（日，默认）/ `w`（周）/ `m`（月）/ `5` / `15` / `30` / `60`（分钟）  
-**复权参数**：`1`（后复权）/ `2`（前复权）/ `3`（不复权，默认）
-
----
-
-## 脚本三：fetch_technical.py（技术指标）
-
-**依赖**：MyTT + requests（直接调用腾讯/新浪 API，无需 ashares 库）  
-**特点**：使用实时K线数据计算指标，盘中可用，自动输出信号解读
-
-```bash
-# 默认指标：MA + MACD + KDJ + RSI + BOLL
-python3 fetch_technical.py 600519
-
-# 自定义频率和指标
-python3 fetch_technical.py 000001 --freq 1d --count 120 --indicators MA,MACD,KDJ,RSI,BOLL
-
-# 分钟线技术分析
-python3 fetch_technical.py 300750 --freq 15m --count 60 --indicators MACD,KDJ,BOLL
-
-# 输出 JSON（不含信号解读）
-python3 fetch_technical.py 600519 --json
-```
-
----
-
-## 脚本四：fetch_stock_events.py（个股事件信息）
-
-**依赖**：akshare  
-**目标**：按个股输出以下 5 类信息
-- 业绩/预告
-- 增减持/回购
-- 监管事项
-- 重大订单合同
-- 舆情热度方向
-
-**增强检索**：支持多关键词（股票代码 + 公司简称）检索新闻，合并去重后分类，显著提升新闻覆盖面。
-
-```bash
-# 文本预览输出（自动获取股票名称）
-python3 fetch_stock_events.py --code 300476
-
-# 手动指定公司名称，增强新闻检索
-python3 fetch_stock_events.py --code 300476 --name 胜宏科技
-
-# 指定业绩查询日期（避免扫太多周期）
-python3 fetch_stock_events.py --code 000001 --dates 20260331,20251231
-
-# 指定返回条数（每个类别最多 50 条，默认也是 50）
-python3 fetch_stock_events.py --code 300476 --name 胜宏科技 --limit 50
-
-# JSON 输出（便于后续结构化处理）
-python3 fetch_stock_events.py --code 300750 --name 宁德时代 --json
-
-# 示例：查询"胜宏科技"最近事件并输出结构化结果
-python3 fetch_stock_events.py --code 300476 --name 胜宏科技 --dates 20260331,20251231,20250930 --limit 50 --json
-```
-
-参数说明：
-- `--code`：股票代码，支持 `600519` / `sh600519` / `sh.600519`
-- `--name`：股票简称（可选），用于增强新闻检索。若不提供，将自动尝试获取
-- `--dates`：业绩查询日期列表，逗号分隔，支持 `YYYYMMDD` 或 `YYYY-MM-DD`
-- `--limit`：每个类别最大返回条数，默认 `50`
-- `--preview`：文本模式每类预览条数，默认 `5`
-- `--json`：输出 JSON
-
-返回结构（`--json`）：
-- `code`：股票代码
-- `name`：股票简称
-- `performance`：业绩/预告（`forecast` + `express`）
-- `holder_change_buyback`：增减持/回购
-- `regulatory`：监管事项
-- `major_contracts`：重大订单合同
-- `sentiment`：舆情热度方向（含热榜快照/趋势）
-
-
----
-
-## 常用工作流
-
-### 1. 个股综合分析
-
-```bash
-# Step 1：实时行情
-python3 fetch_realtime.py --quote 600519
-
-# Step 2：技术指标（日线，默认指标）
-python3 fetch_technical.py 600519 --count 120
-
-# Step 3：基本面（近2年综合财务指标）
-python3 fetch_history.py --financials sh.600519 --start 2024-01-01 --end 2026-01-01
-```
-
-### 2. 大盘情绪判断
-
-```bash
-python3 fetch_realtime.py --index
-python3 fetch_realtime.py --limit-stats
-python3 fetch_realtime.py --boards-summary --boards-limit 20
-python3 fetch_realtime.py --north-money
-```
-
-### 3. 涨停板分析
-
-```bash
-python3 fetch_realtime.py --limit-up-pool
-python3 fetch_realtime.py --consecutive-limit
-python3 fetch_realtime.py --lhb
-```
-
-### 4. 历史回测数据准备
-
-```bash
-# 前复权日K线
-python3 fetch_history.py --kline sh.600519 --start 2020-01-01 --end 2026-01-01 --adjust 2
-
-# 同期财务指标
-python3 fetch_history.py --financials sh.600519 --start 2020-01-01 --end 2026-01-01
-```
-
----
-
-## 稳定性增强（2026-03）
-
-已增强以下容错：
-- 实时脚本 `fetch_realtime.py`：
-  - 腾讯/新浪接口统一使用 HTTPS
-  - 内置重试（429/5xx/网络抖动自动重试）
-  - 日线增加 `ak.stock_zh_a_daily` 兜底（当腾讯/新浪主链路失败时）
-- 历史脚本 `fetch_history.py`：
-  - Baostock 登录增加重试
-
-### 快速验证（历史 + 实时）
-
-```bash
-# 实时验证（分钟聚合快照）
-python3 fetch_realtime.py --quote 600519
-
-# 实时K线验证（日线）
-python3 fetch_realtime.py --kline 600519 --freq 1d --count 30
-
-# 历史K线验证（Baostock）
-python3 fetch_history.py --kline 600519 --start 2026-01-01 --end 2026-03-20
-```
-
-## 数据时效说明
-
-| 数据类型 | 脚本 | 更新时间 |
-|---|---|---|
-| 实时行情/大盘指数 | fetch_realtime.py | 交易时间内实时 |
-| 实时K线（含分钟线） | fetch_realtime.py --kline | 盘中即时 |
-| 行业板块/北向资金/龙虎榜 | fetch_realtime.py | 盘中/T+1 |
-| 历史日K线 | fetch_history.py --kline | 当日 17:30 后 |
-| 分钟K线（历史） | fetch_history.py --kline --freq 15 | 次日 11:00 |
-| 财务报表 | fetch_history.py --financials | 季报发布后 |
-| 指数成分 | fetch_history.py --hs300 等 | 每周一更新 |
-
-## 参考资料
-
-详细参数说明见 [references/api-reference.md](references/api-reference.md)
+- 详细参数：`references/api-reference.md`

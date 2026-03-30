@@ -86,48 +86,45 @@
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| --freq | d | 频率：d(日)/w(周)/m(月)/5/15/30/60(分钟) |
-| --adjust | 3 | 复权：1(后复权)/2(前复权)/3(不复权) |
-| --limit | 500 | 最大返回行数 |
+| --freq | d | 频率：d(日)/w(周)/m(月) |
+| --limit | 500 | 最大返回行数（会映射到内部 count） |
 
-返回字段（日线）：date / code / open / high / low / close / preclose / volume / amount / pctChg / turn / peTTM / pbMRQ
+返回字段（常见）：time / code / open / high / low / close / preclose / volume / pctChg
 
 ### --financials CODE --start YYYY-MM-DD --end YYYY-MM-DD
 
-一次查询并合并以下6类季度财务指标：
-
-**盈利能力（profit_）**：roeAvg / npMargin / gpMargin / netProfit / epsTTM / MBRevenue / totalShare / liqaShare
-
-**营运能力（operation_）**：NRTurnRatio / NRTurnDays / INVTurnRatio / INVTurnDays / CATurnRatio / AssetTurnRatio
-
-**成长能力（growth_）**：YOYEquity / YOYAsset / YOYNI / YOYEPSBasic / YOYNIDeducted
-
-**偿债能力（balance_）**：currentRatio / quickRatio / cashRatio / YOYLiability / liabilityToAsset / assetToEquity
-
-**现金流量（cashflow_）**：CAToAsset / NCAToAsset / tangibleAssetToAsset / ebitToInterest / CFOToOR / CFOToNP
-
-**杜邦分析（dupont_）**：dupontROE / dupontAssetTurn / dupontPnitoni / dupontNitogr / dupontEquityMul
+查询综合财务指标，数据源：akshare。
 
 ### 单项财务指标
 
-`--profit` / `--operation` / `--growth` / `--balance` / `--cashflow` / `--dupont`
+`--profit` / `--growth` / `--balance` / `--cashflow` / `--dupont`
 
-参数：`--year YYYY` + `--quarter 1|2|3|4`
+说明：单项维度与综合指标同源，按脚本内部统一口径输出。
 
 ### 业绩快报/预告
 
-`--perf-express CODE --start YYYY-MM-DD --end YYYY-MM-DD`  
-`--perf-forecast CODE --start YYYY-MM-DD --end YYYY-MM-DD`
+`--perf-express CODE`  
+`--perf-forecast CODE`
+
+### 全市场股票列表
+
+`--all-stocks [--market sh|sz]`
+
+说明：已支持新浪/腾讯/雪球三路聚合，自动去重；单源失败不影响整体返回。
+JSON 输出结构：
+- `meta.market`：市场范围
+- `meta.total`：去重后总数
+- `meta.sources`：各来源命中数量
+- `data`：股票列表（`代码`/`名称`）
 
 ### 宏观经济数据
 
 | 命令 | 内容 | 日期格式 |
 |---|---|---|
-| `--deposit-rate` | 存款基准利率 | YYYY-MM-DD |
-| `--loan-rate` | 贷款基准利率 | YYYY-MM-DD |
-| `--reserve-ratio` | 存款准备金率 | YYYY-MM-DD |
-| `--money-supply --period month` | 月度货币供应(M0/M1/M2) | YYYY-MM |
-| `--money-supply --period year` | 年度货币供应 | YYYY |
+| `--deposit-rate` | 存款基准利率 | 接口可用即返回 |
+| `--loan-rate` | 贷款基准利率 | 接口可用即返回 |
+| `--reserve-ratio` | 存款准备金率 | 接口可用即返回 |
+| `--money-supply` | 货币供应量 | 接口可用即返回 |
 
 ---
 
@@ -163,16 +160,16 @@ CODE        股票代码（必填）
 
 ## 常见股票代码
 
-| 股票 | 代码 | Baostock格式 |
+| 股票 | 代码 | 市场前缀格式 |
 |---|---|---|
-| 贵州茅台 | 600519 | sh.600519 |
-| 中国平安 | 601318 | sh.601318 |
-| 招商银行 | 600036 | sh.600036 |
-| 宁德时代 | 300750 | sz.300750 |
-| 比亚迪 | 002594 | sz.002594 |
-| 中芯国际 | 688981 | sh.688981 |
-| 平安银行 | 000001 | sz.000001 |
-| 万科A | 000002 | sz.000002 |
+| 贵州茅台 | 600519 | sh600519 |
+| 中国平安 | 601318 | sh601318 |
+| 招商银行 | 600036 | sh600036 |
+| 宁德时代 | 300750 | sz300750 |
+| 比亚迪 | 002594 | sz002594 |
+| 中芯国际 | 688981 | sh688981 |
+| 平安银行 | 000001 | sz000001 |
+| 万科A | 000002 | sz000002 |
 
 ## 大盘指数代码
 
