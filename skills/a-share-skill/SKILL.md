@@ -39,7 +39,7 @@ python3 "$SKILL_DIR/scripts/fetch_stock_events.py" [参数]
 ## 脚本路由规则
 
 按问题类型选脚本：
-- `fetch_realtime.py`：实时价格、分钟线、指数、北向、龙虎榜、涨跌停、板块、资金流、新闻
+- `fetch_realtime.py`：实时价格、分钟线、指数、北向、龙虎榜、涨跌停、板块、资金流、新闻、全市场行情、成交明细
 - `fetch_history.py`：历史K线、财务、业绩、分红、行业、指数成分、交易日历、宏观
 - `fetch_technical.py`：MA/MACD/KDJ/RSI/BOLL等技术指标
 - `fetch_stock_events.py`：业绩、增减持/回购、监管、重大合同、舆情方向
@@ -72,6 +72,8 @@ python3 "$SKILL_DIR/scripts/fetch_stock_events.py" [参数]
 python3 fetch_realtime.py --quote 600519 --json
 python3 fetch_realtime.py --index --json
 python3 fetch_realtime.py --boards-summary --boards-limit 20 --json
+python3 fetch_realtime.py --all-quote --sort change_pct_desc --top 50 --json
+python3 fetch_realtime.py --tick 600519 --json
 
 # 历史
 python3 fetch_history.py --kline 600519 --start 2025-01-01 --end 2025-03-31 --freq d --json
