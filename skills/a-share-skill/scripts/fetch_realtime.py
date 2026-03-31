@@ -32,6 +32,7 @@ import sys
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, date, time as time_type
+from typing import Optional
 
 import pandas as pd
 import requests
@@ -812,7 +813,7 @@ def _generate_all_codes() -> list:
     return codes
 
 
-def _parse_tencent_quote(line: str) -> dict | None:
+def _parse_tencent_quote(line: str) -> Optional[dict]:
     """解析腾讯 qt.gtimg.cn 单行数据，返回结构化 dict"""
     if '~' not in line or len(line) < 50:
         return None
@@ -849,7 +850,7 @@ def _parse_tencent_quote(line: str) -> dict | None:
         return None
 
 
-def _parse_sina_quote(line: str) -> dict | None:
+def _parse_sina_quote(line: str) -> Optional[dict]:
     """解析新浪 hq.sinajs.cn 单行数据作为降级备源"""
     if '="' not in line:
         return None
