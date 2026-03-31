@@ -53,11 +53,29 @@ python3 "$SKILL_DIR/scripts/fetch_stock_events.py" [参数]
 
 ## 降级与容错规则
 
-- 历史能力统一走 `fetch_history.py`（已内置多源逻辑）。
+- 历史能力统一走 `fetch_history.py`（已内置多源逻辑，K线链路为腾讯优先、新浪降级、东财兜底）。
 - 遇到上游限流或临时失败：
   - 同类接口先重试 1-2 次。
   - 可降级就降级，不能降级则明确标注为“上游数据源不可用”。
 - `--all-stocks` 已支持新浪/腾讯/雪球多源；若单一源失败，继续返回其他源合并结果。
+
+## 批量数据并行与超时规范（强制）
+
+当任务是“批量拉取”时（实时个股列表 / 多只历史K线），默认并行，不逐只串行。
+
+- 推荐并发：`max_workers=8~12`（默认 10）
+- 每只股票独立异常捕获，失败不阻断整批
+- 结果输出必须包含：样本数、成功率、总耗时、失败代码清单
+
+超时上限（硬限制）：
+- **批量实时个股列表**：整批任务最多等待 `30s`
+- **批量历史K线（多只）**：整批任务最多等待 `30s`
+- **全市场并发任务**：整批任务最多等待 `60s`
+
+超时/失败处理（强制）：
+- 到达超时即停止等待并返回当前结果
+- 失败就标记失败，不做长时间阻塞重试
+- 禁止无上限重试或“卡住一直等”
 
 ## 输出规范
 
@@ -77,6 +95,7 @@ python3 fetch_realtime.py --tick 600519 --json
 
 # 历史
 python3 fetch_history.py --kline 600519 --start 2025-01-01 --end 2025-03-31 --freq d --json
+python3 fetch_history.py --kline-batch 600519,000001,300750 --start 2025-10-01 --end 2026-03-31 --count 120 --workers 8 --retries 2 --json
 python3 fetch_history.py --financials 600519 --start 2023-01-01 --end 2025-01-01 --json
 python3 fetch_history.py --industry 300271 --with-boards --json
 

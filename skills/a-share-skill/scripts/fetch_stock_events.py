@@ -18,7 +18,9 @@ import re
 import sys
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, List, Optional
 
 # 检测 --json 参数，在 import akshare 之前禁用 tqdm 防止进度条污染 stdout
@@ -71,23 +73,82 @@ def normalize_code(code: str) -> str:
     return c
 
 
-def get_stock_name(code6: str, deadline_ts: float) -> Optional[str]:
-    """通过股票代码获取股票简称"""
-    remain = _remaining_seconds(deadline_ts)
-    if remain <= 1:
-        return None
+_STOCK_NAME_CACHE: Dict[str, str] = {}
+_STOCK_NAME_CACHE_TS: float = 0.0
+_STOCK_NAME_CACHE_LOCK = threading.Lock()
+_STOCK_NAME_CACHE_TTL_SECONDS = 12 * 3600
+_STOCK_NAME_CACHE_FILE = Path(__file__).resolve().parents[3] / "cache" / "stock_name_map.json"
+
+
+def _load_stock_name_cache_from_disk() -> None:
+    global _STOCK_NAME_CACHE, _STOCK_NAME_CACHE_TS
     try:
-        df = _safe_ak_call(ak.stock_zh_a_spot_em, timeout_sec=min(8, remain))
-        if df is not None and not df.empty:
-            code_col = "代码" if "代码" in df.columns else None
-            name_col = "名称" if "名称" in df.columns else None
-            if code_col and name_col:
-                match = df[df[code_col].astype(str).str.zfill(6) == code6]
-                if not match.empty:
-                    return str(match.iloc[0][name_col])
+        if not _STOCK_NAME_CACHE_FILE.exists():
+            return
+        obj = json.loads(_STOCK_NAME_CACHE_FILE.read_text(encoding="utf-8"))
+        data = obj.get("data") if isinstance(obj, dict) else None
+        updated_at = float(obj.get("updated_at", 0)) if isinstance(obj, dict) else 0.0
+        if isinstance(data, dict) and data:
+            with _STOCK_NAME_CACHE_LOCK:
+                _STOCK_NAME_CACHE = {str(k).zfill(6): str(v) for k, v in data.items()}
+                _STOCK_NAME_CACHE_TS = updated_at if updated_at > 0 else time.time()
     except Exception:
         pass
-    return None
+
+
+def _save_stock_name_cache_to_disk(mapping: Dict[str, str], updated_at: float) -> None:
+    try:
+        _STOCK_NAME_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "updated_at": updated_at,
+            "ttl_sec": _STOCK_NAME_CACHE_TTL_SECONDS,
+            "size": len(mapping),
+            "data": mapping,
+        }
+        _STOCK_NAME_CACHE_FILE.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _load_stock_name_cache(deadline_ts: float, ttl_seconds: int = _STOCK_NAME_CACHE_TTL_SECONDS) -> Dict[str, str]:
+    """加载并缓存全市场股票简称映射（内存+落盘），避免每只股票都拉一次全市场列表。"""
+    global _STOCK_NAME_CACHE, _STOCK_NAME_CACHE_TS
+
+    # 先尝试从磁盘加载
+    if not _STOCK_NAME_CACHE:
+        _load_stock_name_cache_from_disk()
+
+    now = time.time()
+    with _STOCK_NAME_CACHE_LOCK:
+        if _STOCK_NAME_CACHE and (now - _STOCK_NAME_CACHE_TS) < ttl_seconds:
+            return _STOCK_NAME_CACHE
+
+    remain = _remaining_seconds(deadline_ts)
+    if remain <= 1:
+        return _STOCK_NAME_CACHE
+
+    try:
+        df = _safe_ak_call(ak.stock_zh_a_spot_em, timeout_sec=min(8, remain))
+        if df is not None and not df.empty and "代码" in df.columns and "名称" in df.columns:
+            mapping = {
+                str(row["代码"]).zfill(6): str(row["名称"])
+                for _, row in df[["代码", "名称"]].iterrows()
+            }
+            now_ts = time.time()
+            with _STOCK_NAME_CACHE_LOCK:
+                _STOCK_NAME_CACHE = mapping
+                _STOCK_NAME_CACHE_TS = now_ts
+            _save_stock_name_cache_to_disk(mapping, now_ts)
+            return mapping
+    except Exception:
+        pass
+    return _STOCK_NAME_CACHE
+
+
+def get_stock_name(code6: str, deadline_ts: float) -> Optional[str]:
+    """通过股票代码获取股票简称（带缓存）。"""
+    mapping = _load_stock_name_cache(deadline_ts)
+    return mapping.get(code6)
 
 
 def to_hot_symbol(code6: str) -> str:
@@ -341,14 +402,25 @@ def query_sentiment(code6: str, limit: int, deadline_ts: float) -> Dict:
 
 def build_payload(code: str, stock_name: Optional[str], dates: List[str], limit: int, max_seconds: int, skip_sentiment: bool) -> Dict:
     code6 = normalize_code(code)
-    deadline_ts = time.time() + max(8, int(max_seconds))
+    # 事件查询超时上限：60s（避免长时间阻塞）
+    budget = min(60, max(8, int(max_seconds)))
+    deadline_ts = time.time() + budget
 
     # 自动获取股票名称（如果未提供）
     if not stock_name:
         stock_name = get_stock_name(code6, deadline_ts)
 
-    perf = query_performance(code6, dates, limit, deadline_ts)
-    news_blocks = query_news_categories(code6, stock_name, limit, deadline_ts)
+    perf = {
+        "category": "业绩/预告",
+        "forecast": [],
+        "express": [],
+        "count": 0,
+    }
+    news_blocks = {
+        "holder_change_buyback": {"category": "增减持/回购", "items": [], "count": 0, "source": ""},
+        "regulatory": {"category": "监管事项", "items": [], "count": 0, "source": ""},
+        "major_contracts": {"category": "重大订单合同", "items": [], "count": 0, "source": ""},
+    }
     sentiment = {
         "category": "舆情热度方向",
         "rank_snapshot": [],
@@ -357,8 +429,32 @@ def build_payload(code: str, stock_name: Optional[str], dates: List[str], limit:
         "direction": "未知",
         "count": 0,
     }
-    if not skip_sentiment and _remaining_seconds(deadline_ts) > 1:
-        sentiment = query_sentiment(code6, limit, deadline_ts)
+
+    # 三大模块并行：业绩 / 新闻分类 / 舆情
+    workers = 3 if not skip_sentiment else 2
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        fut_perf = ex.submit(query_performance, code6, dates, limit, deadline_ts)
+        fut_news = ex.submit(query_news_categories, code6, stock_name, limit, deadline_ts)
+        fut_sent = None
+        if not skip_sentiment and _remaining_seconds(deadline_ts) > 1:
+            fut_sent = ex.submit(query_sentiment, code6, limit, deadline_ts)
+
+        for key, fut in [("perf", fut_perf), ("news", fut_news), ("sent", fut_sent)]:
+            if fut is None:
+                continue
+            remain = max(1, _remaining_seconds(deadline_ts))
+            try:
+                val = fut.result(timeout=remain)
+                if key == "perf":
+                    perf = val
+                elif key == "news":
+                    news_blocks = val
+                elif key == "sent":
+                    sentiment = val
+            except FuturesTimeoutError:
+                pass
+            except Exception:
+                pass
 
     return {
         "code": code6,
@@ -408,19 +504,92 @@ def print_text(payload: Dict, preview: int) -> None:
         print(f"  - 百度热度 | {item.get('名称/代码', '')} | 综合热度: {item.get('综合热度', '')}")
 
 
+def _parse_code_list(raw: str) -> List[str]:
+    if not raw:
+        return []
+    out = []
+    seen = set()
+    for x in re.split(r"[,\s]+", raw.strip()):
+        if not x:
+            continue
+        code = normalize_code(x)
+        if code and code not in seen:
+            seen.add(code)
+            out.append(code)
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="查询个股业绩、增减持/回购、监管、重大合同、舆情热度")
-    parser.add_argument("--code", required=True, help="股票代码，如 600519 / sh600519 / sh.600519")
+    parser.add_argument("--code", required=False, help="股票代码，如 600519 / sh600519 / sh.600519")
+    parser.add_argument("--batch-codes", default="", help="批量股票代码，逗号或空格分隔")
+    parser.add_argument("--workers", type=int, default=5, help="批量模式并发数，默认5")
     parser.add_argument("--name", default="", help="股票简称，如 胜宏科技（用于增强新闻检索）")
     parser.add_argument("--dates", default="", help="业绩查询日期，逗号分隔，支持 YYYYMMDD 或 YYYY-MM-DD")
     parser.add_argument("--limit", type=int, default=50, help="每个类别最多返回条数，默认 50")
     parser.add_argument("--preview", type=int, default=5, help="文本模式每类预览条数，默认 5")
-    parser.add_argument("--max-seconds", type=int, default=35, help="整体最大执行秒数，默认 35")
+    parser.add_argument("--max-seconds", type=int, default=60, help="整体最大执行秒数，默认 60（上限60）")
     parser.add_argument("--skip-sentiment", action="store_true", help="跳过舆情模块，提升稳定性和速度")
     parser.add_argument("--json", action="store_true", dest="output_json", help="输出 JSON")
     args = parser.parse_args()
 
     dates = _parse_dates(args.dates.split(",")) if args.dates.strip() else _default_dates(120)
+
+    batch_codes = _parse_code_list(args.batch_codes)
+    if batch_codes:
+        start_ts = time.time()
+        workers = max(1, int(args.workers or 5))
+        results: List[Dict] = []
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            futs = {
+                ex.submit(
+                    build_payload,
+                    code,
+                    None,
+                    dates,
+                    args.limit,
+                    args.max_seconds,
+                    args.skip_sentiment,
+                ): code
+                for code in batch_codes
+            }
+            for f in as_completed(futs):
+                code = futs[f]
+                try:
+                    payload = f.result()
+                except Exception as e:
+                    payload = {
+                        "code": code,
+                        "name": None,
+                        "queried_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "error": str(e),
+                    }
+                results.append(payload)
+
+        order = {c: i for i, c in enumerate(batch_codes)}
+        results.sort(key=lambda x: order.get(x.get("code", ""), 10**9))
+
+        if args.output_json:
+            print(json.dumps({
+                "meta": {
+                    "requested": len(batch_codes),
+                    "workers": workers,
+                    "elapsed_sec": round(time.time() - start_ts, 2),
+                    "max_seconds_per_stock": min(60, max(8, int(args.max_seconds))),
+                },
+                "results": results,
+            }, ensure_ascii=False, indent=2))
+            return
+
+        print(f"【批量个股事件】请求{len(batch_codes)}只 并发={workers} 耗时={round(time.time() - start_ts, 2)}s")
+        for p in results:
+            print(f"- {p.get('code')} {p.get('name') or ''} | 事件总数: {p.get('performance', {}).get('count', 0) + p.get('holder_change_buyback', {}).get('count', 0) + p.get('regulatory', {}).get('count', 0) + p.get('major_contracts', {}).get('count', 0) + p.get('sentiment', {}).get('count', 0)}")
+        return
+
+    if not args.code:
+        print("请通过 --code 或 --batch-codes 指定股票代码")
+        sys.exit(1)
+
     stock_name = args.name.strip() if args.name.strip() else None
     payload = build_payload(args.code, stock_name, dates, args.limit, args.max_seconds, args.skip_sentiment)
 

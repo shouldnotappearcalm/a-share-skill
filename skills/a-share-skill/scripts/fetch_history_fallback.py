@@ -3,7 +3,7 @@
 A股历史/基础信息兜底脚本（不依赖 Baostock）
 
 数据源优先级：
-1) K线：新浪 -> 腾讯
+1) K线：腾讯 -> 新浪 -> 雪球 -> 东财(akshare)
 2) 基本信息：新浪 -> 腾讯
 3) 行业/板块：东方财富（公司概况 + 板块成分扫描）
 4) 全市场股票列表：新浪 ✅
@@ -21,6 +21,7 @@ import argparse
 import json
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
 import pandas as pd
@@ -209,30 +210,146 @@ def _estimate_fetch_count(start: str, end: str, freq: str, default_count: int) -
     return default_count
 
 
-def cmd_kline(args):
-    session = _build_session()
-    norm = normalize_code(args.kline)
-    fetch_count = _estimate_fetch_count(args.start, args.end, args.freq, args.count)
+def get_kline_xueqiu(session: requests.Session, norm_code: str, freq: str, count: int) -> pd.DataFrame:
+    """雪球K线兜底（可能受反爬策略影响）。"""
+    period_map = {"1d": "day", "1w": "week", "1M": "month"}
+    if freq not in period_map:
+        return pd.DataFrame()
 
-    df = get_kline_sina(session, norm, args.freq, fetch_count)
-    source = "新浪"
-    if df.empty:
-        df = get_kline_tencent(session, norm, args.freq, fetch_count)
-        source = "腾讯"
-    if df.empty:
-        print(f"未获取到 {norm} 的K线数据（新浪/腾讯均失败）")
-        return
+    digits = _code_digits(norm_code)
+    if len(digits) != 6:
+        return pd.DataFrame()
+    symbol = ("SH" if norm_code.startswith("sh") else "SZ") + digits
 
-    start_dt = pd.to_datetime(args.start) if args.start else None
-    end_dt = pd.to_datetime(args.end) if args.end else None
+    url = "https://stock.xueqiu.com/v5/stock/chart/kline.json"
+    params = {
+        "symbol": symbol,
+        "begin": int(pd.Timestamp.now().timestamp() * 1000),
+        "period": period_map[freq],
+        "type": "before",
+        "count": max(60, int(count)),
+        "indicator": "kline",
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": f"https://xueqiu.com/S/{symbol}",
+        "Accept": "application/json, text/plain, */*",
+    }
+    try:
+        r = session.get(url, params=params, headers=headers, timeout=10)
+        if r.status_code != 200:
+            return pd.DataFrame()
+        j = r.json()
+        data = (j or {}).get("data", {})
+        items = data.get("item") or []
+        cols = data.get("column") or []
+        if not items or not cols:
+            return pd.DataFrame()
+        if not all(k in cols for k in ["timestamp", "open", "high", "low", "close", "volume"]):
+            return pd.DataFrame()
+        df = pd.DataFrame(items, columns=cols)
+        out = df[["timestamp", "open", "high", "low", "close", "volume"]].copy()
+        out = out.rename(columns={"timestamp": "time"})
+        out["time"] = pd.to_datetime(out["time"], unit="ms", errors="coerce")
+        for col in ["open", "high", "low", "close", "volume"]:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+        out = out.dropna(subset=["time"])
+        return out
+    except Exception:
+        return pd.DataFrame()
+
+
+def get_kline_eastmoney(norm_code: str, freq: str, start: str = None, end: str = None) -> pd.DataFrame:
+    """东方财富日/周/月K线（akshare）兜底。"""
+    try:
+        import akshare as ak
+    except Exception:
+        return pd.DataFrame()
+
+    period_map = {"1d": "daily", "1w": "weekly", "1M": "monthly"}
+    if freq not in period_map:
+        return pd.DataFrame()
+
+    symbol = _code_digits(norm_code)
+    if not symbol or len(symbol) != 6:
+        return pd.DataFrame()
+
+    def _fmt(d):
+        if not d:
+            return ""
+        try:
+            return pd.to_datetime(d).strftime("%Y%m%d")
+        except Exception:
+            return ""
+
+    try:
+        df = ak.stock_zh_a_hist(
+            symbol=symbol,
+            period=period_map[freq],
+            start_date=_fmt(start),
+            end_date=_fmt(end),
+            adjust="qfq",
+        )
+        if df is None or df.empty:
+            return pd.DataFrame()
+        # 兼容中文列
+        col_map = {
+            "日期": "time",
+            "开盘": "open",
+            "最高": "high",
+            "最低": "low",
+            "收盘": "close",
+            "成交量": "volume",
+        }
+        if not set(col_map.keys()).issubset(set(df.columns)):
+            return pd.DataFrame()
+        out = df.rename(columns=col_map)[list(col_map.values())].copy()
+        for col in ["open", "high", "low", "close", "volume"]:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+        out["time"] = pd.to_datetime(out["time"], errors="coerce")
+        out = out.dropna(subset=["time"])
+        return out
+    except Exception:
+        return pd.DataFrame()
+
+
+def _fetch_kline_with_fallback(session: requests.Session, norm: str, freq: str, fetch_count: int, start: str = None, end: str = None, retry: int = 2):
+    """历史K线主链路：腾讯优先 -> 新浪 -> 雪球 -> 东方财富(akshare)。含重试。"""
+    last_df = pd.DataFrame()
+    for _ in range(max(1, retry)):
+        df = get_kline_tencent(session, norm, freq, fetch_count)
+        if not df.empty:
+            return df, "腾讯"
+        last_df = df
+
+        df = get_kline_sina(session, norm, freq, fetch_count)
+        if not df.empty:
+            return df, "新浪"
+        last_df = df
+
+        df = get_kline_xueqiu(session, norm, freq, fetch_count)
+        if not df.empty:
+            return df, "雪球"
+        last_df = df
+
+    # 最后兜底东方财富
+    df = get_kline_eastmoney(norm, freq, start=start, end=end)
+    if not df.empty:
+        return df, "东财"
+
+    return last_df, None
+
+
+def _format_kline_output(df: pd.DataFrame, norm: str, count: int, start: str = None, end: str = None) -> pd.DataFrame:
+    start_dt = pd.to_datetime(start) if start else None
+    end_dt = pd.to_datetime(end) if end else None
     if start_dt is not None:
         df = df[df["time"] >= start_dt]
     if end_dt is not None:
         df = df[df["time"] <= end_dt]
-    df = df.sort_values("time").tail(args.count)
+    df = df.sort_values("time").tail(count)
     if df.empty:
-        print(f"未找到 {norm} 在指定区间内的K线数据")
-        return
+        return pd.DataFrame()
 
     out = df.copy()
     out["code"] = norm
@@ -240,13 +357,135 @@ def cmd_kline(args):
     out["pctChg"] = (out["close"] / out["preclose"] - 1) * 100
     out["time"] = out["time"].dt.strftime("%Y-%m-%d")
     cols = ["time", "code", "open", "high", "low", "close", "preclose", "volume", "pctChg"]
-    out = out[cols]
+    return out[cols]
+
+
+def cmd_kline(args):
+    session = _build_session()
+    norm = normalize_code(args.kline)
+    fetch_count = _estimate_fetch_count(args.start, args.end, args.freq, args.count)
+
+    df, source = _fetch_kline_with_fallback(
+        session, norm, args.freq, fetch_count, start=args.start, end=args.end, retry=2
+    )
+    if df.empty:
+        print(f"未获取到 {norm} 的K线数据（腾讯/新浪/东财均失败）")
+        return
+
+    out = _format_kline_output(df, norm, args.count, args.start, args.end)
+    if out.empty:
+        print(f"未找到 {norm} 在指定区间内的K线数据")
+        return
 
     if args.output_json:
         print(out.to_json(orient="records", force_ascii=False))
     else:
         print(f"【{norm} 历史K线】频率={args.freq} 共{len(out)}条 数据源：{source}")
         print(out.to_string(index=False))
+
+
+def cmd_kline_batch(args):
+    """批量历史K线：支持多代码并发拉取（默认8线程）。"""
+    codes = [normalize_code(x) for x in re.split(r"[,\s]+", (args.kline_batch or "").strip()) if x]
+    # 去重且保序
+    uniq = []
+    seen = set()
+    for c in codes:
+        if c and c not in seen:
+            seen.add(c)
+            uniq.append(c)
+
+    if not uniq:
+        print("请通过 --kline-batch 传入至少一个股票代码（逗号分隔）")
+        return
+
+    fetch_count = _estimate_fetch_count(args.start, args.end, args.freq, args.count)
+
+    def _one(code):
+        session = _build_session()
+        df, source = _fetch_kline_with_fallback(
+            session, code, args.freq, fetch_count, start=args.start, end=args.end, retry=max(1, int(args.retries or 2))
+        )
+        if df.empty:
+            return {
+                "code": code,
+                "ok": False,
+                "source": None,
+                "rows": 0,
+                "data": [],
+                "error": "腾讯/新浪/东财均失败",
+            }
+        out = _format_kline_output(df, code, args.count, args.start, args.end)
+        if out.empty:
+            return {
+                "code": code,
+                "ok": False,
+                "source": source,
+                "rows": 0,
+                "data": [],
+                "error": "指定区间无数据",
+            }
+        return {
+            "code": code,
+            "ok": True,
+            "source": source,
+            "rows": len(out),
+            "data": json.loads(out.to_json(orient="records", force_ascii=False)),
+            "error": None,
+        }
+
+    results = []
+    max_workers = max(1, int(args.workers or 8))
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futs = [ex.submit(_one, c) for c in uniq]
+        for f in as_completed(futs):
+            results.append(f.result())
+
+    # 二次补拉：对失败代码使用低并发再试一轮，提升100只批量成功率
+    fail_codes = [r["code"] for r in results if not r.get("ok")]
+    retry_pass_results = []
+    if fail_codes:
+        retry_workers = min(3, max_workers)
+        with ThreadPoolExecutor(max_workers=retry_workers) as ex:
+            futs = [ex.submit(_one, c) for c in fail_codes]
+            for f in as_completed(futs):
+                retry_pass_results.append(f.result())
+        retry_map = {r["code"]: r for r in retry_pass_results if r.get("ok")}
+        if retry_map:
+            for i, r in enumerate(results):
+                c = r.get("code")
+                if c in retry_map:
+                    results[i] = retry_map[c]
+
+    # 按输入顺序回排
+    order = {c: i for i, c in enumerate(uniq)}
+    results.sort(key=lambda x: order.get(x["code"], 10**9))
+
+    success = [r for r in results if r["ok"]]
+    fail = [r for r in results if not r["ok"]]
+
+    if args.output_json:
+        print(json.dumps({
+            "meta": {
+                "requested": len(uniq),
+                "success": len(success),
+                "fail": len(fail),
+                "workers": max_workers,
+                "retries": int(args.retries or 2),
+                "second_pass_retry": True,
+                "freq": args.freq,
+                "count": args.count,
+                "start": args.start,
+                "end": args.end,
+            },
+            "results": results,
+        }, ensure_ascii=False))
+    else:
+        print(f"【批量历史K线】请求{len(uniq)}只 成功{len(success)} 失败{len(fail)} 并发={max_workers}")
+        for r in success[:20]:
+            print(f"  ✓ {r['code']} rows={r['rows']} source={r['source']}")
+        for r in fail[:20]:
+            print(f"  ✗ {r['code']} error={r['error']}")
 
 
 # ============ 基本信息 ============
@@ -888,6 +1127,9 @@ def build_parser():
     
     # K线
     p.add_argument("--kline", metavar="CODE", help="历史K线代码")
+    p.add_argument("--kline-batch", help="批量历史K线代码，逗号/空格分隔（示例: 600519,000001,300750）")
+    p.add_argument("--workers", type=int, default=8, help="批量K线并发线程数，默认8")
+    p.add_argument("--retries", type=int, default=2, help="批量K线每只代码重试次数，默认2")
     p.add_argument("--start", help="开始日期 YYYY-MM-DD")
     p.add_argument("--end", help="结束日期 YYYY-MM-DD")
     p.add_argument("--freq", default="1d", choices=["1d", "1w", "1M"], help="K线频率，默认1d")
@@ -945,7 +1187,9 @@ def build_parser():
 def main():
     args = build_parser().parse_args()
     
-    if args.kline:
+    if args.kline_batch:
+        cmd_kline_batch(args)
+    elif args.kline:
         cmd_kline(args)
     elif args.basic:
         cmd_basic(args)
