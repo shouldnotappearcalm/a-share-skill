@@ -13,12 +13,17 @@
 
 import argparse
 import json
+import os
 import re
 import sys
 import threading
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+
+# 检测 --json 参数，在 import akshare 之前禁用 tqdm 防止进度条污染 stdout
+if "--json" in sys.argv:
+    os.environ["TQDM_DISABLE"] = "1"
 
 import akshare as ak
 import pandas as pd
