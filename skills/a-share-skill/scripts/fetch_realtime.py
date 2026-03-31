@@ -20,12 +20,17 @@ A股实时行情数据脚本
   python3 fetch_realtime.py --market-news --news-limit 50
   python3 fetch_realtime.py --boards-summary --boards-limit 60 --boards-sort market_cap_desc
   python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 300
+  python3 fetch_realtime.py --all-quote --top 20
+  python3 fetch_realtime.py --all-quote --sort change_pct_desc --top 50
+  python3 fetch_realtime.py --tick 600519
+  python3 fetch_realtime.py --tick 600519 --tick-page 2
 """
 
 import argparse
 import json
 import sys
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, date, time as time_type
 
 import pandas as pd
@@ -42,6 +47,9 @@ HEADERS = {
 SINA_KLINE_URL = "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
 TENCENT_DAY_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
 TENCENT_MIN_URL = "https://ifzq.gtimg.cn/appstock/app/kline/mkline"
+SINA_QUOTE_URL = "https://hq.sinajs.cn/list="
+TENCENT_QUOTE_URL = "https://qt.gtimg.cn/q="
+TENCENT_TICK_URL = "https://stock.gtimg.cn/data/index.php"
 MARKET_NEWS_URL = "https://dang-invest.com/api/market/news"
 BOARDS_SUMMARY_URL = "https://dang-invest.com/api/market/boards/summary"
 BOARDS_DETAIL_URL = "https://dang-invest.com/api/market/boards/detail"
@@ -779,6 +787,274 @@ def cmd_boards_detail(mode: str, group_key: str, sort: str, items_limit: int, it
         print(f"  ... 已截断显示前 {display_n} 只（共 {len(items)} 只）")
 
 
+# ---------------------------------------------------------------------------
+# 全市场实时行情
+# ---------------------------------------------------------------------------
+
+_ALL_STOCK_CODES = None
+
+
+def _generate_all_codes() -> list:
+    """生成沪深全市场候选代码列表"""
+    global _ALL_STOCK_CODES
+    if _ALL_STOCK_CODES is not None:
+        return _ALL_STOCK_CODES
+    codes = []
+    for i in range(600000, 606000):
+        codes.append(f"sh{i}")
+    for i in range(688000, 690000):
+        codes.append(f"sh{i}")
+    for i in range(1, 5000):
+        codes.append(f"sz{i:06d}")
+    for i in range(300000, 302000):
+        codes.append(f"sz{i}")
+    _ALL_STOCK_CODES = codes
+    return codes
+
+
+def _parse_tencent_quote(line: str) -> dict | None:
+    """解析腾讯 qt.gtimg.cn 单行数据，返回结构化 dict"""
+    if '~' not in line or len(line) < 50:
+        return None
+    parts = line.split('~')
+    if len(parts) < 48:
+        return None
+    try:
+        price = float(parts[3]) if parts[3] else 0
+        if price <= 0:
+            return None
+        prev_close = float(parts[4]) if parts[4] else 0
+        change_pct = round((price - prev_close) / prev_close * 100, 2) if prev_close > 0 else 0
+        market_prefix = "sh" if parts[0] == "1" else "sz"
+        return {
+            "code": f"{market_prefix}{parts[2]}",
+            "name": parts[1],
+            "price": price,
+            "prev_close": prev_close,
+            "open": float(parts[5]) if parts[5] else 0,
+            "change_pct": change_pct,
+            "volume": int(parts[6]) if parts[6] else 0,
+            "amount": float(parts[37]) * 10000 if parts[37] else 0,
+            "turnover_rate": float(parts[38]) if parts[38] else 0,
+            "pe": float(parts[39]) if parts[39] else 0,
+            "high": float(parts[33]) if parts[33] else 0,
+            "low": float(parts[34]) if parts[34] else 0,
+            "amplitude": float(parts[43]) if parts[43] else 0,
+            "market_cap": float(parts[45]) if parts[45] else 0,
+            "pb": float(parts[46]) if parts[46] else 0,
+            "limit_up": float(parts[47]) if parts[47] else 0,
+            "limit_down": float(parts[48]) if len(parts) > 48 and parts[48] else 0,
+        }
+    except (ValueError, IndexError):
+        return None
+
+
+def _parse_sina_quote(line: str) -> dict | None:
+    """解析新浪 hq.sinajs.cn 单行数据作为降级备源"""
+    if '="' not in line:
+        return None
+    code_part = line.split('="')[0].replace("var hq_str_", "")
+    val = line.split('="')[1].rstrip('";')
+    if not val:
+        return None
+    fields = val.split(',')
+    if len(fields) < 32:
+        return None
+    try:
+        price = float(fields[3])
+        prev_close = float(fields[2])
+        if price <= 0:
+            return None
+        change_pct = round((price - prev_close) / prev_close * 100, 2) if prev_close > 0 else 0
+        return {
+            "code": code_part,
+            "name": fields[0],
+            "price": price,
+            "prev_close": prev_close,
+            "open": float(fields[1]),
+            "change_pct": change_pct,
+            "volume": int(float(fields[8])),
+            "amount": float(fields[9]),
+            "high": float(fields[4]),
+            "low": float(fields[5]),
+        }
+    except (ValueError, IndexError):
+        return None
+
+
+_ALL_QUOTE_SORT_KEYS = {
+    "change_pct_desc": ("change_pct", True),
+    "change_pct_asc": ("change_pct", False),
+    "amount_desc": ("amount", True),
+    "turnover_rate_desc": ("turnover_rate", True),
+    "market_cap_desc": ("market_cap", True),
+    "market_cap_asc": ("market_cap", False),
+}
+
+BATCH_SIZE = 500
+WORKERS = 4
+
+
+def _fetch_all_quotes_tencent() -> list:
+    """腾讯接口批量拉取全市场行情"""
+    codes = _generate_all_codes()
+    batches = [codes[i:i + BATCH_SIZE] for i in range(0, len(codes), BATCH_SIZE)]
+    session = _build_session()
+    session.trust_env = False
+
+    def fetch_batch(batch):
+        resp = session.get(f"{TENCENT_QUOTE_URL}{','.join(batch)}", timeout=30)
+        results = []
+        for line in resp.text.strip().split('\n'):
+            parsed = _parse_tencent_quote(line)
+            if parsed:
+                results.append(parsed)
+        return results
+
+    all_items = []
+    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
+        futures = [pool.submit(fetch_batch, b) for b in batches]
+        for f in as_completed(futures):
+            all_items.extend(f.result())
+    return all_items
+
+
+def _fetch_all_quotes_sina() -> list:
+    """新浪接口批量拉取全市场行情（降级备源）"""
+    codes = _generate_all_codes()
+    batches = [codes[i:i + BATCH_SIZE] for i in range(0, len(codes), BATCH_SIZE)]
+    session = _build_session()
+    session.trust_env = False
+    session.headers["Referer"] = "https://finance.sina.com.cn/"
+
+    def fetch_batch(batch):
+        resp = session.get(f"{SINA_QUOTE_URL}{','.join(batch)}", timeout=30)
+        results = []
+        for line in resp.text.strip().split('\n'):
+            parsed = _parse_sina_quote(line)
+            if parsed:
+                results.append(parsed)
+        return results
+
+    all_items = []
+    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
+        futures = [pool.submit(fetch_batch, b) for b in batches]
+        for f in as_completed(futures):
+            all_items.extend(f.result())
+    return all_items
+
+
+def cmd_all_quote(sort_key: str, top: int, output_json: bool):
+    try:
+        items = _fetch_all_quotes_tencent()
+        source = "腾讯"
+    except Exception:
+        try:
+            items = _fetch_all_quotes_sina()
+            source = "新浪"
+        except Exception as e:
+            print(f"获取全市场行情失败：{e}")
+            sys.exit(1)
+
+    if not items:
+        print("未获取到有效行情数据")
+        sys.exit(1)
+
+    sort_field, sort_reverse = _ALL_QUOTE_SORT_KEYS.get(sort_key, ("change_pct", True))
+    items.sort(key=lambda x: x.get(sort_field) or 0, reverse=sort_reverse)
+
+    meta = {
+        "total": len(items),
+        "sort": sort_key,
+        "top": top,
+        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "data_source": source,
+    }
+
+    display = items[:top] if top > 0 else items
+
+    if output_json:
+        print(json.dumps({"meta": meta, "data": display}, ensure_ascii=False, indent=2))
+        return
+
+    print(f"【全市场行情】{meta['update_time']}  共 {len(items)} 只  排序={sort_key}  数据源：{source}")
+    for i, r in enumerate(display):
+        sign = "+" if r["change_pct"] >= 0 else ""
+        amt_yi = round(r.get("amount", 0) / 1e8, 2)
+        tr = r.get("turnover_rate", 0)
+        mc = round(r.get("market_cap", 0), 1)
+        print(f"  {i + 1:>4}. {r['code']:<10} {r['name']:<8} "
+              f"价={r['price']:<9} {sign}{r['change_pct']:.2f}%  "
+              f"额={amt_yi}亿  换手={tr}%  市值={mc}亿")
+
+
+# ---------------------------------------------------------------------------
+# 个股实时成交明细
+# ---------------------------------------------------------------------------
+
+def cmd_tick(code: str, page: int, top: int, output_json: bool):
+    normalized = normalize_code(code)
+    session = _build_session()
+    session.trust_env = False
+    try:
+        resp = session.get(TENCENT_TICK_URL,
+                           params={"appn": "detail", "action": "data", "c": normalized, "p": page},
+                           timeout=15)
+        resp.raise_for_status()
+        text = resp.text.strip()
+    except Exception as e:
+        print(f"获取成交明细失败：{e}")
+        sys.exit(1)
+
+    # 解析: v_detail_data_xxx=[总页数,"序号/时间/价格/涨跌/量(手)/额/方向|..."]
+    if '=[' not in text:
+        print(f"返回数据格式异常：{text[:200]}")
+        sys.exit(1)
+
+    bracket_content = text.split('=[')[1].rstrip('];')
+    parts = bracket_content.split(',', 1)
+    total_pages = int(parts[0]) if parts[0].strip().isdigit() else 0
+    records_raw = parts[1].strip('"').split('|') if len(parts) > 1 else []
+
+    BS_MAP = {"B": "买", "S": "卖", "M": "中"}
+    records = []
+    for rec in records_raw:
+        fields = rec.split('/')
+        if len(fields) < 7:
+            continue
+        records.append({
+            "seq": int(fields[0]) if fields[0].isdigit() else 0,
+            "time": fields[1],
+            "price": float(fields[2]),
+            "change": float(fields[3]),
+            "volume": int(fields[4]),
+            "amount": float(fields[5]),
+            "direction": BS_MAP.get(fields[6], fields[6]),
+        })
+
+    meta = {
+        "code": normalized,
+        "page": page,
+        "total_pages": total_pages,
+        "records": len(records),
+        "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "data_source": "腾讯",
+    }
+
+    display = records[:top] if top > 0 else records
+
+    if output_json:
+        print(json.dumps({"meta": meta, "data": display}, ensure_ascii=False, indent=2))
+        return
+
+    print(f"【成交明细】{normalized}  第{page}页/共{total_pages}页  {len(records)}条  数据源：腾讯")
+    for r in display:
+        sign = "+" if r["change"] >= 0 else ""
+        amt_w = round(r["amount"] / 10000, 1)
+        print(f"  {r['time']}  价={r['price']:<9} {sign}{r['change']:<7} "
+              f"量={r['volume']}手  额={amt_w}万  {r['direction']}")
+
+
 def cmd_consecutive_limit(date_str: str, top: int, output_json: bool):
     if not date_str:
         date_str = datetime.now().strftime("%Y%m%d")
@@ -834,6 +1110,11 @@ def main():
     parser.add_argument("--boards-group-key", default="", help="板块key，--boards-detail 必填（例如 半导体）")
     parser.add_argument("--boards-items-limit", type=int, default=300, help="成分返回条数（默认300）")
     parser.add_argument("--boards-items-offset", type=int, default=0, help="成分偏移（默认0）")
+    parser.add_argument("--all-quote", action="store_true", help="全市场实时行情（腾讯主源/新浪备源）")
+    parser.add_argument("--sort", default="change_pct_desc",
+                        help="全市场排序：change_pct_desc|change_pct_asc|amount_desc|turnover_rate_desc|market_cap_desc|market_cap_asc")
+    parser.add_argument("--tick", metavar="CODE", help="个股实时成交明细（腾讯）")
+    parser.add_argument("--tick-page", type=int, default=0, help="成交明细页码（默认0=最新）")
     parser.add_argument("--json", action="store_true", dest="output_json", help="输出JSON格式")
     args = parser.parse_args()
 
@@ -866,6 +1147,10 @@ def main():
         cmd_boards_summary(args.boards_mode, args.boards_limit, args.boards_sort, args.output_json)
     elif args.boards_detail:
         cmd_boards_detail(args.boards_mode, args.boards_group_key, args.boards_sort, args.boards_items_limit, args.boards_items_offset, args.output_json)
+    elif args.all_quote:
+        cmd_all_quote(args.sort, args.top, args.output_json)
+    elif args.tick:
+        cmd_tick(args.tick, args.tick_page, args.top, args.output_json)
     else:
         parser.print_help()
 
