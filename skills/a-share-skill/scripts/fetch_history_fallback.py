@@ -147,7 +147,11 @@ def get_kline_sina(session: requests.Session, norm_code: str, freq: str, count: 
         data = _get_json(session, SINA_KLINE_URL, params=params, timeout=10)
         if not data or isinstance(data, dict):
             return pd.DataFrame()
-        df = pd.DataFrame(data, columns=["time", "open", "high", "low", "close", "volume"])
+        df = pd.DataFrame(data)
+        # 新浪返回列名为 day，统一重命名为 time
+        if "day" in df.columns:
+            df = df.rename(columns={"day": "time"})
+        df = df[["time", "open", "high", "low", "close", "volume"]]
         for col in ["open", "high", "low", "close", "volume"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
         df["time"] = pd.to_datetime(df["time"], errors="coerce")
@@ -181,13 +185,39 @@ def get_kline_tencent(session: requests.Session, norm_code: str, freq: str, coun
         return pd.DataFrame()
 
 
+def _estimate_fetch_count(start: str, end: str, freq: str, default_count: int) -> int:
+    """根据日期范围估算需要拉取的K线条数（含余量）。
+
+    新浪/腾讯接口返回的是"从今天往前推 N 条"的数据，
+    因此要覆盖到 start，需要拉取 今天→start 之间的交易日数量。
+    """
+    if not start:
+        return default_count
+    try:
+        s = pd.to_datetime(start)
+        now = pd.Timestamp.now()
+        days_from_now = (now - s).days + 1
+        if freq == "1d":
+            # 一年约 250 个交易日，按自然日 * 0.72 + 余量
+            return max(default_count, int(days_from_now * 0.72) + 30)
+        if freq == "1w":
+            return max(default_count, days_from_now // 7 + 10)
+        if freq == "1M":
+            return max(default_count, days_from_now // 30 + 5)
+    except Exception:
+        pass
+    return default_count
+
+
 def cmd_kline(args):
     session = _build_session()
     norm = normalize_code(args.kline)
-    df = get_kline_sina(session, norm, args.freq, args.count)
+    fetch_count = _estimate_fetch_count(args.start, args.end, args.freq, args.count)
+
+    df = get_kline_sina(session, norm, args.freq, fetch_count)
     source = "新浪"
     if df.empty:
-        df = get_kline_tencent(session, norm, args.freq, args.count)
+        df = get_kline_tencent(session, norm, args.freq, fetch_count)
         source = "腾讯"
     if df.empty:
         print(f"未获取到 {norm} 的K线数据（新浪/腾讯均失败）")
