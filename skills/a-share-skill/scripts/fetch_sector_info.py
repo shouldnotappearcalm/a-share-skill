@@ -4,17 +4,18 @@
 数据源：东方财富 HTTP API
 
 功能：
-- 查询单只股票所属的行业板块
-- 查询单只股票所属的概念板块
-- 支持批量查询
+- 查询单只/多只股票所属的行业板块
+- 查询单只/多只股票所属的概念板块
+- 默认并行查询，速度快
 
 依赖安装：pip install requests
 
 用法示例：
-  python3 fetch_sector_info.py --code 600519
-  python3 fetch_sector_info.py --code 600519 --json
-  python3 fetch_sector_info.py --codes 600519,000001,300750
-  python3 fetch_sector_info.py --batch-test  # 使用内置40只股票测试
+  python3 fetch_sector_info.py 600519
+  python3 fetch_sector_info.py 600519 000001 300750
+  python3 fetch_sector_info.py 600519,000001,300750
+  python3 fetch_sector_info.py --json 600519 000001
+  python3 fetch_sector_info.py --batch-test
 """
 
 import argparse
@@ -25,39 +26,47 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
-def _build_session() -> requests.Session:
-    """构建带重试机制的 HTTP Session"""
-    from requests.adapters import HTTPAdapter
-    from urllib3.util.retry import Retry
-    
-    session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "application/json, text/plain, */*",
-    })
-    
-    retry = Retry(
-        total=3,
-        connect=2,
-        read=2,
-        backoff_factor=0.3,
-        status_forcelist=(429, 500, 502, 503, 504),
-        allowed_methods=("GET",),
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    
-    return session
+# 全局共享 Session（连接池复用，提高并发性能）
+_SHARED_SESSION = None
+
+# 默认并发数（经过测试，8是较好的平衡点）
+DEFAULT_WORKERS = 8
+
+
+def _get_shared_session() -> requests.Session:
+    """获取全局共享的 Session"""
+    global _SHARED_SESSION
+    if _SHARED_SESSION is None:
+        session = requests.Session()
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Connection": "keep-alive",
+        })
+        
+        retry = Retry(
+            total=3,
+            connect=2,
+            read=2,
+            backoff_factor=0.2,
+            status_forcelist=(429, 500, 502, 503, 504),
+            allowed_methods=("GET",),
+        )
+        # 连接池大小与并发数匹配
+        adapter = HTTPAdapter(max_retries=retry, pool_connections=DEFAULT_WORKERS, pool_maxsize=DEFAULT_WORKERS)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        
+        _SHARED_SESSION = session
+    return _SHARED_SESSION
 
 
 def normalize_code(code: str) -> tuple:
-    """
-    标准化股票代码，返回 (市场代码, 纯代码)
-    市场代码: 1=沪市, 0=深市
-    """
+    """标准化股票代码，返回 (市场代码, 纯代码)"""
     code = code.strip()
     if code.lower().startswith("sh"):
         return ("1", code[2:].zfill(6))
@@ -77,10 +86,8 @@ def normalize_code(code: str) -> tuple:
     return (None, code.zfill(6))
 
 
-def get_sector_info_http(code6: str, market: str, timeout: int = 10, include_concepts: bool = True, retries: int = 2) -> Dict:
-    """
-    通过东方财富 HTTP API 获取个股板块信息
-    """
+def get_sector_info_http(code6: str, market: str, timeout: int = 8, include_concepts: bool = True, retries: int = 2) -> Dict:
+    """通过东方财富 HTTP API 获取个股板块信息"""
     result = {
         "code": code6,
         "name": None,
@@ -93,16 +100,16 @@ def get_sector_info_http(code6: str, market: str, timeout: int = 10, include_con
     if market is None:
         market = "1" if code6.startswith("6") else "0"
     
-    session = _build_session()
+    session = _get_shared_session()
     secid = f"{market}.{code6}"
     
-    # 接口1：个股基本信息（名称 + 行业）- 带重试
+    # 接口1：个股基本信息（名称 + 行业）
     for attempt in range(retries + 1):
         try:
             url = "https://push2.eastmoney.com/api/qt/stock/get"
             params = {
                 "secid": secid,
-                "fields": "f57,f58,f127",  # 代码、名称、行业
+                "fields": "f57,f58,f127",
                 "ut": "fa5fd1943c7b386f172d6893dbfba10b",
             }
             resp = session.get(url, params=params, timeout=timeout)
@@ -113,13 +120,13 @@ def get_sector_info_http(code6: str, market: str, timeout: int = 10, include_con
                 result["name"] = data["data"].get("f58")
                 result["industry"] = data["data"].get("f127")
                 if result["name"] or result["industry"]:
-                    break  # 成功获取数据，跳出重试循环
+                    break
         except Exception as e:
             result["error"] = str(e)
             if attempt < retries:
-                time.sleep(0.5 * (attempt + 1))  # 递增等待时间
+                time.sleep(0.2 * (attempt + 1))
     
-    # 接口2：获取概念板块（可选）- 带重试
+    # 接口2：获取概念板块（可选）
     if include_concepts:
         for attempt in range(retries + 1):
             try:
@@ -139,29 +146,32 @@ def get_sector_info_http(code6: str, market: str, timeout: int = 10, include_con
                         name = item.get("f14", "")
                         if name and name not in result["concepts"]:
                             result["concepts"].append(name)
-                break  # 成功，跳出重试循环
+                break
             except Exception:
                 if attempt < retries:
-                    time.sleep(0.3 * (attempt + 1))
+                    time.sleep(0.1 * (attempt + 1))
     
     return result
 
 
-def get_sector_info(code: str, timeout: int = 10, include_concepts: bool = True) -> Dict:
-    """
-    获取个股板块信息（主函数）
-    """
+def get_sector_info(code: str, timeout: int = 8, include_concepts: bool = True) -> Dict:
+    """获取个股板块信息"""
     market, code6 = normalize_code(code)
     return get_sector_info_http(code6, market, timeout, include_concepts)
 
 
-def batch_get_sector_info(codes: List[str], timeout: int = 10, max_workers: int = 5, include_concepts: bool = True) -> List[Dict]:
-    """
-    批量获取多只股票的板块信息
-    """
-    results = []
+def batch_get_sector_info(codes: List[str], timeout: int = 8, max_workers: int = DEFAULT_WORKERS, include_concepts: bool = True) -> List[Dict]:
+    """批量并行获取多只股票的板块信息"""
+    if not codes:
+        return []
     
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    # 单只股票直接查询
+    if len(codes) == 1:
+        return [get_sector_info(codes[0], timeout, include_concepts)]
+    
+    # 多只股票并行查询
+    results = []
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(codes))) as executor:
         future_to_code = {
             executor.submit(get_sector_info, code, timeout, include_concepts): code
             for code in codes
@@ -218,14 +228,17 @@ def print_single_result(result: Dict, output_json: bool = False):
     print(f"{'='*60}")
 
 
-def print_batch_results(results: List[Dict], output_json: bool = False):
+def print_batch_results(results: List[Dict], output_json: bool = False, show_elapsed: float = None):
     """打印批量查询结果"""
     if output_json:
-        print(json.dumps(results, ensure_ascii=False, indent=2))
+        output = {"data": results}
+        if show_elapsed is not None:
+            output["elapsed_seconds"] = round(show_elapsed, 2)
+        print(json.dumps(output, ensure_ascii=False, indent=2))
         return
     
     print(f"\n{'='*80}")
-    print(f"{'代码':<10} {'名称':<12} {'行业':<15} {'概念数量':<8} {'数据源':<10}")
+    print(f"{'代码':<10} {'名称':<12} {'行业':<15} {'概念数':<6} {'数据源':<10}")
     print(f"{'-'*80}")
     
     success_count = 0
@@ -235,97 +248,58 @@ def print_batch_results(results: List[Dict], output_json: bool = False):
         industry = r.get("industry") or "未知"
         concept_count = len(r.get("concepts", []))
         source = r.get("source", "未知")
-        error = r.get("error")
         
-        # 判断成功：有名称或行业即可
         is_success = bool(r.get("name") or r.get("industry"))
         status = "✓" if is_success else "✗"
-        print(f"{code:<10} {name:<12} {industry:<15} {concept_count:<8} {source:<10} {status}")
+        print(f"{code:<10} {name:<12} {industry:<15} {concept_count:<6} {source:<10} {status}")
         if is_success:
             success_count += 1
     
     print(f"{'-'*80}")
-    print(f"总计: {len(results)} 只, 成功: {success_count} 只, 失败: {len(results) - success_count} 只")
+    print(f"总计: {len(results)} 只, 成功: {success_count} 只, 失败: {len(results) - success_count} 只", end="")
+    if show_elapsed is not None:
+        print(f", 耗时: {show_elapsed:.2f}秒")
+    else:
+        print()
     print(f"{'='*80}\n")
 
 
 # 内置测试股票代码（沪深40只，覆盖各行业和板块）
 TEST_CODES = [
     # 沪市主板 - 金融
-    "600519",  # 贵州茅台 - 白酒
-    "601318",  # 中国平安 - 保险
-    "600036",  # 招商银行 - 银行
-    "601166",  # 兴业银行 - 银行
-    "601398",  # 工商银行 - 银行
-    "601288",  # 农业银行 - 银行
-    "600000",  # 浦发银行 - 银行
-    "601939",  # 建设银行 - 银行
-    "601988",  # 中国银行 - 银行
-    "600030",  # 中信证券 - 证券
-    "601211",  # 国泰君安 - 证券
-    # 沪市主板 - 消费/医药
-    "600276",  # 恒瑞医药 - 医药
-    "600887",  # 伊利股份 - 食品饮料
-    "601888",  # 中国中免 - 免税
-    # 沪市主板 - 能源/工业
-    "600900",  # 长江电力 - 电力
-    "601012",  # 隆基绿能 - 光伏
-    "600309",  # 万华化学 - 化工
-    "601899",  # 紫金矿业 - 有色金属
-    "600585",  # 海螺水泥 - 水泥
-    "600104",  # 上汽集团 - 汽车
+    "600519", "601318", "600036", "601166", "601398", "601288", "600000", "601939", "601988", "600030",
+    "601211",
+    # 沪市主板 - 消费/医药/能源
+    "600276", "600887", "601888", "600900", "601012", "600309", "601899", "600585", "600104",
     # 深市主板
-    "000001",  # 平安银行 - 银行
-    "000002",  # 万科A - 房地产
-    "000333",  # 美的集团 - 家电
-    "000651",  # 格力电器 - 家电
-    "000858",  # 五粮液 - 白酒
-    "000568",  # 泸州老窖 - 白酒
-    "000538",  # 云南白药 - 中药
-    "000063",  # 中兴通讯 - 通信
+    "000001", "000002", "000333", "000651", "000858", "000568", "000538", "000063",
     # 创业板
-    "300750",  # 宁德时代 - 电池
-    "300059",  # 东方财富 - 证券
-    "300015",  # 爱尔眼科 - 医疗服务
-    "300014",  # 亿纬锂能 - 电池
-    "300274",  # 阳光电源 - 光伏
-    "300124",  # 汇川技术 - 工控
-    "300033",  # 同花顺 - 金融IT
-    "300498",  # 温氏股份 - 养殖
+    "300750", "300059", "300015", "300014", "300274", "300124", "300033", "300498",
     # 科创板
-    "688981",  # 中芯国际 - 半导体
-    "688599",  # 天合光能 - 光伏
-    "688111",  # 金山办公 - 软件
+    "688981", "688599", "688111",
 ]
 
 
-def run_batch_test(codes: List[str] = None, include_concepts: bool = True) -> bool:
-    """
-    运行批量测试
-    返回: True 表示全部成功，False 表示有失败
-    """
-    test_codes = codes or TEST_CODES
-    # 去重
-    test_codes = list(dict.fromkeys(test_codes))
+def run_batch_test(max_workers: int = DEFAULT_WORKERS, include_concepts: bool = True) -> bool:
+    """运行批量测试"""
+    test_codes = list(dict.fromkeys(TEST_CODES))  # 去重
     
-    print(f"\n开始测试 {len(test_codes)} 只股票的板块信息查询...")
-    print(f"{'='*80}\n")
+    print(f"\n{'='*60}")
+    print(f"  批量测试: {len(test_codes)} 只股票")
+    print(f"  并发数: {max_workers}")
+    print(f"{'='*60}")
     
     start_time = time.time()
-    results = batch_get_sector_info(test_codes, timeout=15, max_workers=3, include_concepts=include_concepts)
+    results = batch_get_sector_info(test_codes, timeout=8, max_workers=max_workers, include_concepts=include_concepts)
     elapsed = time.time() - start_time
     
-    # 统计
     success_count = sum(1 for r in results if r.get("industry") or r.get("name"))
     fail_count = len(results) - success_count
     
-    print_batch_results(results, output_json=False)
-    
-    print(f"耗时: {elapsed:.2f} 秒")
-    print(f"成功率: {success_count}/{len(results)} ({success_count/len(results)*100:.1f}%)")
+    print_batch_results(results, show_elapsed=elapsed)
     
     if fail_count > 0:
-        print(f"\n失败股票:")
+        print(f"失败股票:")
         for r in results:
             if not (r.get("industry") or r.get("name")):
                 print(f"  - {r.get('code')}: {r.get('error', '未知错误')}")
@@ -334,49 +308,72 @@ def run_batch_test(codes: List[str] = None, include_concepts: bool = True) -> bo
     return True
 
 
+def parse_codes_from_args(args) -> List[str]:
+    """从参数中解析股票代码列表"""
+    codes = []
+    
+    # 从位置参数获取
+    for code in args.codes:
+        # 支持逗号分隔
+        if ',' in code:
+            codes.extend([c.strip() for c in code.split(',') if c.strip()])
+        else:
+            codes.append(code.strip())
+    
+    return codes
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="查询个股板块信息（行业 + 概念板块）",
+        description="查询个股板块信息（行业 + 概念板块），默认并行查询",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  python3 fetch_sector_info.py --code 600519
-  python3 fetch_sector_info.py --code 600519 --json
-  python3 fetch_sector_info.py --codes 600519,000001,300750
-  python3 fetch_sector_info.py --batch-test
-  python3 fetch_sector_info.py --batch-test --no-concepts
+  python3 fetch_sector_info.py 600519                    # 单只股票
+  python3 fetch_sector_info.py 600519 000001 300750     # 多只股票（并行）
+  python3 fetch_sector_info.py 600519,000001,300750     # 逗号分隔
+  python3 fetch_sector_info.py --json 600519 000001     # JSON输出
+  python3 fetch_sector_info.py --batch-test             # 内置40只股票测试
+  python3 fetch_sector_info.py --batch-test --workers 8 # 指定并发数
         """
     )
     
-    parser.add_argument("--code", help="单只股票代码，如 600519 / sh600519")
-    parser.add_argument("--codes", help="多只股票代码，逗号分隔")
+    parser.add_argument("codes", nargs="*", help="股票代码（支持多个，空格或逗号分隔）")
     parser.add_argument("--batch-test", action="store_true", help="使用内置40只股票进行批量测试")
-    parser.add_argument("--timeout", type=int, default=10, help="单只股票查询超时时间（秒），默认 10")
-    parser.add_argument("--no-concepts", action="store_true", help="不查询概念板块（提高速度）")
+    parser.add_argument("--timeout", type=int, default=8, help="单只股票查询超时（秒），默认8")
+    parser.add_argument("--workers", type=int, default=DEFAULT_WORKERS, help=f"并发数，默认{DEFAULT_WORKERS}")
+    parser.add_argument("--no-concepts", action="store_true", help="不查询概念板块（更快）")
     parser.add_argument("--json", action="store_true", dest="output_json", help="输出 JSON 格式")
     
     args = parser.parse_args()
-    
     include_concepts = not args.no_concepts
     
+    # 批量测试模式
     if args.batch_test:
-        success = run_batch_test(include_concepts=include_concepts)
+        success = run_batch_test(max_workers=args.workers, include_concepts=include_concepts)
         sys.exit(0 if success else 1)
     
-    if args.code:
-        result = get_sector_info(args.code, timeout=args.timeout, include_concepts=include_concepts)
-        print_single_result(result, output_json=args.output_json)
-        sys.exit(0 if result.get("industry") or result.get("name") else 1)
+    # 解析股票代码
+    codes = parse_codes_from_args(args)
     
-    if args.codes:
-        codes = [c.strip() for c in args.codes.split(",") if c.strip()]
-        results = batch_get_sector_info(codes, timeout=args.timeout, include_concepts=include_concepts)
-        print_batch_results(results, output_json=args.output_json)
-        success = all(r.get("industry") or r.get("name") for r in results)
-        sys.exit(0 if success else 1)
+    if not codes:
+        parser.print_help()
+        sys.exit(1)
     
-    parser.print_help()
-    sys.exit(1)
+    # 并行查询
+    start_time = time.time()
+    results = batch_get_sector_info(codes, timeout=args.timeout, max_workers=args.workers, include_concepts=include_concepts)
+    elapsed = time.time() - start_time
+    
+    # 输出结果
+    if len(results) == 1:
+        print_single_result(results[0], output_json=args.output_json)
+    else:
+        print_batch_results(results, output_json=args.output_json, show_elapsed=elapsed)
+    
+    # 退出码
+    success = all(r.get("industry") or r.get("name") for r in results)
+    sys.exit(0 if success else 1)
 
 
 if __name__ == "__main__":

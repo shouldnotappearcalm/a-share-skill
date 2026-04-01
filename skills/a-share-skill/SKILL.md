@@ -1,6 +1,6 @@
 ---
 name: a-share-skill
-description: 查询A股实时行情、历史数据、技术指标、事件与资金面。Use when 用户提到股票代码、板块、技术分析、财务指标、指数成分、交易日历或宏观数据。
+description: 查询A股实时行情、历史数据、技术指标、事件、资金面与个股行业信息。Use when 用户提到股票代码、板块、技术分析、财务指标、指数成分、交易日历、宏观数据或个股所属行业。
 ---
 
 # A股数据综合分析
@@ -14,6 +14,7 @@ description: 查询A股实时行情、历史数据、技术指标、事件与资
 - 历史数据与财务维度
 - 技术指标
 - 个股事件
+- 个股行业信息（`fetch_sector_info.py`，数据源东方财富；**不作为支持能力：概念板块**，见下）
 
 ## 环境与路径
 
@@ -27,7 +28,10 @@ python3 "$SKILL_DIR/scripts/fetch_realtime.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_history.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_technical.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_stock_events.py" [参数]
+python3 "$SKILL_DIR/scripts/fetch_sector_info.py" [参数]
 ```
+
+说明：脚本虽可能带概念相关参数，但**上游概念接口结果不稳定、常为空**，本技能**不将概念查询列为可用能力**；使用时请固定加 `--no-concepts`，只查行业与证券简称。
 
 ## 代码格式约定
 
@@ -43,10 +47,11 @@ python3 "$SKILL_DIR/scripts/fetch_stock_events.py" [参数]
 - `fetch_history.py`：历史K线、财务、业绩、分红、行业、指数成分、交易日历、宏观
 - `fetch_technical.py`：MA/MACD/KDJ/RSI/BOLL等技术指标
 - `fetch_stock_events.py`：业绩、增减持/回购、监管、重大合同、舆情方向
+- `fetch_sector_info.py`：单只或多只股票的行业与名称（东方财富）；批量时并行，默认 `--workers`；**仅文档化行业路径，不加概念**
 
 ## 执行流程
 
-1. 先识别用户意图是实时、历史、技术还是事件。
+1. 先识别用户意图是实时、历史、技术、事件还是「个股所属行业」。
 2. 选择对应脚本并优先加 `--json`。
 3. 参数不足时补齐默认值后执行，不先空谈。
 4. 返回时给出关键字段结论，并附可复现命令。
@@ -104,6 +109,10 @@ python3 fetch_technical.py 600519 --freq 1d --count 120 --indicators MA,MACD,KDJ
 
 # 事件
 python3 fetch_stock_events.py --code 300476 --name 胜宏科技 --dates 20250331,20241231 --limit 20 --json
+
+# 个股行业（不加概念，见上文说明）
+python3 fetch_sector_info.py --no-concepts --json 600519
+python3 fetch_sector_info.py --workers 8 --no-concepts --timeout 15 --json 600519 000001 300750 600036 601318 002594 688981 300059
 ```
 
 ## 不要做的事
@@ -111,6 +120,7 @@ python3 fetch_stock_events.py --code 300476 --name 胜宏科技 --dates 20250331
 - 不把本技能当成爬虫任务优先方案。
 - 不在无必要时输出超长原始表格。
 - 不使用已移除的旧流程文案。
+- 不承诺或引导用户依赖 `fetch_sector_info.py` 的概念板块字段；技能侧只用 `--no-concepts` 的行业与名称结果。
 
 ## 参考
 

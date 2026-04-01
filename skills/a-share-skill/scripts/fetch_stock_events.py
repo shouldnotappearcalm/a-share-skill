@@ -181,19 +181,49 @@ def _parse_dates(dates: List[str]) -> List[str]:
     return out
 
 
-def _default_dates(days: int = 120) -> List[str]:
+def _default_dates(days: int = 365) -> List[str]:
+    """生成财报季日期列表（季度末日期：0331, 0630, 0930, 1231）
+    
+    业绩预告/快报 API 需要使用财报季日期，如 20260331, 20251231 等。
+    非财报季日期（如 20260401）会导致 API 返回错误。
+    """
     today = datetime.now().date()
+    current_year = today.year
+    current_month = today.month
+    
+    # 财报季结束月份：3月、6月、9月、12月
+    quarter_ends = [3, 6, 9, 12]
+    quarter_end_days = {3: 31, 6: 30, 9: 30, 12: 31}
+    
     dates = []
-    for i in range(0, days, 30):
-        d = today - timedelta(days=i)
-        dates.append(d.strftime("%Y%m%d"))
-    return dates
+    
+    # 从当前季度往前推算
+    for year_offset in range(0, 4):  # 查询最近4年的财报
+        target_year = current_year - year_offset
+        for month in reversed(quarter_ends):
+            # 如果是当前年份，只查询已过去的季度
+            if target_year == current_year and month > current_month:
+                continue
+            date_str = f"{target_year}{month:02d}{quarter_end_days[month]:02d}"
+            dates.append(date_str)
+            
+            # 如果已经超过 days 天的范围，停止
+            date_obj = datetime.strptime(date_str, "%Y%m%d").date()
+            if (today - date_obj).days > days:
+                break
+        else:
+            continue
+        break
+    
+    return dates[:8]  # 最多返回8个财报季日期
 
 
 def query_performance(code6: str, dates: List[str], limit: int, deadline_ts: float) -> Dict:
     yjyg_rows = []
     yjbb_rows = []
+    financial_abstract_rows = []
 
+    # 1. 尝试从业绩预告/快报获取数据
     for d in dates:
         if _remaining_seconds(deadline_ts) <= 1:
             break
@@ -220,11 +250,46 @@ def query_performance(code6: str, dates: List[str], limit: int, deadline_ts: flo
         if yjyg_rows or yjbb_rows:
             break
 
+    # 2. 如果业绩预告/快报都没有数据，尝试从财务摘要获取
+    #    这对于大公司（如茅台）很重要，它们可能不发布业绩预告/快报
+    if not yjyg_rows and not yjbb_rows and _remaining_seconds(deadline_ts) > 3:
+        try:
+            df = _safe_ak_call(ak.stock_financial_abstract, symbol=code6, timeout_sec=min(8, _remaining_seconds(deadline_ts)))
+            if df is not None and not df.empty:
+                # 提取最近一期的财报数据
+                # 列格式：选项, 指标, 20250930, 20250630, ...
+                date_cols = [c for c in df.columns if c not in ["选项", "指标"]]
+                if date_cols:
+                    latest_col = date_cols[0]  # 最近一期
+                    # 转换为记录格式
+                    abstract_data = {
+                        "报告期": latest_col,
+                        "数据来源": "财务摘要",
+                    }
+                    # 提取关键指标
+                    key_indicators = [
+                        "归母净利润", "营业总收入", "净利润", "扣非净利润", 
+                        "基本每股收益", "每股净资产", "净资产收益率(ROE)", 
+                        "毛利率", "销售净利率", "经营现金流量净额"
+                    ]
+                    for _, row in df.iterrows():
+                        indicator = row.get("指标", "")
+                        if indicator in key_indicators and latest_col in df.columns:
+                            val = row.get(latest_col)
+                            if pd.notna(val):
+                                abstract_data[indicator] = val
+                    
+                    if len(abstract_data) > 2:  # 有实际数据
+                        financial_abstract_rows = [abstract_data]
+        except Exception:
+            pass
+
     return {
         "category": "业绩/预告",
         "forecast": yjyg_rows,
         "express": yjbb_rows,
-        "count": len(yjyg_rows) + len(yjbb_rows),
+        "financial_abstract": financial_abstract_rows,
+        "count": len(yjyg_rows) + len(yjbb_rows) + len(financial_abstract_rows),
     }
 
 
@@ -478,6 +543,10 @@ def print_text(payload: Dict, preview: int) -> None:
         print(f"  - 预告 | {item.get('公告日期', '')} | {item.get('股票简称', '')} | {item.get('预告类型', '')}")
     for item in perf["express"][:preview]:
         print(f"  - 快报 | {item.get('最新公告日期', '')} | {item.get('股票简称', '')}")
+    for item in perf.get("financial_abstract", [])[:preview]:
+        print(f"  - 财报摘要 | 报告期: {item.get('报告期', '')} | 归母净利润: {item.get('归母净利润', 'N/A')} | 营收: {item.get('营业总收入', 'N/A')}")
+        if item.get("基本每股收益"):
+            print(f"    | 每股收益: {item.get('基本每股收益')} | ROE: {item.get('净资产收益率(ROE)', 'N/A')} | 毛利率: {item.get('毛利率', 'N/A')}")
 
     hc = payload["holder_change_buyback"]
     print(f"\n2) 增减持/回购：{hc['count']} 条")

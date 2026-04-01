@@ -158,6 +158,30 @@ CODE        股票代码（必填）
 
 ---
 
+## fetch_sector_info.py 参数详解
+
+查询单只或多只股票的**证券简称与申万/东财行业分类**，数据源：**东方财富** HTTP 接口。
+
+本参考与 `SKILL.md` 对齐：**不将「概念板块」列为可用能力**（上游概念接口结果不稳定、实践中常为空）。文档与技能用法上请**始终加 `--no-concepts`**，只使用行业与名称维度。
+
+### 用法
+
+- 单只：`python3 fetch_sector_info.py --no-concepts --json 600519`
+- 多只（空格或逗号分隔，内部线程池并行）：`python3 fetch_sector_info.py --workers 8 --no-concepts --timeout 15 --json 600519 000001 300750`
+
+| 参数 | 说明 |
+|---|---|
+| `codes` | 位置参数，一只或多只代码，支持空格或逗号分隔 |
+| `--workers` | 并发线程数 |
+| `--timeout` | 单只股票请求超时（秒） |
+| `--no-concepts` | **技能侧必选**：跳过概念板块请求，仅行业+名称 |
+| `--json` | 输出 JSON（多只时通常带 `data` 与耗时等元信息，以脚本实际输出为准） |
+| `--batch-test` | 使用脚本内置列表做批量自检 |
+
+返回字段（行业路径）：`code` / `name` / `industry` / `source`（一般为 `eastmoney`）等；`concepts` 即使存在也不作为本技能承诺字段。
+
+---
+
 ## 常见股票代码
 
 | 股票 | 代码 | 市场前缀格式 |
