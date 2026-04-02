@@ -14,6 +14,8 @@ description: 查询A股实时行情、历史数据、技术指标、事件、资
 - 历史数据与财务维度
 - 技术指标
 - 个股事件
+- A+H 双重上市公司列表（支持按 H 股上市日期筛选）
+- A股赴港上市关键事件时间节点（递表/聆讯/备案/招股/定价/配售/上市）
 - 个股行业信息（`fetch_sector_info.py`，数据源东方财富；**不作为支持能力：概念板块**，见下）
 
 ## 环境与路径
@@ -28,6 +30,8 @@ python3 "$SKILL_DIR/scripts/fetch_realtime.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_history.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_technical.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_stock_events.py" [参数]
+python3 "$SKILL_DIR/scripts/fetch_ah_stocks.py" [参数]
+python3 "$SKILL_DIR/scripts/fetch_ah_ipo_timeline.py" [参数]
 python3 "$SKILL_DIR/scripts/fetch_sector_info.py" [参数]
 ```
 
@@ -47,11 +51,13 @@ python3 "$SKILL_DIR/scripts/fetch_sector_info.py" [参数]
 - `fetch_history.py`：历史K线、财务、业绩、分红、行业、指数成分、交易日历、宏观
 - `fetch_technical.py`：MA/MACD/KDJ/RSI/BOLL等技术指标
 - `fetch_stock_events.py`：业绩、增减持/回购、监管、重大合同、舆情方向
+- `fetch_ah_stocks.py`：A+H 双重上市公司清单、H 股上市日期区间筛选
+- `fetch_ah_ipo_timeline.py`：A股赴港上市关键事件节点（递表/聆讯/备案/招股/定价/配售/上市）；支持 `--code` / `--name` 点查
 - `fetch_sector_info.py`：单只或多只股票的行业与名称（东方财富）；批量时并行，默认 `--workers`；**仅文档化行业路径，不加概念**
 
 ## 执行流程
 
-1. 先识别用户意图是实时、历史、技术、事件还是「个股所属行业」。
+1. 先识别用户意图是实时、历史、技术、事件、A股赴港上市时间节点，还是「个股所属行业」。
 2. 选择对应脚本并优先加 `--json`。
 3. 参数不足时补齐默认值后执行，不先空谈。
 4. 返回时给出关键字段结论，并附可复现命令。
@@ -109,6 +115,15 @@ python3 fetch_technical.py 600519 --freq 1d --count 120 --indicators MA,MACD,KDJ
 
 # 事件
 python3 fetch_stock_events.py --code 300476 --name 胜宏科技 --dates 20250331,20241231 --limit 20 --json
+
+# A+H 列表
+python3 fetch_ah_stocks.py --json
+python3 fetch_ah_stocks.py --since 2020-01-01 --until 2024-12-31 --json
+
+# A股赴港上市关键节点
+python3 fetch_ah_ipo_timeline.py --name 顺丰 --json
+python3 fetch_ah_ipo_timeline.py --code 002352 --json
+python3 fetch_ah_ipo_timeline.py --since 2020 --workers 4 --json
 
 # 个股行业（不加概念，见上文说明）
 python3 fetch_sector_info.py --no-concepts --json 600519

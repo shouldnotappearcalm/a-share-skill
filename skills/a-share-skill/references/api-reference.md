@@ -158,6 +158,45 @@ CODE        股票代码（必填）
 
 ---
 
+## fetch_ah_ipo_timeline.py 参数详解
+
+查询 A股赴港上市（A→H）关键事件时间节点，默认提取以下里程碑：
+- `submit`：递表/递交上市申请/刊发申请资料
+- `hearing`：聆讯/联交所审议/聆讯后资料集
+- `filing`：证监会备案
+- `prospectus`：招股说明书/全球发售
+- `pricing`：发售价/发行价
+- `allotment`：配售结果
+- `listing`：挂牌并上市交易
+
+### 用法
+
+- 单票按名称：`python3 fetch_ah_ipo_timeline.py --name 赛力斯 --json`
+- 单票按代码：`python3 fetch_ah_ipo_timeline.py --code 601127 --json`
+- 全量（按 H 股上市年份过滤）：`python3 fetch_ah_ipo_timeline.py --since 2020 --workers 4 --json`
+
+### 参数
+
+| 参数 | 说明 |
+|---|---|
+| `--name` | 名称模糊匹配（如 `顺丰` / `美的`） |
+| `--code` | A股或H股代码（如 `002352` / `06936`） |
+| `--since` | 全量模式起始年份（默认 2020） |
+| `--workers` | 并发线程数 |
+| `--no-cache` | 全量模式禁用缓存，强制刷新 |
+| `--json` | 输出 JSON |
+| `--limit` | 文本输出条数 |
+
+### 输出字段（data[]）
+
+- `name` / `a_code` / `hk_code`
+- `list_date`（H股上市日期）
+- `submit_date` / `hearing_date` / `filing_date` / `prospectus_date` / `pricing_date` / `allotment_date` / `listing_announce_date`
+- `event_count`
+- `events`（命中的 H 股相关公告列表，含 `date`、`title`）
+
+---
+
 ## fetch_sector_info.py 参数详解
 
 查询单只或多只股票的**证券简称与申万/东财行业分类**，数据源：**东方财富** HTTP 接口。
