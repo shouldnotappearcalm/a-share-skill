@@ -336,21 +336,32 @@ def _fetch_announcements(a_code: str, begin: str, end: str, max_pages: int = 30)
             "end_time": end,
             "stock_list": a_code,
         }
-        try:
-            resp = requests.get(
-                "https://np-anotice-stock.eastmoney.com/api/security/ann",
-                params=params,
-                headers=headers,
-                timeout=8,
-            )
-            items = resp.json().get("data", {}).get("list", []) or []
-            if not items:
+
+        items = None
+        for _ in range(3):
+            try:
+                resp = requests.get(
+                    "https://np-anotice-stock.eastmoney.com/api/security/ann",
+                    params=params,
+                    headers=headers,
+                    timeout=8,
+                )
+                items = resp.json().get("data", {}).get("list", []) or []
                 break
-            all_items.extend(items)
-            if len(items) < 100:
-                break
-        except Exception:
+            except Exception:
+                continue
+
+        # 本页彻底失败：跳过该页，继续后续页，避免提前中断
+        if items is None:
+            continue
+
+        if not items:
             break
+
+        all_items.extend(items)
+        if len(items) < 100:
+            break
+
     return all_items
 
 
