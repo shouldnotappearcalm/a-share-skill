@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-A股赴港上市(IPO)关键时间节点查询
+A股赴港上市关键事件时间节点查询
 
-能力：
-1) 查询 A->H 关键节点：递表、聆讯、招股、定价、配售结果、上市、超额配售等
-2) 支持按股票代码/名称精准查询（即使 list_date 缺失也可强制查询）
-3) 支持全量缓存结果输出
+参考实现要点：
+- 港股名 -> A股代码 自动解析（缓存映射）
+- 东方财富公告分段/分页抓取
+- 先做 H 股相关公告过滤，再做里程碑正则匹配
+- 时间窗口默认：H 股上市日前 3 年 ~ 上市后 180 天
+- 支持批量与单票查询
 """
 
 import argparse
@@ -24,11 +26,15 @@ import pandas as pd
 import requests
 
 
+# ------------------------------
+# 通用
+# ------------------------------
+
 class _CallTimeout(Exception):
     pass
 
 
-def _safe_ak_call(fn, *args, timeout_sec: int = 15, **kwargs):
+def _safe_ak_call(fn, *args, timeout_sec: int = 12, **kwargs):
     result = {"value": None, "error": None}
 
     def _runner():
@@ -59,18 +65,18 @@ def _to_native(v: Any):
     return v
 
 
-def _parse_date(date_str: Any) -> Optional[datetime]:
-    if date_str is None:
+def _parse_date(s: Any) -> Optional[datetime]:
+    if s is None:
         return None
-    s = str(date_str).strip()
-    if not s:
+    x = str(s).strip()
+    if not x:
         return None
-    s = s.replace("/", "-")
-    if " " in s:
-        s = s.split(" ")[0]
+    x = x.replace("/", "-")
+    if " " in x:
+        x = x.split(" ")[0]
     for fmt in ("%Y-%m-%d", "%Y%m%d", "%Y年%m月%d日"):
         try:
-            return datetime.strptime(s, fmt)
+            return datetime.strptime(x, fmt)
         except ValueError:
             pass
     return None
@@ -80,364 +86,473 @@ def _normalize_hk_code(raw: str) -> str:
     s = str(raw).strip().upper()
     if s.endswith(".HK"):
         s = s[:-3]
-    if s.isdigit():
-        return s.zfill(5)
-    return s
+    return s.zfill(5) if s.isdigit() else s
 
 
-def _load_cache(cache_file: Path, ttl_sec: int) -> Optional[Dict[str, Any]]:
-    if not cache_file.exists():
+# ------------------------------
+# 路径/缓存
+# ------------------------------
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+CACHE_DIR = SCRIPT_DIR.parent / "cache"
+AH_CACHE_FILE = CACHE_DIR / "ah_stocks.json"
+TIMELINE_CACHE_FILE = CACHE_DIR / "ah_ipo_timeline.json"
+CODE_MAPPING_FILE = CACHE_DIR / "ah_code_mapping.json"
+
+TIMELINE_TTL = 24 * 3600
+CODE_MAPPING_TTL = 30 * 24 * 3600
+
+_CODE_MAPPING_LOCK = threading.Lock()
+_CODE_MAPPING_DIRTY = False
+
+
+def _load_json_if_fresh(path: Path, ttl: int) -> Optional[Dict[str, Any]]:
+    if not path.exists():
         return None
     try:
-        payload = json.loads(cache_file.read_text(encoding="utf-8"))
-        ts = float(payload.get("generated_at", 0))
-        if time.time() - ts > ttl_sec:
+        obj = json.loads(path.read_text(encoding="utf-8"))
+        ts = float(obj.get("generated_at", 0))
+        if time.time() - ts > ttl:
             return None
-        return payload
+        return obj
     except Exception:
         return None
 
 
-def _save_cache(cache_file: Path, data: Dict[str, Any]) -> None:
-    cache_file.parent.mkdir(parents=True, exist_ok=True)
-    cache_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+def _save_json(path: Path, payload: Dict[str, Any]):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def _load_ah_stocks_cache() -> List[Dict[str, Any]]:
-    script_dir = Path(__file__).resolve().parent
-    cache_file = script_dir.parent / "cache" / "ah_stocks.json"
-    if cache_file.exists():
-        try:
-            payload = json.loads(cache_file.read_text(encoding="utf-8"))
-            return payload.get("data", []) or []
-        except Exception:
-            return []
-    return []
+def _load_code_mapping() -> Dict[str, str]:
+    obj = _load_json_if_fresh(CODE_MAPPING_FILE, CODE_MAPPING_TTL)
+    if not obj:
+        return {}
+    data = obj.get("data", {})
+    return data if isinstance(data, dict) else {}
 
 
-def _fetch_ah_stock_list() -> List[Dict[str, Any]]:
+def _save_code_mapping(mapping: Dict[str, str]):
+    _save_json(CODE_MAPPING_FILE, {
+        "generated_at": time.time(),
+        "generated_at_text": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "count": len(mapping),
+        "data": mapping,
+    })
+
+
+# ------------------------------
+# A/H 列表
+# ------------------------------
+
+def _load_ah_from_cache() -> List[Dict[str, Any]]:
+    if not AH_CACHE_FILE.exists():
+        return []
     try:
-        df = _safe_ak_call(ak.stock_zh_ah_spot_em, timeout_sec=30)
-        if df is None or df.empty:
-            return []
-        items = []
-        for _, row in df.iterrows():
-            items.append({
-                "hk_code": _normalize_hk_code(row.get("H股代码", "")),
-                "a_code": str(row.get("A股代码", "")).strip(),
-                "ah_name": str(row.get("名称", "")).strip(),
-                "list_date": None,
-            })
-        return items
+        obj = json.loads(AH_CACHE_FILE.read_text(encoding="utf-8"))
+        rows = obj.get("data", [])
+        return rows if isinstance(rows, list) else []
     except Exception:
         return []
 
 
-def _search_ipo_announcements(
-    a_code: str,
-    start_date: str,
-    end_date: str,
-    page_size: int = 100,
-    max_pages: int = 4,
-) -> List[Dict[str, Any]]:
-    url = "https://np-anotice-stock.eastmoney.com/api/security/ann"
+def _fetch_ah_spot_list() -> List[Dict[str, Any]]:
+    df = _safe_ak_call(ak.stock_zh_ah_spot_em, timeout_sec=20)
+    if df is None or df.empty:
+        return []
 
-    ipo_patterns = [
-        r"递表|递交.*申请|刊发申请资料|更新申请资料",
-        r"聆讯|通过.*聆讯|聆讯后资料集|PHIP|联交所审议",
-        r"境外发行上市备案|备案通知书|证监会.*备案",
-        r"招股书|招股章程|全球发售|公开发售|国际配售",
-        r"定价|发售价|发行价",
-        r"配售结果|分配结果|中签|超额配股权|稳定价格期",
-        r"挂牌上市|H股上市|上市交易|在港上市",
-        r"港交所|香港联交所|香港交易所|发行H股",
-    ]
-
-    all_announcements: List[Dict[str, Any]] = []
-    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-
-    seg_start = start_dt
-    while seg_start <= end_dt:
-        seg_end = min(seg_start + timedelta(days=180), end_dt)
-        for page in range(1, max_pages + 1):
-            params = {
-                "sr": -1,
-                "page_size": page_size,
-                "page_index": page,
-                "ann_type": "SHA,SZA",
-                "client_source": "web",
-                "f_node": 0,
-                "s_node": 0,
-                "begin_time": seg_start.strftime("%Y-%m-%d"),
-                "end_time": seg_end.strftime("%Y-%m-%d"),
-                "stock_list": a_code,
-            }
-
-            ok = False
-            for _ in range(1):
-                try:
-                    resp = requests.get(
-                        url,
-                        params=params,
-                        timeout=6,
-                        headers={
-                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-                        },
-                    )
-                    data = resp.json()
-                    items = data.get("data", {}).get("list", []) or []
-                    ok = True
-                    if not items:
-                        break
-
-                    for item in items:
-                        title = str(item.get("title", ""))
-                        if not title:
-                            continue
-                        if not any(re.search(p, title) for p in ipo_patterns):
-                            continue
-                        art_code = item.get("art_code", "")
-                        if art_code and any(x.get("art_code") == art_code for x in all_announcements):
-                            continue
-                        all_announcements.append(
-                            {
-                                "art_code": art_code,
-                                "title": title,
-                                "notice_date": str(item.get("notice_date", ""))[:10],
-                            }
-                        )
-                    if len(items) < page_size:
-                        break
-                    break
-                except Exception:
-                    continue
-            if not ok:
-                break
-
-        seg_start = seg_end + timedelta(days=1)
-
-    return sorted(all_announcements, key=lambda x: x.get("notice_date", ""))
+    out = []
+    for _, row in df.iterrows():
+        out.append({
+            "ah_name": str(row.get("名称", "")).strip(),
+            "a_code": str(row.get("A股代码", "")).strip(),
+            "hk_code": _normalize_hk_code(row.get("H股代码", "")),
+            "list_date": None,
+        })
+    return out
 
 
-def _extract_timeline_from_announcements(announcements: List[Dict[str, Any]]) -> Dict[str, Any]:
-    def _pick_first(pattern: str) -> Optional[str]:
-        for ann in announcements:
-            if re.search(pattern, ann.get("title", "")):
-                return ann.get("notice_date")
+def _query_hk_profile(hk_code: str) -> Dict[str, Any]:
+    try:
+        df = _safe_ak_call(ak.stock_hk_security_profile_em, symbol=hk_code, timeout_sec=10)
+        if df is None or df.empty:
+            return {"hk_code": hk_code, "profile_error": "empty"}
+        row = {k: _to_native(v) for k, v in df.iloc[0].to_dict().items()}
+        return {
+            "hk_code": hk_code,
+            "security_name": row.get("证券简称"),
+            "list_date": str(row.get("上市日期", "")).split(" ")[0] if row.get("上市日期") else None,
+            "security_type": row.get("证券类型"),
+            "board": row.get("板块"),
+            "is_sh_connect": row.get("是否沪港通标的"),
+            "is_sz_connect": row.get("是否深港通标的"),
+            "profile_error": None,
+        }
+    except Exception as e:
+        return {"hk_code": hk_code, "profile_error": str(e)}
+
+
+def _fetch_ah_stocks(max_workers: int = 8, use_cache: bool = True) -> List[Dict[str, Any]]:
+    if use_cache:
+        cached = _load_ah_from_cache()
+        if cached:
+            return cached
+
+    items = _fetch_ah_spot_list()
+    if not items:
+        return []
+
+    prof_map: Dict[str, Dict[str, Any]] = {}
+    with ThreadPoolExecutor(max_workers=max(1, max_workers)) as ex:
+        futs = {ex.submit(_query_hk_profile, s["hk_code"]): s["hk_code"] for s in items}
+        for fut in as_completed(futs):
+            hk = futs[fut]
+            try:
+                prof_map[hk] = fut.result()
+            except Exception as e:
+                prof_map[hk] = {"hk_code": hk, "profile_error": str(e)}
+
+    out = []
+    for s in items:
+        p = prof_map.get(s["hk_code"], {})
+        out.append({
+            "ah_name": s.get("ah_name"),
+            "a_code": s.get("a_code"),
+            "hk_code": s.get("hk_code"),
+            "security_name": p.get("security_name") or s.get("ah_name"),
+            "list_date": p.get("list_date"),
+            "security_type": p.get("security_type"),
+            "board": p.get("board"),
+            "is_sh_connect": p.get("is_sh_connect"),
+            "is_sz_connect": p.get("is_sz_connect"),
+            "profile_error": p.get("profile_error"),
+        })
+
+    _save_json(AH_CACHE_FILE, {
+        "generated_at": time.time(),
+        "generated_at_text": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "count": len(out),
+        "data": out,
+    })
+    return out
+
+
+# ------------------------------
+# 港股名 -> A股代码 自动解析
+# ------------------------------
+
+def _search_a_code(keyword: str) -> Optional[str]:
+    # 东方财富 suggest 接口
+    try:
+        resp = requests.get(
+            "https://searchapi.eastmoney.com/api/suggest/get",
+            params={"input": keyword, "type": "14", "count": "8"},
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=6,
+        )
+        arr = resp.json().get("QuotationCodeTable", {}).get("Data", []) or []
+        for item in arr:
+            classify = str(item.get("Classify", ""))
+            code = str(item.get("Code", "")).strip()
+            # 23: A股（常见）
+            if classify == "23" and code.isdigit() and len(code) == 6:
+                return code
+    except Exception:
+        return None
+    return None
+
+
+def _resolve_a_code(name: str, hint_a_code: str = "", code_mapping: Optional[Dict[str, str]] = None) -> Optional[str]:
+    if hint_a_code and hint_a_code.isdigit() and len(hint_a_code) == 6:
+        return hint_a_code
+
+    clean = str(name or "").strip().replace("*", "")
+    if not clean:
         return None
 
-    timeline = {
-        "submit_date": _pick_first(r"递表|递交.*申请|刊发申请资料|更新申请资料"),
-        "hearing_date": _pick_first(r"聆讯|通过.*聆讯|聆讯后资料集|PHIP|联交所审议"),
-        "filing_date": _pick_first(r"境外发行上市备案|备案通知书|证监会.*备案"),
-        "prospectus_date": _pick_first(r"招股书|招股章程|全球发售|公开发售|国际配售"),
-        "pricing_date": _pick_first(r"定价|发售价|发行价"),
-        "allotment_result_date": _pick_first(r"配售结果|分配结果|中签"),
-        "greenshoe_date": _pick_first(r"超额配股权|稳定价格期"),
-        "list_announce_date": _pick_first(r"挂牌上市|H股上市|上市交易|在港上市"),
-        "events": [],
+    mapping = code_mapping if code_mapping is not None else _load_code_mapping()
+    if clean in mapping:
+        return mapping[clean]
+
+    candidates = [clean]
+    for suffix in ["股份", "科技", "集团", "控股", "有限公司", "国际"]:
+        if clean.endswith(suffix) and len(clean) > len(suffix):
+            candidates.append(clean[:-len(suffix)])
+
+    # 一个常见英文名兜底示例
+    if clean.upper() == "FORTIOR":
+        candidates.append("峰岹科技")
+
+    found = None
+    for kw in candidates:
+        code = _search_a_code(kw)
+        if code:
+            found = code
+            break
+
+    if found:
+        with _CODE_MAPPING_LOCK:
+            mapping[clean] = found
+            _save_code_mapping(mapping)
+        return found
+
+    return None
+
+
+# ------------------------------
+# 公告抓取 + 节点提取
+# ------------------------------
+
+_MILESTONE_PATTERNS = [
+    (r"递表|递交.*申请|刊发申请资料|更新申请资料", "submit"),
+    (r"聆讯|通过.*聆讯|聆讯后资料集|联交所审议|PHIP", "hearing"),
+    (r"境外发行上市备案|备案通知书|证监会.*备案", "filing"),
+    (r"招股书|招股章程|全球发售|公开发售|国际配售", "prospectus"),
+    (r"定价|发售价|发行价", "pricing"),
+    (r"配售结果|分配结果|中签结果", "allotment"),
+    (r"挂牌上市|H股上市|上市交易", "listing"),
+]
+
+_H_FILTER = r"H股|境外上市|港交所|香港联交所|香港交易所|发行境外上市外资股|全球发售|招股"
+
+
+def _fetch_announcements(a_code: str, begin: str, end: str, max_pages: int = 30) -> List[Dict[str, Any]]:
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://data.eastmoney.com/",
     }
+    all_items: List[Dict[str, Any]] = []
 
-    event_patterns = [
-        ("submit", r"递表|递交.*申请|刊发申请资料|更新申请资料"),
-        ("hearing", r"聆讯|通过.*聆讯|聆讯后资料集|PHIP|联交所审议"),
-        ("filing", r"境外发行上市备案|备案通知书|证监会.*备案"),
-        ("prospectus", r"招股书|招股章程|全球发售|公开发售|国际配售"),
-        ("pricing", r"定价|发售价|发行价"),
-        ("allotment", r"配售结果|分配结果|中签"),
-        ("greenshoe", r"超额配股权|稳定价格期"),
-        ("listing", r"挂牌上市|H股上市|上市交易|在港上市"),
-    ]
+    for page in range(1, max_pages + 1):
+        params = {
+            "sr": -1,
+            "page_size": "100",
+            "page_index": str(page),
+            "ann_type": "SHA,SZA",
+            "client_source": "web",
+            "f_node": "0",
+            "s_node": "0",
+            "begin_time": begin,
+            "end_time": end,
+            "stock_list": a_code,
+        }
+        try:
+            resp = requests.get(
+                "https://np-anotice-stock.eastmoney.com/api/security/ann",
+                params=params,
+                headers=headers,
+                timeout=8,
+            )
+            items = resp.json().get("data", {}).get("list", []) or []
+            if not items:
+                break
+            all_items.extend(items)
+            if len(items) < 100:
+                break
+        except Exception:
+            break
+    return all_items
 
-    seen = set()
+
+def _extract_milestones(announcements: List[Dict[str, Any]], listing_date: Optional[str]) -> Dict[str, Any]:
+    cutoff = None
+    if listing_date:
+        dt = _parse_date(listing_date)
+        if dt:
+            cutoff = (dt - timedelta(days=365 * 3)).strftime("%Y-%m-%d")
+
+    hk_anns = []
     for ann in announcements:
-        title = ann.get("title", "")
-        d = ann.get("notice_date")
-        if not d:
+        title = str(ann.get("title", ""))
+        notice_date = str(ann.get("notice_date", ""))[:10]
+        if not title or not notice_date:
             continue
-        for ev_type, patt in event_patterns:
-            if re.search(patt, title):
-                key = (ev_type, d, title)
-                if key in seen:
-                    continue
-                seen.add(key)
-                timeline["events"].append(
-                    {"date": d, "type": ev_type, "title": title, "source": "eastmoney_announcement"}
-                )
+        if not re.search(_H_FILTER, title):
+            continue
+        if cutoff and notice_date < cutoff:
+            continue
+        hk_anns.append({"date": notice_date, "title": title})
+
+    hk_anns.sort(key=lambda x: x["date"])
+
+    milestones: Dict[str, Dict[str, str]] = {}
+    for patt, name in _MILESTONE_PATTERNS:
+        for ann in hk_anns:
+            if re.search(patt, ann["title"]):
+                milestones[name] = {"date": ann["date"], "title": ann["title"]}
                 break
 
-    timeline["events"] = sorted(timeline["events"], key=lambda x: x["date"])
-    return timeline
+    return {
+        "milestones": milestones,
+        "events": hk_anns,
+        "event_count": len(hk_anns),
+    }
 
 
-def _matches_target(stock: Dict[str, Any], code: str = "", name: str = "") -> bool:
-    code = (code or "").strip().upper()
-    name = (name or "").strip().lower()
+def _query_milestones_for_stock(stock: Dict[str, Any], code_mapping: Dict[str, str]) -> Dict[str, Any]:
+    name = stock.get("ah_name") or stock.get("security_name") or ""
+    hk_code = stock.get("hk_code") or ""
+    listing_date = stock.get("list_date")
 
-    a_code = str(stock.get("a_code") or "").upper()
-    hk_code = str(stock.get("hk_code") or "").upper()
-    ah_name = str(stock.get("ah_name") or stock.get("name") or stock.get("security_name") or "")
-    ah_name_l = ah_name.lower()
+    a_code = _resolve_a_code(name, hint_a_code=stock.get("a_code", ""), code_mapping=code_mapping)
+    if not a_code:
+        return {
+            "name": name,
+            "a_code": None,
+            "hk_code": hk_code,
+            "list_date": listing_date,
+            "error": "无法解析A股代码",
+            "milestones": {},
+            "events": [],
+            "event_count": 0,
+        }
 
-    if code:
-        code_ok = code in {a_code, hk_code, hk_code.zfill(5)}
-        if not code_ok:
-            return False
-    if name and name not in ah_name_l:
+    # 查询时间窗：优先围绕上市日；若无上市日，用近6年
+    if listing_date and _parse_date(listing_date):
+        dt = _parse_date(listing_date)
+        begin = (dt - timedelta(days=365 * 3)).strftime("%Y-%m-%d")
+        end = (dt + timedelta(days=180)).strftime("%Y-%m-%d")
+    else:
+        begin = (datetime.now() - timedelta(days=365 * 6)).strftime("%Y-%m-%d")
+        end = datetime.now().strftime("%Y-%m-%d")
+
+    anns = _fetch_announcements(a_code, begin, end)
+    extracted = _extract_milestones(anns, listing_date)
+
+    return {
+        "name": name,
+        "a_code": a_code,
+        "hk_code": hk_code,
+        "list_date": listing_date,
+        "error": None,
+        "milestones": extracted["milestones"],
+        "events": extracted["events"],
+        "event_count": extracted["event_count"],
+        "query_window": {"begin": begin, "end": end},
+    }
+
+
+def _batch_query_milestones(stocks: List[Dict[str, Any]], max_workers: int = 4, use_cache: bool = True) -> Dict[str, Dict]:
+    # target 场景不走批量缓存，避免旧数据干扰
+    if use_cache:
+        cached = _load_json_if_fresh(TIMELINE_CACHE_FILE, TIMELINE_TTL)
+        if cached and isinstance(cached.get("data"), dict):
+            return cached["data"]
+
+    code_mapping = _load_code_mapping()
+    results: Dict[str, Dict] = {}
+
+    with ThreadPoolExecutor(max_workers=max(1, max_workers)) as ex:
+        futs = {ex.submit(_query_milestones_for_stock, s, code_mapping): s for s in stocks}
+        for fut in as_completed(futs):
+            s = futs[fut]
+            key = s.get("hk_code") or s.get("a_code") or s.get("ah_name")
+            try:
+                results[key] = fut.result()
+            except Exception as e:
+                results[key] = {
+                    "name": s.get("ah_name"),
+                    "a_code": s.get("a_code"),
+                    "hk_code": s.get("hk_code"),
+                    "list_date": s.get("list_date"),
+                    "error": str(e),
+                    "milestones": {},
+                    "events": [],
+                    "event_count": 0,
+                }
+
+    if use_cache:
+        _save_json(TIMELINE_CACHE_FILE, {
+            "generated_at": time.time(),
+            "generated_at_text": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "count": len(results),
+            "data": results,
+        })
+    return results
+
+
+def _match_target(stock: Dict[str, Any], code: str = "", name: str = "") -> bool:
+    c = (code or "").strip().upper()
+    n = (name or "").strip().lower()
+
+    a = str(stock.get("a_code") or "").upper()
+    h = str(stock.get("hk_code") or "").upper()
+    nm = str(stock.get("ah_name") or stock.get("security_name") or "").lower()
+
+    if c and c not in {a, h, h.zfill(5)}:
+        return False
+    if n and n not in nm:
         return False
     return True
 
 
-def _build_rows_for_stocks(stocks: List[Dict[str, Any]], since_year: int = 2020, workers: int = 3) -> List[Dict[str, Any]]:
-    end_date = datetime.now().strftime("%Y-%m-%d")
-
-    def _process(stock: Dict[str, Any]) -> Dict[str, Any]:
-        a_code = str(stock.get("a_code") or "")
-        list_date = str(stock.get("list_date") or "")
-
-        # 即使 list_date 缺失，也强制查公告（解决用户点查时漏数据问题）
-        start_date = f"{since_year}-01-01"
-        if list_date:
-            dt = _parse_date(list_date)
-            if dt:
-                start_date = (dt - timedelta(days=900)).strftime("%Y-%m-%d")
-
-        anns = _search_ipo_announcements(a_code, start_date, end_date)
-        timeline = _extract_timeline_from_announcements(anns)
-
-        return {
-            "a_code": a_code,
-            "hk_code": str(stock.get("hk_code") or ""),
-            "name": str(stock.get("ah_name") or stock.get("name") or stock.get("security_name") or ""),
-            "submit_date": timeline.get("submit_date"),
-            "hearing_date": timeline.get("hearing_date"),
-            "filing_date": timeline.get("filing_date"),
-            "prospectus_date": timeline.get("prospectus_date"),
-            "pricing_date": timeline.get("pricing_date"),
-            "allotment_result_date": timeline.get("allotment_result_date"),
-            "greenshoe_date": timeline.get("greenshoe_date"),
-            "list_date": list_date or None,
-            "list_announce_date": timeline.get("list_announce_date"),
-            "announce_count": len(anns),
-            "events": timeline.get("events", []),
-        }
-
-    rows: List[Dict[str, Any]] = []
-    with ThreadPoolExecutor(max_workers=max(1, workers)) as ex:
-        futs = [ex.submit(_process, s) for s in stocks if s.get("a_code")]
-        for fut in as_completed(futs):
-            try:
-                rows.append(fut.result())
-            except Exception:
-                pass
-
-    rows.sort(key=lambda x: (x.get("list_date") or "9999-99-99", x.get("a_code") or ""), reverse=True)
-    return rows
-
-
-def _print_table(rows: List[Dict[str, Any]], limit: int = 50) -> None:
-    show = rows[:limit]
-    if not show:
-        print("无结果")
-        return
-
-    print(f"A股赴港上市关键节点：{len(rows)} 条（展示前 {len(show)} 条）")
-    print("-" * 150)
-    print(f"{'A股':<8} {'H股':<8} {'名称':<12} {'递表':<12} {'聆讯':<12} {'备案':<12} {'招股':<12} {'上市':<12} {'事件数':<6}")
-    print("-" * 150)
-    for r in show:
-        print(
-            f"{str(r.get('a_code') or ''):<8} "
-            f"{str(r.get('hk_code') or ''):<8} "
-            f"{str(r.get('name') or '')[:10]:<12} "
-            f"{str(r.get('submit_date') or '-'):<12} "
-            f"{str(r.get('hearing_date') or '-'):<12} "
-            f"{str(r.get('filing_date') or '-'):<12} "
-            f"{str(r.get('prospectus_date') or '-'):<12} "
-            f"{str(r.get('list_date') or r.get('list_announce_date') or '-'):<12} "
-            f"{str(r.get('announce_count') or 0):<6}"
-        )
+def _format_row(info: Dict[str, Any]) -> Dict[str, Any]:
+    m = info.get("milestones", {}) or {}
+    return {
+        "name": info.get("name"),
+        "a_code": info.get("a_code"),
+        "hk_code": info.get("hk_code"),
+        "list_date": info.get("list_date"),
+        "submit_date": (m.get("submit") or {}).get("date"),
+        "hearing_date": (m.get("hearing") or {}).get("date"),
+        "filing_date": (m.get("filing") or {}).get("date"),
+        "prospectus_date": (m.get("prospectus") or {}).get("date"),
+        "pricing_date": (m.get("pricing") or {}).get("date"),
+        "allotment_date": (m.get("allotment") or {}).get("date"),
+        "listing_announce_date": (m.get("listing") or {}).get("date"),
+        "event_count": info.get("event_count", 0),
+        "error": info.get("error"),
+        "events": info.get("events", []),
+    }
 
 
 def main():
-    parser = argparse.ArgumentParser(description="查询A股赴港上市关键时间节点")
-    parser.add_argument("--since", type=int, default=2020, help="起始年份，默认2020")
-    parser.add_argument("--workers", type=int, default=3, help="并发数，默认3")
-    parser.add_argument("--no-cache", action="store_true", help="跳过缓存，强制刷新")
-    parser.add_argument("--code", default="", help="按A股/港股代码过滤，如 601127 / 09927")
-    parser.add_argument("--name", default="", help="按名称过滤，如 赛力斯")
-    parser.add_argument("--json", action="store_true", dest="output_json", help="输出JSON")
-    parser.add_argument("--limit", type=int, default=50, help="文本模式最多展示条数")
+    parser = argparse.ArgumentParser(description="查询A股赴港上市关键事件时间节点")
+    parser.add_argument("--since", type=int, default=2020, help="全量模式起始年份")
+    parser.add_argument("--workers", type=int, default=4, help="并发数")
+    parser.add_argument("--no-cache", action="store_true", help="全量模式禁用缓存")
+    parser.add_argument("--code", default="", help="A股或H股代码，如 601127 / 09927")
+    parser.add_argument("--name", default="", help="股票名称，如 赛力斯")
+    parser.add_argument("--json", action="store_true", dest="output_json", help="输出 JSON")
+    parser.add_argument("--limit", type=int, default=50, help="文本输出条数")
     args = parser.parse_args()
 
-    script_dir = Path(__file__).resolve().parent
-    cache_file = script_dir.parent / "cache" / "ah_ipo_timeline.json"
-    ttl_sec = 24 * 3600
+    ah_stocks = _fetch_ah_stocks(max_workers=max(1, args.workers), use_cache=True)
+    if not ah_stocks:
+        print(json.dumps({"error": "无法获取A/H股票列表", "data": []}, ensure_ascii=False))
+        return
 
-    # 准备股票池（优先 ah_stocks 缓存，缺失则实时拉取）
-    ah_rows = _load_ah_stocks_cache()
-    if not ah_rows:
-        ah_rows = _fetch_ah_stock_list()
+    target_mode = bool(args.code or args.name)
 
-    if args.code or args.name:
-        target_stocks = [s for s in ah_rows if _matches_target(s, code=args.code, name=args.name)]
-        rows = _build_rows_for_stocks(target_stocks, since_year=args.since, workers=args.workers)
-        meta = {
-            "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "since_year": args.since,
-            "total": len(rows),
-            "cache_hit": False,
-            "cache_file": str(cache_file),
-            "filtered": len(rows),
-            "target_mode": True,
-            "target_input": {"code": args.code or None, "name": args.name or None},
-            "target_stock_candidates": len(target_stocks),
-        }
+    if target_mode:
+        pool = [s for s in ah_stocks if _match_target(s, code=args.code, name=args.name)]
+        results = _batch_query_milestones(pool, max_workers=max(1, args.workers), use_cache=False)
+        rows = [_format_row(v) for v in results.values()]
     else:
-        cache_hit = False
-        cached_data = None
-        if not args.no_cache:
-            cached_data = _load_cache(cache_file, ttl_sec)
-            cache_hit = cached_data is not None
+        pool = []
+        for s in ah_stocks:
+            dt = _parse_date(s.get("list_date"))
+            if dt and dt.year >= args.since:
+                pool.append(s)
+        results = _batch_query_milestones(pool, max_workers=max(1, args.workers), use_cache=(not args.no_cache))
+        rows = [_format_row(v) for v in results.values()]
 
-        if cached_data:
-            rows = cached_data.get("data", [])
-            old_meta = cached_data.get("meta", {})
-            meta = {
-                **old_meta,
-                "cache_hit": cache_hit,
-                "cache_file": str(cache_file),
-                "filtered": len(rows),
-                "target_mode": False,
-            }
-        else:
-            stocks = []
-            for s in ah_rows:
-                d = _parse_date(s.get("list_date"))
-                if d and d.year >= args.since:
-                    stocks.append(s)
-            rows = _build_rows_for_stocks(stocks, since_year=args.since, workers=args.workers)
-            meta = {
-                "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "since_year": args.since,
-                "total": len(rows),
-                "cache_hit": False,
-                "cache_file": str(cache_file),
-                "filtered": len(rows),
-                "target_mode": False,
-            }
-            _save_cache(cache_file, {"generated_at": time.time(), "meta": meta, "data": rows})
+    rows.sort(key=lambda x: (x.get("list_date") or "9999-99-99", x.get("hk_code") or ""), reverse=True)
 
     output = {
         "query": {
-            "since_year": args.since,
+            "since": args.since,
             "workers": args.workers,
             "no_cache": bool(args.no_cache),
             "code": args.code or None,
             "name": args.name or None,
+            "target_mode": target_mode,
         },
-        "meta": meta,
+        "meta": {
+            "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "total": len(rows),
+            "target_candidates": len(pool),
+        },
         "data": rows,
     }
 
@@ -445,12 +560,23 @@ def main():
         print(json.dumps(output, ensure_ascii=False, indent=2))
         return
 
-    print(
-        f"查询完成：总计 {output['meta'].get('total', 0)} 条，"
-        f"筛选后 {output['meta'].get('filtered', 0)} 条，"
-        f"target_mode={output['meta'].get('target_mode')}"
-    )
-    _print_table(rows, limit=max(1, args.limit))
+    show = rows[:max(1, args.limit)]
+    print(f"查询完成：共 {len(rows)} 条（展示 {len(show)} 条）")
+    print("-" * 150)
+    print(f"{'A股':<8} {'H股':<8} {'名称':<10} {'递表':<12} {'聆讯':<12} {'备案':<12} {'招股':<12} {'上市':<12} {'事件数':<6}")
+    print("-" * 150)
+    for r in show:
+        print(
+            f"{str(r.get('a_code') or '-'):8} "
+            f"{str(r.get('hk_code') or '-'):8} "
+            f"{str(r.get('name') or '-')[:8]:10} "
+            f"{str(r.get('submit_date') or '-'):12} "
+            f"{str(r.get('hearing_date') or '-'):12} "
+            f"{str(r.get('filing_date') or '-'):12} "
+            f"{str(r.get('prospectus_date') or '-'):12} "
+            f"{str(r.get('list_date') or r.get('listing_announce_date') or '-'):12} "
+            f"{str(r.get('event_count') or 0):6}"
+        )
 
 
 if __name__ == "__main__":
