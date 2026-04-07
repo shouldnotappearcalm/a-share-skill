@@ -40,7 +40,17 @@ a-share-skill/
   - `fetch_realtime.py`：实时行情 / 指数 / 热点板块 / 涨停连板 / 资金流向等  
   - `fetch_history.py`：历史 K 线、财务报表、指数成分、宏观经济、交易日历等  
   - `fetch_technical.py`：基于实时 K 线计算多种技术指标（依赖 MyTT）
+  - `fetch_stock_events.py`：个股事件聚合（业绩、增减持/回购、监管、重大事项、舆情）
+  - `fetch_ah_stocks.py`：A+H 双重上市公司列表（支持按 H 股上市日期区间筛选）
+  - `fetch_ah_ipo_timeline.py`：A 股赴港上市关键节点时间线（支持单票与批量）
+  - `fetch_sector_info.py`：个股行业信息（支持多代码并发查询，建议配合 `--no-concepts`）
 - `references/`：补充说明文档，例如 `api-reference.md`，对各脚本参数和字段做更详细说明
+
+## 最近更新
+
+- 新增 `fetch_ah_stocks.py`，支持查询 A+H 双重上市公司并按 `--since/--until` 过滤 H 股上市日期。
+- `fetch_stock_events.py` 调整本地缓存路径到 Skill 目录下的 `cache/`，便于仓库内统一管理。
+- 仓库新增 `.gitignore`，忽略 `skills/a-share-skill/cache/`，避免本地缓存文件进入版本库。
 
 ## 如何在 Cursor / 项目中使用
 

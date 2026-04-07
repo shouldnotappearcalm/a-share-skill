@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 - 2026-04-08
+
+- 新增 `scripts/fetch_ah_stocks.py`：
+  - 支持 A+H 双重上市公司列表查询；
+  - 支持 `--since` / `--until` 按 H 股上市日期筛选；
+  - 支持本地缓存与 `--no-cache` 强制刷新。
+- 更新 `scripts/fetch_stock_events.py`：
+  - 将股票名称缓存路径调整到 `skills/a-share-skill/cache/stock_name_map.json`，统一到 Skill 缓存目录管理。
+- 仓库新增 `.gitignore` 规则：
+  - 忽略 `skills/a-share-skill/cache/`，避免缓存文件被提交。
+
 ## 0.4.0 - 2026-03-18
 
 - `fetch_realtime.py` 新增 `--boards-summary` / `--boards-detail`：
