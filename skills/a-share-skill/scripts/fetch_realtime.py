@@ -892,12 +892,12 @@ _ALL_QUOTE_SORT_KEYS = {
     "market_cap_asc": ("market_cap", False),
 }
 
-BATCH_SIZE = 500
-WORKERS = 4
+BATCH_SIZE = 600
+WORKERS = 8
 
 
-def _fetch_all_quotes_tencent() -> list:
-    """腾讯接口批量拉取全市场行情"""
+def _fetch_all_quotes_tencent():
+    """腾讯接口批量拉取全市场行情，返回(结果, 失败批次)"""
     codes = _generate_all_codes()
     batches = [codes[i:i + BATCH_SIZE] for i in range(0, len(codes), BATCH_SIZE)]
     session = _build_session()
@@ -913,17 +913,23 @@ def _fetch_all_quotes_tencent() -> list:
         return results
 
     all_items = []
+    failed_batches = []
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-        futures = [pool.submit(fetch_batch, b) for b in batches]
-        for f in as_completed(futures):
-            all_items.extend(f.result())
-    return all_items
+        fut_map = {pool.submit(fetch_batch, b): b for b in batches}
+        for fut in as_completed(fut_map):
+            batch = fut_map[fut]
+            try:
+                all_items.extend(fut.result())
+            except Exception:
+                failed_batches.append(batch)
+    return all_items, failed_batches
 
 
-def _fetch_all_quotes_sina() -> list:
-    """新浪接口批量拉取全市场行情（降级备源）"""
-    codes = _generate_all_codes()
-    batches = [codes[i:i + BATCH_SIZE] for i in range(0, len(codes), BATCH_SIZE)]
+def _fetch_all_quotes_sina(batches=None) -> list:
+    """新浪接口批量拉取全市场行情（降级备源，可指定批次）"""
+    if batches is None:
+        codes = _generate_all_codes()
+        batches = [codes[i:i + BATCH_SIZE] for i in range(0, len(codes), BATCH_SIZE)]
     session = _build_session()
     session.trust_env = False
     session.headers["Referer"] = "https://finance.sina.com.cn/"
@@ -947,15 +953,34 @@ def _fetch_all_quotes_sina() -> list:
 
 def cmd_all_quote(sort_key: str, top: int, output_json: bool):
     try:
-        items = _fetch_all_quotes_tencent()
-        source = "腾讯"
-    except Exception:
+        tx_items, failed_batches = _fetch_all_quotes_tencent()
+    except Exception as e:
+        print(f"获取腾讯全市场行情失败：{e}")
+        tx_items, failed_batches = [], [ _generate_all_codes() ]
+
+    sina_items = []
+    if failed_batches:
+        try:
+            sina_items = _fetch_all_quotes_sina(failed_batches)
+        except Exception:
+            sina_items = []
+
+    if not tx_items and not sina_items:
         try:
             items = _fetch_all_quotes_sina()
             source = "新浪"
         except Exception as e:
             print(f"获取全市场行情失败：{e}")
             sys.exit(1)
+    else:
+        merged = {}
+        for row in tx_items:
+            merged[row["code"]] = row
+        for row in sina_items:
+            if row["code"] not in merged:
+                merged[row["code"]] = row
+        items = list(merged.values())
+        source = "腾讯+新浪补拉" if sina_items else "腾讯"
 
     if not items:
         print("未获取到有效行情数据")

@@ -21,6 +21,7 @@ import argparse
 import json
 import re
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
@@ -401,8 +402,17 @@ def cmd_kline_batch(args):
 
     fetch_count = _estimate_fetch_count(args.start, args.end, args.freq, args.count)
 
+    local_ctx = threading.local()
+
+    def _get_thread_session():
+        s = getattr(local_ctx, "session", None)
+        if s is None:
+            s = _build_session()
+            local_ctx.session = s
+        return s
+
     def _one(code):
-        session = _build_session()
+        session = _get_thread_session()
         df, source = _fetch_kline_with_fallback(
             session, code, args.freq, fetch_count, start=args.start, end=args.end, retry=max(1, int(args.retries or 2))
         )
@@ -755,27 +765,22 @@ def cmd_all_stocks(args):
 
     merged = []
     source_errors = {}
+    source_funcs = {
+        "新浪": lambda: _fetch_all_stocks_sina(session, args.market),
+        "腾讯": lambda: _fetch_all_stocks_tencent(args.market),
+        "雪球": lambda: _fetch_all_stocks_xueqiu(args.market),
+    }
 
-    try:
-        sina_df = _fetch_all_stocks_sina(session, args.market)
-        if not sina_df.empty:
-            merged.append(sina_df)
-    except Exception as e:
-        source_errors["新浪"] = str(e)
-
-    try:
-        tx_df = _fetch_all_stocks_tencent(args.market)
-        if not tx_df.empty:
-            merged.append(tx_df)
-    except Exception as e:
-        source_errors["腾讯"] = str(e)
-
-    try:
-        xq_df = _fetch_all_stocks_xueqiu(args.market)
-        if not xq_df.empty:
-            merged.append(xq_df)
-    except Exception as e:
-        source_errors["雪球"] = str(e)
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        fut_map = {ex.submit(fn): name for name, fn in source_funcs.items()}
+        for fut in as_completed(fut_map):
+            src = fut_map[fut]
+            try:
+                src_df = fut.result()
+                if src_df is not None and not src_df.empty:
+                    merged.append(src_df)
+            except Exception as e:
+                source_errors[src] = str(e)
 
     if not merged:
         if source_errors:
