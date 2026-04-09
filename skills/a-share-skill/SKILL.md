@@ -140,3 +140,4 @@ python3 fetch_sector_info.py --workers 8 --no-concepts --timeout 15 --json 60051
 ## 参考
 
 - 详细参数：`references/api-reference.md`
+- GitHub 项目地址：[https://github.com/shouldnotappearcalm/a-share-skill](https://github.com/shouldnotappearcalm/a-share-skill)
