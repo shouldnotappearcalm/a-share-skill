@@ -63,21 +63,24 @@ a-share-skill/
 
 ### openclaw
 
-方式一：从本仓库复制到全局目录
+方式一：通过 ClawHub 安装（推荐，便于版本管理）
+
+```bash
+clawhub install a-share-trading
+clawhub install a-share-paper-trading
+```
+
+发布页：
+- `https://clawhub.ai/shouldnotappearcalm/a-share-trading`
+- `https://clawhub.ai/shouldnotappearcalm/a-share-paper-trading`
+
+方式二：从本仓库复制到全局目录
 
 ```bash
 mkdir -p ~/.openclaw/workspace/skills
 cp -R a-share-data ~/.openclaw/workspace/skills/
 cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
 ```
-
-方式二：通过 ClawHub 安装（推荐，便于版本管理）
-
-```bash
-clawhub install a-share-trading
-```
-
-发布页：`https://clawhub.ai/shouldnotappearcalm/a-share-trading`
 
 ### Cursor
 

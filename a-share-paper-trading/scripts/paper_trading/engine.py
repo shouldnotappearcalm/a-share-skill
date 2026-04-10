@@ -7,6 +7,7 @@ import sqlite3
 import threading
 import uuid
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, time as time_type
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -24,12 +25,28 @@ def trade_date() -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
 
-def is_trading_time(dt: Optional[datetime] = None) -> bool:
+def market_phase(dt: Optional[datetime] = None) -> str:
     now = dt or datetime.now()
     if now.weekday() >= 5:
-        return False
+        return "closed"
     current = now.time()
-    return (time_type(9, 30) <= current <= time_type(11, 30)) or (time_type(13, 0) <= current <= time_type(15, 0))
+    if time_type(9, 15) <= current < time_type(9, 25):
+        return "opening_call_auction"
+    if time_type(9, 25) <= current < time_type(9, 30):
+        return "pre_open_break"
+    if time_type(9, 30) <= current <= time_type(11, 30):
+        return "morning_continuous"
+    if time_type(11, 30) < current < time_type(13, 0):
+        return "lunch_break"
+    if time_type(13, 0) <= current < time_type(14, 57):
+        return "afternoon_continuous"
+    if time_type(14, 57) <= current <= time_type(15, 0):
+        return "closing_call_auction"
+    return "post_close"
+
+
+def is_trading_time(dt: Optional[datetime] = None) -> bool:
+    return market_phase(dt) in {"morning_continuous", "afternoon_continuous"}
 
 
 def is_after_close(dt: Optional[datetime] = None) -> bool:
@@ -39,12 +56,37 @@ def is_after_close(dt: Optional[datetime] = None) -> bool:
     return now.time() > time_type(15, 0)
 
 
-def calc_commission(amount: float) -> float:
-    return max(5.0, round(amount * 0.0003, 2))
+def _is_shanghai_symbol(symbol: Optional[str]) -> bool:
+    if not symbol:
+        return False
+    value = str(symbol).strip().lower()
+    return value.startswith("sh") or value.startswith("6")
+
+
+def calc_transfer_fee(amount: float, symbol: Optional[str] = None) -> float:
+    if not _is_shanghai_symbol(symbol):
+        return 0.0
+    return round(amount * 0.00001, 2)
+
+
+def calc_commission(amount: float, symbol: Optional[str] = None) -> float:
+    broker = max(5.0, round(amount * 0.0003, 2))
+    return round(broker + calc_transfer_fee(amount, symbol), 2)
 
 
 def calc_tax(side: str, amount: float) -> float:
     return 0.0 if side.lower() != "sell" else round(amount * 0.001, 2)
+
+
+def validate_price_tick(price: float) -> float:
+    try:
+        price_decimal = Decimal(str(price))
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError(f"invalid price {price}") from exc
+    normalized = price_decimal.quantize(Decimal("0.01"))
+    if price_decimal != normalized:
+        raise ValueError(f"order price must align with 0.01 tick size, got {price}")
+    return float(normalized)
 
 
 @dataclass
