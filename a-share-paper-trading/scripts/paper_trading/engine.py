@@ -284,8 +284,12 @@ class PaperTradingEngine:
             raise ValueError("limit_price required for limit orders")
         if req.order_type == "market" and not is_trading_time():
             raise ValueError("market orders are only accepted during trading hours")
+        if req.order_type == "limit" and req.limit_price is not None:
+            req.limit_price = validate_price_tick(req.limit_price)
 
         quote = self.market_data.get_quote(req.symbol)
+        if req.order_type == "market" and not self._is_quote_tradable(quote):
+            raise ValueError(f"symbol {req.symbol} quote is stale or unavailable for market order")
         self._validate_price_limits(req, quote)
         with self._lock, self._connect() as conn:
             account = conn.execute("SELECT * FROM accounts WHERE account_id = ?", (req.account_id,)).fetchone()
@@ -295,13 +299,13 @@ class PaperTradingEngine:
             reserved_cash = 0.0
             if req.side == "buy":
                 if req.order_type == "limit":
-                    reserved_cash = req.qty * float(req.limit_price) + calc_commission(req.qty * float(req.limit_price))
+                    reserved_cash = req.qty * float(req.limit_price) + calc_commission(req.qty * float(req.limit_price), req.symbol)
                     available_cash = float(account["cash"]) - float(account["frozen_cash"])
                     if available_cash + 1e-6 < reserved_cash:
                         raise ValueError("insufficient available cash")
                 else:
                     estimated_amount = req.qty * quote.price
-                    total_need = estimated_amount + calc_commission(estimated_amount)
+                    total_need = estimated_amount + calc_commission(estimated_amount, req.symbol)
                     available_cash = float(account["cash"]) - float(account["frozen_cash"])
                     if available_cash + 1e-6 < total_need:
                         raise ValueError("insufficient available cash")
@@ -353,6 +357,10 @@ class PaperTradingEngine:
             filled = 0
             for order in open_orders:
                 quote = self.market_data.get_quote(order["symbol"])
+                if not self._is_quote_tradable(quote):
+                    ts = now_ts()
+                    conn.execute("UPDATE orders SET last_checked_at = ?, updated_at = ? WHERE order_id = ?", (ts, ts, order["order_id"]))
+                    continue
                 market_date = quote.timestamp.split(" ")[0] if quote.timestamp else trade_date()
                 fill_price = self._get_fill_price(order, quote)
                 if fill_price is not None:
@@ -522,14 +530,14 @@ class PaperTradingEngine:
                 lot_qty = int((cash / price) // 100) * 100
                 if lot_qty >= 100:
                     amount = lot_qty * price
-                    commission = calc_commission(amount)
+                    commission = calc_commission(amount, symbol)
                     cash -= amount + commission
                     qty = lot_qty
                     avg_cost = price
                     trades.append({"date": date_str, "action": "buy", "price": round(price, 3), "qty": lot_qty, "amount": round(amount, 2), "profit": 0.0})
             elif signal == "sell" and qty > 0:
                 amount = qty * price
-                commission = calc_commission(amount)
+                commission = calc_commission(amount, symbol)
                 tax = calc_tax("sell", amount)
                 profit = amount - commission - tax - qty * avg_cost
                 cash += amount - commission - tax
@@ -564,13 +572,29 @@ class PaperTradingEngine:
             return
         if quote.limit_up is None or quote.limit_down is None:
             return
-        price = round(float(req.limit_price), 2)
+        price = validate_price_tick(req.limit_price)
         limit_up = round(float(quote.limit_up), 2)
         limit_down = round(float(quote.limit_down), 2)
         if price > limit_up:
             raise ValueError(f"order price {price} above daily limit up {limit_up}")
         if price < limit_down:
             raise ValueError(f"order price {price} below daily limit down {limit_down}")
+
+    def _is_quote_tradable(self, quote) -> bool:
+        try:
+            if float(quote.price) <= 0:
+                return False
+            if max(float(quote.open), float(quote.high), float(quote.low), float(quote.price)) <= 0:
+                return False
+        except Exception:
+            return False
+        if not getattr(quote, "timestamp", None):
+            return False
+        try:
+            quote_date = str(quote.timestamp).split(" ")[0]
+        except Exception:
+            return False
+        return quote_date == trade_date()
 
     def _should_fill(self, order: sqlite3.Row, last_price: float) -> bool:
         if order["order_type"] == "market":
@@ -613,6 +637,8 @@ class PaperTradingEngine:
         return True
 
     def _get_fill_price(self, order: sqlite3.Row, quote) -> Optional[float]:
+        if not self._is_quote_tradable(quote):
+            return None
         if order["order_type"] == "market":
             return None if self._is_locked_limit(order["side"], quote) else quote.price
         limit_price = float(order["limit_price"])
@@ -642,7 +668,7 @@ class PaperTradingEngine:
     def _fill_order(self, conn: sqlite3.Connection, order: sqlite3.Row, fill_price: float, market_date: str) -> None:
         qty = int(order["qty"])
         amount = round(fill_price * qty, 2)
-        commission = calc_commission(amount)
+        commission = calc_commission(amount, order["symbol"])
         tax = calc_tax(order["side"], amount)
         ts = now_ts()
         if order["side"] == "buy":

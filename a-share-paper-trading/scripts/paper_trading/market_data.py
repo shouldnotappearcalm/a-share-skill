@@ -78,6 +78,27 @@ def _code_digits(code: str) -> str:
     return norm[2:] if norm.startswith(("sh", "sz")) else norm
 
 
+def infer_limit_ratio(symbol: str, name: str = "") -> float:
+    digits = _code_digits(symbol)
+    upper_name = str(name or "").upper()
+    if digits.startswith(("300", "301", "688", "689")):
+        return 0.20
+    if "ST" in upper_name:
+        return 0.05
+    if digits.startswith(("430", "440", "830", "831", "832", "833", "834", "835", "836", "837", "838", "839", "870", "871", "872", "873", "874", "875", "876", "877", "878", "879")):
+        return 0.30
+    return 0.10
+
+
+def infer_limit_prices(symbol: str, prev_close: float, name: str = "") -> tuple[Optional[float], Optional[float]]:
+    if prev_close <= 0:
+        return None, None
+    ratio = infer_limit_ratio(symbol, name)
+    up = round(prev_close * (1 + ratio), 2)
+    down = round(prev_close * (1 - ratio), 2)
+    return up, down
+
+
 def _get_price_sina(session: requests.Session, code: str, count: int, frequency: str) -> pd.DataFrame:
     if frequency not in SINA_FREQ_MAP:
         return pd.DataFrame()
@@ -340,6 +361,10 @@ class MarketDataProvider:
                 snapshot.price = float(parsed.get("price") or snapshot.price)
         except Exception:
             pass
+        if snapshot.limit_up is None or snapshot.limit_down is None:
+            inferred_up, inferred_down = infer_limit_prices(snapshot.symbol, snapshot.prev_close, snapshot.name)
+            snapshot.limit_up = snapshot.limit_up or inferred_up
+            snapshot.limit_down = snapshot.limit_down or inferred_down
         return snapshot
 
     def get_quotes(self, symbols: List[str]) -> Dict[str, Quote]:
@@ -361,6 +386,8 @@ class MarketDataProvider:
         if df is None or df.empty:
             raise ValueError(f"failed to load history for {symbol}")
         out = df.copy()
+        if "time" not in out.columns:
+            out = out.rename(columns={out.columns[0]: "time"})
         out["time"] = pd.to_datetime(out["time"])
         out = out.sort_values("time").reset_index(drop=True)
         for column in ["open", "high", "low", "close", "volume"]:
