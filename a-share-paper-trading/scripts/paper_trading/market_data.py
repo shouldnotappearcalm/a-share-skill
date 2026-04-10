@@ -374,11 +374,12 @@ class MarketDataProvider:
 
     def get_intraday_bars(self, symbol: str, freq: str = "1m", count: int = 240) -> pd.DataFrame:
         normalized = normalize_realtime_code(symbol)
-        df = get_price(normalized, frequency=freq, count=count)
+        df = get_price(self._session, normalized, frequency=freq, count=count)
         if df is None or df.empty:
             return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
         out = df.copy().reset_index()
-        out.columns = ["time", "open", "close", "high", "low", "volume"]
+        out = out.rename(columns={out.columns[0]: "time"})
+        out = out[["time", "open", "high", "low", "close", "volume"]]
         out["time"] = pd.to_datetime(out["time"])
         for column in ["open", "high", "low", "close", "volume"]:
             out[column] = pd.to_numeric(out[column], errors="coerce")

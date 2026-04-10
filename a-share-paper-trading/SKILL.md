@@ -37,17 +37,48 @@ lsof -iTCP:8765 -sTCP:LISTEN
 - 收盘后让当日未成单过期
 - 定时写账户净值快照
 
+可用启动参数：
+
+- `--host`
+- `--port`
+- `--db-path`
+- `--match-interval`
+- `--valuation-interval`
+- `--idle-valuation-interval`
+
 ## CLI
 
 ```bash
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" create-account alpha --cash 500000
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" list-accounts
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" reset-account alpha --cash 300000
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" buy alpha 600519 100 --market
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" sell alpha 600519 100 --price 1450
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" orders alpha
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" positions alpha
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" show-account alpha
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" trades alpha
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" cancel <order_id>
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" process-orders
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" run-snapshots
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" backtest 600519 --strategy sma_cross --start 2025-01-01 --end 2026-03-31 --cash 200000
 ```
+
+支持的 CLI 子命令：
+
+- `create-account`
+- `reset-account`
+- `list-accounts`
+- `show-account`
+- `positions`
+- `orders`
+- `trades`
+- `buy`
+- `sell`
+- `cancel`
+- `process-orders`
+- `run-snapshots`
+- `backtest`
 
 ## 规则摘要
 
@@ -64,6 +95,24 @@ python3 "$SKILL_DIR/scripts/paper_trade_cli.py" backtest 600519 --strategy sma_c
 - `scripts/paper_trading_service.py`: 启动 HTTP 服务
 - `scripts/paper_trade_cli.py`: CLI
 - `scripts/paper_trading/`: 账户、撮合、估值、数据适配
+
+## 服务接口
+
+默认暴露这些 HTTP 路由：
+
+- `GET /accounts`
+- `POST /accounts`
+- `GET /accounts/{account_id}`
+- `POST /accounts/{account_id}/reset`
+- `GET /accounts/{account_id}/positions`
+- `GET /accounts/{account_id}/orders`
+- `GET /accounts/{account_id}/trades`
+- `POST /orders`
+- `POST /orders/{order_id}/cancel`
+- `POST /orders/process`
+- `POST /snapshots/run`
+- `POST /backtest`
+- `GET /health`
 
 ## 数据层说明
 
