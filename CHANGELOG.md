@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0 - 2026-04-10
+
+- 目录与命名调整：
+  - 仓库结构改为扁平目录，移除 `skills/` 中间层。
+  - 主数据技能从 `a-share-skill` 更名为 `a-share-data`。
+  - 删除 `ai-stock-pick-skill`，README 同步移除对应说明。
+- `a-share-paper-trading` 独立化：
+  - `market_data.py` 内置行情与历史数据适配逻辑，不再依赖外部 skill 脚本。
+  - `SKILL.md` 更新为独立运行说明，并同步 openclaw 目录文档。
+- 文档更新：
+  - README 补充 `a-share-paper-trading` 能力说明。
+  - README 新增 openclaw/cursor/claude code/opencode/codex 全局安装指引。
+  - openclaw 安装补充 `clawhub install a-share-trading` 方式。
+
 ## 0.5.0 - 2026-04-08
 
 - 新增 `scripts/fetch_ah_stocks.py`：
@@ -7,9 +21,9 @@
   - 支持 `--since` / `--until` 按 H 股上市日期筛选；
   - 支持本地缓存与 `--no-cache` 强制刷新。
 - 更新 `scripts/fetch_stock_events.py`：
-  - 将股票名称缓存路径调整到 `skills/a-share-skill/cache/stock_name_map.json`，统一到 Skill 缓存目录管理。
+  - 将股票名称缓存路径调整到 `a-share-data/cache/stock_name_map.json`，统一到 Skill 缓存目录管理。
 - 仓库新增 `.gitignore` 规则：
-  - 忽略 `skills/a-share-skill/cache/`，避免缓存文件被提交。
+  - 忽略 `a-share-data/cache/`，避免缓存文件被提交。
 
 ## 0.4.0 - 2026-03-18
 
@@ -35,7 +49,7 @@
 
 ## 0.1.0 - 2026-03-18
 
-- 新增 `skills/a-share-skill` Skill：
+- 新增 `a-share-data` Skill：
   - 能力覆盖：实时行情、分钟/日/周K线、技术指标（MACD/KDJ/RSI/BOLL 等）、财务报表（盈利/成长/偿债/现金流/杜邦）、宏观利率与货币供应量、指数成分股、涨停/连板、龙虎榜、北向资金、资金流向等。
   - 数据源：东方财富 / 新浪财经（通过 akshare）、Baostock、本地 Ashare + MyTT 库。
 - 添加脚本：
@@ -44,5 +58,5 @@
   - `scripts/fetch_technical.py`：依托 Ashare 实时K线和 MyTT 计算多种技术指标并给出信号解读。
   - `scripts/Ashare.py`：内置稳定版 Ashare，实现 A 股双核心实时 K 线接口。
 - 目录调整：
-  - 使用 `skills/` 目录统一承载 Skill：`skills/a-share-skill/`。
+  - 使用独立 skill 目录承载：`a-share-data/`。
   - 在仓库根目录新增 `README.md`，说明 Skill 包结构与用法。

@@ -1,4 +1,4 @@
-# a-share-skill
+# a-share-data
 
 基于 A 股市场的数据分析 Skill 集合，提供实时行情、历史与财务、技术指标等多种能力，面向 Agent 使用。
 
@@ -6,17 +6,16 @@
 
 ```bash
 a-share-skill/
-  README.md                     # 当前总说明
-  skills/
-    a-share-skill/              # 单个 Skill：A 股综合数据分析
-      SKILL.md                  # Skill 元信息与详细能力说明（给 Agent 看）
-      scripts/                  # 可执行脚本（实时、历史/财务、技术指标）
-      references/               # 文档与参数说明，例如 api-reference.md
+  a-share-data/                 # A股综合数据分析
+  a-share-paper-trading/        # 模拟盘交易与回测
+  README.md
 ```
+
+说明：当前仓库已采用扁平结构，每个 skill 目录直接位于仓库根目录下；每个 skill 内部保持 `SKILL.md + scripts/ + references/` 的标准结构。
 
 当前包含的 Skill：
 
-- `a-share-skill`：A 股综合数据分析 Skill  
+- `a-share-data`：A 股综合数据分析 Skill  
   - **主要能力**（摘自 `SKILL.md`）：  
     - 实时行情快照（分钟K线聚合 + 市场状态）、今日分钟K线、批量实时行情  
     - 分钟 / 日 / 周 K 线（腾讯/新浪 API + 东方财富 akshare）  
@@ -29,10 +28,16 @@ a-share-skill/
     - 盘中情绪与热点跟踪（指数、涨跌停统计、热点板块、北向资金、龙虎榜）  
     - 为量化 / 回测准备历史行情与财务因子数据
 
-- `ai-stock-pick-skill`：AI 辅助 A 股选股/策略执行框架 Skill（支持先接入外部信号源，例如 Telegram 公开频道）  
-  - **主要能力**（当前第一步）：  
-    - 从 `https://t.me/s/<channel>` 拉取指定时间范围内的公开消息  
-    - 输出结构化 JSON（消息文本、链接、发布时间等），用于后续 A 股选股/概念映射
+- `a-share-paper-trading`：A 股模拟交易与回测 Skill  
+  - **主要能力**：  
+    - 创建/重置模拟账户，管理资金与持仓  
+    - 限价单/市价单下单、撤单、订单与成交查询  
+    - 交易规则约束（100股整数倍、T+1、涨跌停校验、收盘过期）  
+    - 账户估值与净值快照、简单策略回测  
+  - **典型使用场景**：  
+    - 在不动真资金的情况下做交易流程演练  
+    - 验证撮合、冻结资金、可卖数量等账户逻辑  
+    - 快速回测单票策略并观察收益曲线
 
 ## scripts 与 references 说明
 
@@ -50,9 +55,73 @@ a-share-skill/
 
 - 新增 `fetch_ah_stocks.py`，支持查询 A+H 双重上市公司并按 `--since/--until` 过滤 H 股上市日期。
 - `fetch_stock_events.py` 调整本地缓存路径到 Skill 目录下的 `cache/`，便于仓库内统一管理。
-- 仓库新增 `.gitignore`，忽略 `skills/a-share-skill/cache/`，避免本地缓存文件进入版本库。
+- 仓库新增 `.gitignore`，忽略 `a-share-data/cache/`，避免本地缓存文件进入版本库。
 
-## 如何在 Cursor / 项目中使用
+## 全局安装（openclaw / cursor / claude code / opencode / codex）
 
-- 将整个 `skills/a-share-skill` 目录打包，放入 `~/.cursor/skills/` 或项目 `.cursor/skills/` 中使用  
-- 在此仓库下继续追加更多 Skills（例如 `skills/xxx-skill/`），保持同样结构：`SKILL.md` + `scripts/` + `references/`
+以下写法以“安装到用户级全局目录”为主，适合你这种一套技能多项目复用的场景。命令在本仓库根目录执行。
+
+### openclaw
+
+方式一：从本仓库复制到全局目录
+
+```bash
+mkdir -p ~/.openclaw/workspace/skills
+cp -R a-share-data ~/.openclaw/workspace/skills/
+cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
+```
+
+方式二：通过 ClawHub 安装（推荐，便于版本管理）
+
+```bash
+clawhub install a-share-trading
+```
+
+发布页：`https://clawhub.ai/shouldnotappearcalm/a-share-trading`
+
+### Cursor
+
+```bash
+mkdir -p ~/.cursor/skills
+cp -R a-share-data ~/.cursor/skills/
+cp -R a-share-paper-trading ~/.cursor/skills/
+```
+
+### Claude Code
+
+```bash
+mkdir -p ~/.claude/skills
+cp -R a-share-data ~/.claude/skills/
+cp -R a-share-paper-trading ~/.claude/skills/
+```
+
+### OpenCode
+
+```bash
+mkdir -p ~/.opencode/skills
+cp -R a-share-data ~/.opencode/skills/
+cp -R a-share-paper-trading ~/.opencode/skills/
+```
+
+如果你的 OpenCode 使用的是自定义 skills 路径，请把上面的目录替换成你本机配置路径。
+
+### Codex
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R a-share-data ~/.agents/skills/
+cp -R a-share-paper-trading ~/.agents/skills/
+```
+
+### 安装后快速自检
+
+1. 确认目标目录下存在 `a-share-data/SKILL.md` 与 `a-share-paper-trading/SKILL.md`
+2. 新开会话后发一个明确请求，例如：
+   - “用 a-share-data 拉取 600519 最近 20 个交易日的日线”
+   - “用 a-share-paper-trading 创建模拟账户并下一个限价单”
+
+### 参考文档
+
+- Cursor: [Agent Skills](https://www.trycursor.com/docs/context/skills)
+- Claude Code: [Extend Claude with skills](https://code.claude.com/docs/en/skills.md)
+- Codex: [Agent Skills](https://developers.openai.com/codex/skills)
