@@ -134,6 +134,10 @@ class PaperTradingEngine:
                     net_asset REAL NOT NULL,
                     position_count INTEGER NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS system_settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
                 """
             )
 
@@ -142,17 +146,68 @@ class PaperTradingEngine:
             existing = conn.execute("SELECT account_id FROM accounts WHERE account_id = ?", (account_id,)).fetchone()
             if existing:
                 raise ValueError(f"account {account_id} already exists")
+            account_count = conn.execute("SELECT COUNT(*) AS cnt FROM accounts").fetchone()["cnt"]
             ts = now_ts()
             conn.execute(
                 "INSERT INTO accounts(account_id, initial_cash, cash, frozen_cash, created_at, updated_at) VALUES(?, ?, ?, 0, ?, ?)",
                 (account_id, float(initial_cash), float(initial_cash), ts, ts),
             )
+            if int(account_count or 0) == 0:
+                conn.execute(
+                    "INSERT OR REPLACE INTO system_settings(key, value) VALUES('default_account_id', ?)",
+                    (account_id,),
+                )
         return self.get_account(account_id)
 
     def list_accounts(self) -> List[Dict]:
+        default_account_id = self.get_default_account_id()
         with self._lock, self._connect() as conn:
             rows = conn.execute("SELECT account_id FROM accounts ORDER BY account_id").fetchall()
-        return [self.get_account(row["account_id"]) for row in rows]
+        out = []
+        for row in rows:
+            item = self.get_account(row["account_id"])
+            item["is_default"] = row["account_id"] == default_account_id
+            out.append(item)
+        return out
+
+    def get_default_account_id(self) -> Optional[str]:
+        with self._lock, self._connect() as conn:
+            row = conn.execute("SELECT value FROM system_settings WHERE key = 'default_account_id'").fetchone()
+            if not row:
+                return None
+            account = conn.execute("SELECT account_id FROM accounts WHERE account_id = ?", (row["value"],)).fetchone()
+            return account["account_id"] if account else None
+
+    def set_default_account(self, account_id: str) -> Dict:
+        with self._lock, self._connect() as conn:
+            account = conn.execute("SELECT account_id FROM accounts WHERE account_id = ?", (account_id,)).fetchone()
+            if not account:
+                raise ValueError(f"account {account_id} not found")
+            conn.execute(
+                "INSERT OR REPLACE INTO system_settings(key, value) VALUES('default_account_id', ?)",
+                (account_id,),
+            )
+        return {"default_account_id": account_id}
+
+    def adjust_cash(self, account_id: str, delta: float, note: str = "") -> Dict:
+        delta = round(float(delta), 2)
+        if abs(delta) < 1e-9:
+            raise ValueError("delta must not be zero")
+        with self._lock, self._connect() as conn:
+            account = conn.execute("SELECT * FROM accounts WHERE account_id = ?", (account_id,)).fetchone()
+            if not account:
+                raise ValueError(f"account {account_id} not found")
+            available_cash = float(account["cash"]) - float(account["frozen_cash"])
+            if delta < 0 and available_cash + 1e-6 < abs(delta):
+                raise ValueError(f"insufficient available cash, available={round(available_cash, 2)}")
+            ts = now_ts()
+            conn.execute(
+                "UPDATE accounts SET initial_cash = initial_cash + ?, cash = cash + ?, updated_at = ? WHERE account_id = ?",
+                (delta, delta, ts, account_id),
+            )
+        account_data = self.get_account(account_id)
+        account_data["cash_adjustment"] = {"delta": delta, "note": note}
+        return account_data
 
     def reset_account(self, account_id: str, initial_cash: Optional[float] = None) -> Dict:
         with self._lock, self._connect() as conn:

@@ -50,6 +50,9 @@ def build_parser() -> argparse.ArgumentParser:
     reset.add_argument("account_id")
     reset.add_argument("--cash", type=float)
     sub.add_parser("list-accounts")
+    sub.add_parser("show-default-account")
+    set_default = sub.add_parser("set-default-account")
+    set_default.add_argument("account_id")
     show = sub.add_parser("show-account")
     show.add_argument("account_id")
     positions = sub.add_parser("positions")
@@ -75,6 +78,14 @@ def build_parser() -> argparse.ArgumentParser:
     sell.add_argument("--note", default="")
     cancel = sub.add_parser("cancel")
     cancel.add_argument("order_id")
+    add_cash = sub.add_parser("add-cash")
+    add_cash.add_argument("account_id")
+    add_cash.add_argument("amount", type=float)
+    add_cash.add_argument("--note", default="")
+    deduct_cash = sub.add_parser("deduct-cash")
+    deduct_cash.add_argument("account_id")
+    deduct_cash.add_argument("amount", type=float)
+    deduct_cash.add_argument("--note", default="")
     sub.add_parser("process-orders")
     sub.add_parser("run-snapshots")
     backtest = sub.add_parser("backtest")
@@ -101,6 +112,10 @@ def main() -> None:
         result = request_json(base_url, "POST", f"/accounts/{args.account_id}/reset", {"initial_cash": args.cash})
     elif cmd == "list-accounts":
         result = request_json(base_url, "GET", "/accounts")
+    elif cmd == "show-default-account":
+        result = request_json(base_url, "GET", "/accounts/default")
+    elif cmd == "set-default-account":
+        result = request_json(base_url, "POST", "/accounts/default", {"account_id": args.account_id})
     elif cmd == "show-account":
         result = request_json(base_url, "GET", f"/accounts/{args.account_id}")
     elif cmd == "positions":
@@ -129,6 +144,24 @@ def main() -> None:
         )
     elif cmd == "cancel":
         result = request_json(base_url, "POST", f"/orders/{args.order_id}/cancel", {})
+    elif cmd == "add-cash":
+        if args.amount <= 0:
+            parser.error("amount must be positive")
+        result = request_json(
+            base_url,
+            "POST",
+            f"/accounts/{args.account_id}/cash-adjust",
+            {"delta": args.amount, "note": args.note},
+        )
+    elif cmd == "deduct-cash":
+        if args.amount <= 0:
+            parser.error("amount must be positive")
+        result = request_json(
+            base_url,
+            "POST",
+            f"/accounts/{args.account_id}/cash-adjust",
+            {"delta": -args.amount, "note": args.note},
+        )
     elif cmd == "process-orders":
         result = request_json(base_url, "POST", "/orders/process", {})
     elif cmd == "run-snapshots":

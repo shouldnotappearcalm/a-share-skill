@@ -25,14 +25,21 @@ def main() -> None:
     account = engine.create_account("alpha", 500000)
     assert_true("create_account_cash", account["cash"] == 500000.0, str(account))
     assert_true("create_account_net_asset", account["net_asset"] == 500000.0, str(account))
+    assert_true("default_account_set", engine.get_default_account_id() == "alpha", engine.get_default_account_id() or "")
+
+    adjusted = engine.adjust_cash("alpha", 1000, "deposit")
+    assert_true("add_cash", abs(adjusted["cash"] - 501000.0) < 1e-6, str(adjusted))
+    adjusted = engine.adjust_cash("alpha", -500, "withdraw")
+    assert_true("deduct_cash", abs(adjusted["cash"] - 500500.0) < 1e-6, str(adjusted))
 
     order = engine.place_order(
         OrderRequest(account_id="alpha", symbol="600519", side="buy", qty=100, order_type="limit", limit_price=1400)
     )
     account = engine.get_account("alpha")
     expected_reserved = 140000 + max(5.0, round(140000 * 0.0003, 2))
+    expected_cash = 500500.0
     assert_true("freeze_cash", abs(account["frozen_cash"] - expected_reserved) < 1e-6, str(account))
-    assert_true("available_cash", abs(account["available_cash"] - (500000 - expected_reserved)) < 1e-6, str(account))
+    assert_true("available_cash", abs(account["available_cash"] - (expected_cash - expected_reserved)) < 1e-6, str(account))
 
     cancelled = engine.cancel_order(order["order_id"])
     account = engine.get_account("alpha")

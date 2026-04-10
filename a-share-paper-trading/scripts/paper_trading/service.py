@@ -64,6 +64,11 @@ class TradingRequestHandler(BaseHTTPRequestHandler):
                 return self._json({"status": "ok"})
             if path == "/accounts":
                 return self._json({"status": "success", "data": self.engine.list_accounts()})
+            if path == "/accounts/default":
+                default_account_id = self.engine.get_default_account_id()
+                if not default_account_id:
+                    return self._json({"status": "error", "message": "default account not set"}, code=404)
+                return self._json({"status": "success", "data": {"account_id": default_account_id}})
             if path.startswith("/accounts/") and path.endswith("/positions"):
                 return self._json({"status": "success", "data": self.engine.get_positions(path.split("/")[2])})
             if path.startswith("/accounts/") and path.endswith("/orders"):
@@ -85,6 +90,16 @@ class TradingRequestHandler(BaseHTTPRequestHandler):
                 return self._json({"status": "success", "data": self.engine.create_account(payload["account_id"], float(payload.get("initial_cash", 100000.0)))}, code=201)
             if path.startswith("/accounts/") and path.endswith("/reset"):
                 return self._json({"status": "success", "data": self.engine.reset_account(path.split("/")[2], payload.get("initial_cash"))})
+            if path == "/accounts/default":
+                return self._json({"status": "success", "data": self.engine.set_default_account(payload["account_id"])})
+            if path.startswith("/accounts/") and path.endswith("/cash-adjust"):
+                account_id = path.split("/")[2]
+                return self._json(
+                    {
+                        "status": "success",
+                        "data": self.engine.adjust_cash(account_id, float(payload["delta"]), payload.get("note", "")),
+                    }
+                )
             if path == "/orders":
                 req = OrderRequest(
                     account_id=payload["account_id"],
