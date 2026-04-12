@@ -6,8 +6,9 @@
 
 ```bash
 a-share-skill/
-  a-share-data/                 # A股综合数据分析
-  a-share-paper-trading/        # 模拟盘交易与回测
+  a-share-data/                                   # A股综合数据分析
+  a-share-paper-trading/                          # 模拟盘交易与回测
+  a-share-strategy-mainboard-multi-swing-defensive/  # 主板动态池趋势回踩：买卖决策信号
   README.md
 ```
 
@@ -38,6 +39,16 @@ a-share-skill/
     - 在不动真资金的情况下做交易流程演练  
     - 验证撮合、冻结资金、可卖数量等账户逻辑  
     - 快速回测单票策略并观察收益曲线
+
+- `a-share-strategy-mainboard-multi-swing-defensive`：主板流动性池 + 日线 `trend_pullback` 的**选股与买卖信号** Skill  
+  - **主要能力**（见该目录 `SKILL.md`）：  
+    - 从主板高成交额股票中取前 N 只构成股票池（`MarketDataProvider.get_mainboard_universe`）  
+    - 输出「上一交易日收盘 entry」与「最新收盘 entry」两类买入参考，默认按 `score` 各取前 5 只（可调 `--max-buys`）  
+    - 可选读取持仓文件，标注最新日线是否满足策略 `exit`（卖出参考）  
+  - **典型使用场景**：  
+    - 盘前或盘后生成当日可关注标的与减仓参考  
+    - 与 `a-share-paper-trading` 配合时：先跑信号脚本，再按需向模拟盘下单（本 skill 不自动下单）  
+  - **说明**：不包含混合回测；策略参数在 `scripts/strategy_lab/strategy_params.py`
 
 ## scripts 与 references 说明
 
@@ -80,6 +91,7 @@ clawhub install a-share-paper-trading
 mkdir -p ~/.openclaw/workspace/skills
 cp -R a-share-data ~/.openclaw/workspace/skills/
 cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.openclaw/workspace/skills/
 ```
 
 ### Cursor
@@ -88,6 +100,7 @@ cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
 mkdir -p ~/.cursor/skills
 cp -R a-share-data ~/.cursor/skills/
 cp -R a-share-paper-trading ~/.cursor/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.cursor/skills/
 ```
 
 ### Claude Code
@@ -96,6 +109,7 @@ cp -R a-share-paper-trading ~/.cursor/skills/
 mkdir -p ~/.claude/skills
 cp -R a-share-data ~/.claude/skills/
 cp -R a-share-paper-trading ~/.claude/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.claude/skills/
 ```
 
 ### OpenCode
@@ -104,6 +118,7 @@ cp -R a-share-paper-trading ~/.claude/skills/
 mkdir -p ~/.opencode/skills
 cp -R a-share-data ~/.opencode/skills/
 cp -R a-share-paper-trading ~/.opencode/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.opencode/skills/
 ```
 
 如果你的 OpenCode 使用的是自定义 skills 路径，请把上面的目录替换成你本机配置路径。
@@ -114,14 +129,16 @@ cp -R a-share-paper-trading ~/.opencode/skills/
 mkdir -p ~/.agents/skills
 cp -R a-share-data ~/.agents/skills/
 cp -R a-share-paper-trading ~/.agents/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.agents/skills/
 ```
 
 ### 安装后快速自检
 
-1. 确认目标目录下存在 `a-share-data/SKILL.md` 与 `a-share-paper-trading/SKILL.md`
+1. 确认目标目录下存在 `a-share-data/SKILL.md`、`a-share-paper-trading/SKILL.md` 与 `a-share-strategy-mainboard-multi-swing-defensive/SKILL.md`
 2. 新开会话后发一个明确请求，例如：
    - “用 a-share-data 拉取 600519 最近 20 个交易日的日线”
    - “用 a-share-paper-trading 创建模拟账户并下一个限价单”
+   - “用 a-share-strategy-mainboard-multi-swing-defensive 跑 `daily_decisions.py` 看今日买入参考”
 
 ### 参考文档
 

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -76,6 +77,18 @@ def normalize_code(code: str) -> str:
 def _code_digits(code: str) -> str:
     norm = normalize_code(code)
     return norm[2:] if norm.startswith(("sh", "sz")) else norm
+
+
+def _generate_mainboard_codes() -> list[str]:
+    codes: list[str] = []
+    for prefix in ("600", "601", "603", "605", "000", "001", "002"):
+        start = int(prefix) * 1000
+        end = start + 1000
+        for value in range(start, end):
+            code = f"{value:06d}"
+            market = "sh" if code.startswith(("600", "601", "603", "605")) else "sz"
+            codes.append(f"{market}{code}")
+    return codes
 
 
 def infer_limit_ratio(symbol: str, name: str = "") -> float:
@@ -221,8 +234,10 @@ def _parse_tencent_quote(line: str) -> Optional[dict]:
             "open": float(parts[5]) if parts[5] else 0,
             "change_pct": change_pct,
             "volume": int(parts[6]) if parts[6] else 0,
+            "amount": float(parts[37]) * 10000 if len(parts) > 37 and parts[37] else 0,
             "high": float(parts[33]) if parts[33] else 0,
             "low": float(parts[34]) if parts[34] else 0,
+            "market_cap": float(parts[45]) if len(parts) > 45 and parts[45] else 0,
             "limit_up": float(parts[47]) if parts[47] else 0,
             "limit_down": float(parts[48]) if len(parts) > 48 and parts[48] else 0,
         }
@@ -412,3 +427,65 @@ class MarketDataProvider:
             out[column] = pd.to_numeric(out[column], errors="coerce")
         out = out.dropna(subset=["time", "open", "high", "low", "close"]).sort_values("time").reset_index(drop=True)
         return out
+
+    def get_mainboard_universe(self, as_of: str | None = None, top_n: int = 80) -> list[str]:
+        try:
+            df = ak.stock_zh_a_spot_em()
+            if df is None or df.empty:
+                return []
+            out = df.copy()
+            out["代码"] = out["代码"].astype(str).str.zfill(6)
+            out["名称"] = out["名称"].astype(str)
+            out = out[
+                out["代码"].str.startswith(("600", "601", "603", "605", "000", "001", "002"))
+                & (~out["名称"].str.contains("ST", case=False, na=False))
+                & (~out["名称"].str.contains("退", na=False))
+            ]
+            out["成交额"] = pd.to_numeric(out.get("成交额"), errors="coerce")
+            out = out.dropna(subset=["成交额"]).sort_values("成交额", ascending=False)
+            if top_n > 0:
+                out = out.head(int(top_n))
+            return out["代码"].drop_duplicates().tolist()
+        except Exception:
+            pass
+        try:
+            session = _build_session()
+            session.trust_env = False
+            codes = _generate_mainboard_codes()
+            batches = [codes[i : i + 600] for i in range(0, len(codes), 600)]
+            rows: list[dict] = []
+
+            def fetch_batch(batch: list[str]) -> list[dict]:
+                resp = session.get(f"{TENCENT_QUOTE_URL}{','.join(batch)}", timeout=20)
+                out: list[dict] = []
+                for line in resp.text.strip().split("\n"):
+                    parsed = _parse_tencent_quote(line)
+                    if parsed:
+                        out.append(parsed)
+                return out
+
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futures = [pool.submit(fetch_batch, batch) for batch in batches]
+                for future in as_completed(futures):
+                    rows.extend(future.result())
+            if not rows:
+                return []
+            df = pd.DataFrame(rows)
+            df["code"] = df["code"].astype(str).str.replace("^(sh|sz)", "", regex=True).str.zfill(6)
+            df["name"] = df["name"].astype(str)
+            df = df[
+                (~df["name"].str.contains("ST", case=False, na=False))
+                & (~df["name"].str.contains("退", na=False))
+                & (df["price"] > 0)
+            ]
+            if "amount" in df.columns:
+                df["amount"] = pd.to_numeric(df["amount"], errors="coerce")
+                df = df.sort_values("amount", ascending=False)
+            else:
+                df["volume"] = pd.to_numeric(df["volume"], errors="coerce")
+                df = df.sort_values("volume", ascending=False)
+            if top_n > 0:
+                df = df.head(int(top_n))
+            return df["code"].drop_duplicates().tolist()
+        except Exception:
+            return []
