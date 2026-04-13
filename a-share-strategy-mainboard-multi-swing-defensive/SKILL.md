@@ -1,11 +1,11 @@
 ---
 name: a-share-strategy-mainboard-multi-swing-defensive
-description: A 股主板流动性池内按趋势回踩（trend_pullback）产出买入候选与持仓卖出信号，供下单前决策；不跑回测、不自动下单。Use when 用户要选股、判断今日是否适合买/卖、或批量检查持仓是否触发策略离场条件。
+description: A 股主板流动性池内按趋势回踩（trend_pullback）产出买入候选与持仓卖出信号；另有 realtime_quotes 批量拉取现价快照。供下单前决策；不跑回测、不自动下单。Use when 用户要选股、看实时报价、判断买卖信号或检查持仓是否触发离场条件。
 ---
 
 # 主板多波段防御型 · 决策信号
 
-本 skill 只做三件事：**选股范围**、**买入侧信号**、**卖出侧信号**。  
+本 skill 核心做三件事：**选股范围**、**买入侧信号**、**卖出侧信号**；并可选使用 **`realtime_quotes.py`** 对指定代码批量拉取**现价类快照**（基于 `MarketDataProvider.get_quote`，腾讯报价 + 分钟 K 聚合）。  
 输出的是**决策参考**（结构化列表或 JSON），**不包含**历史回测撮合、**不包含**自动报单；真实下单请用券商或另接 `a-share-paper-trading` 等执行通道。
 
 ## 能力边界
@@ -16,6 +16,7 @@ description: A 股主板流动性池内按趋势回踩（trend_pullback）产出
 | 用日线 `trend_pullback` 标出入场/离场条件 | 保证收益或替代投顾 |
 | 给出两类「买入参考」列表（见下） | 直接向交易所或模拟盘服务下单 |
 | 可选：读取持仓列表文件，标出「策略离场」标的 | 替你保存实盘持仓（除非你自建文件） |
+| 批量拉取多只股票现价、涨跌幅、涨跌停参考价等（`realtime_quotes.py`） | 替代 `a-share-data` 的全市场实时板块、资金流等重接口 |
 
 ## 策略逻辑（与参数）
 
@@ -62,11 +63,25 @@ python3 "$SKILL_DIR/scripts/daily_decisions.py" --json
 python3 "$SKILL_DIR/scripts/daily_decisions.py" --top-n 120 --holdings "$HOME/my_holdings.txt"
 ```
 
+### 实时行情快照（增强）
+
+对**已知代码列表**批量取报价（并发），可与 `daily_decisions` 输出的代码配合使用：
+
+```bash
+python3 "$SKILL_DIR/scripts/realtime_quotes.py" 600519 000001 601318 --json
+python3 "$SKILL_DIR/scripts/realtime_quotes.py" -f "$HOME/my_holdings.txt" --workers 10
+```
+
+- `--json`：输出统一 JSON（含 `quotes` 与逐条 `details`）  
+- `--intraday`：额外拉取**最后一根**分钟 K（`--intraday-freq` 默认 `5m`），便于核对与日线快照的时间对齐  
+- 数据来自 `paper_trading/market_data.py`：与全市场深度行情相比为**轻量快照**，盘中价格随最新分钟 K 更新  
+
 ## 脚本布局
 
 | 路径 | 作用 |
 |------|------|
 | `scripts/daily_decisions.py` | 入口：拉池、算信号、打印或 `--json` |
+| `scripts/realtime_quotes.py` | 批量现价快照，可选附带最后一根分钟 K |
 | `scripts/paper_trading/market_data.py` | 行情与 `get_mainboard_universe` |
 | `scripts/strategy_lab/strategies.py` | `trend_pullback` |
 | `scripts/strategy_lab/indicators.py` | 均线、RSI |
