@@ -26,7 +26,11 @@ def request_json(base_url: str, method: str, path: str, payload: Optional[Dict[s
         except Exception as err:
             raise RuntimeError(f"HTTP {exc.code}: {body}") from err
     except urllib.error.URLError as exc:
-        raise RuntimeError(f"failed to reach service at {base_url}: {exc}") from exc
+        raise RuntimeError(
+            "failed to reach service at "
+            f"{base_url}: {exc}. "
+            "Try starting it with: python3 scripts/paper_trading_ctl.py start"
+        ) from exc
 
 
 def print_result(result: Dict[str, Any], output_json: bool) -> None:
