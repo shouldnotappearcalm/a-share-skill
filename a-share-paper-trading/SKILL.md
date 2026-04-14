@@ -20,16 +20,35 @@ description: A股模拟盘交易与回测技能。Use when 用户要启动模拟
 
 ```bash
 SKILL_DIR="<本skill绝对路径>"
-python3 "$SKILL_DIR/scripts/paper_trading_service.py" --host 127.0.0.1 --port 8765
+python3 "$SKILL_DIR/scripts/paper_trading_service.py" --host 127.0.0.1 --port 18765
 ```
 
-默认监听 `http://127.0.0.1:8765`。若本机该端口**已有**模拟盘进程在跑，**不要**再启动第二个实例：会报 `Address already in use`，且多进程可能争用同一 SQLite 库文件。启动前可先检查端口是否在监听，例如：
+默认监听 `http://127.0.0.1:18765`，默认数据库不再落在 skill 目录，而是落到用户级数据目录：
+
+- macOS: `~/Library/Application Support/a-share-paper-trading/paper_trading.db`
+- Linux: `${XDG_DATA_HOME:-~/.local/share}/a-share-paper-trading/paper_trading.db`
+
+若本机该端口**已有**模拟盘进程在跑，**不要**再启动第二个实例：会报 `Address already in use`，且多进程可能争用同一 SQLite 库文件。启动前可先检查端口是否在监听，例如：
 
 ```bash
-lsof -iTCP:8765 -sTCP:LISTEN
+lsof -iTCP:18765 -sTCP:LISTEN
 ```
 
-或向 `http://127.0.0.1:8765/accounts` 发 `GET`（CLI 默认 `--base-url` 与此一致）。已有服务时直接用 `paper_trade_cli.py` 即可。
+或向 `http://127.0.0.1:18765/accounts` 发 `GET`（CLI 默认 `--base-url` 与此一致）。已有服务时直接用 `paper_trade_cli.py` 即可。
+
+更推荐使用控制脚本常驻运行：
+
+```bash
+python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" start
+python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" status
+python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" stop
+```
+
+在 macOS 上，如需持续自启动，可安装 launchd：
+
+```bash
+python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" install-launchd
+```
 
 服务会：
 - 交易时段定时撮合挂单
@@ -45,6 +64,8 @@ lsof -iTCP:8765 -sTCP:LISTEN
 - `--match-interval`
 - `--valuation-interval`
 - `--idle-valuation-interval`
+
+默认端口与 CLI 基址已改为 `18765`，避免和常见本地开发服务冲突。
 
 ## CLI
 
@@ -157,6 +178,8 @@ python3 "$SKILL_DIR/scripts/paper_trade_cli.py" backtest 600519 --strategy sma_c
 
 - `scripts/paper_trading_service.py`: 启动 HTTP 服务
 - `scripts/paper_trade_cli.py`: CLI
+- `scripts/paper_trading_ctl.py`: 启停、状态、launchd 安装
+- `scripts/paper_trading_runtime.py`: 运行时默认目录、端口、路径
 - `scripts/paper_trading/`: 账户、撮合、估值、数据适配
 
 ## 服务接口

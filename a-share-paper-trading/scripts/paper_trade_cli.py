@@ -10,6 +10,8 @@ import urllib.error
 import urllib.request
 from typing import Any, Dict, Optional
 
+from paper_trading_runtime import DEFAULT_HOST, DEFAULT_PORT
+
 
 def request_json(base_url: str, method: str, path: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8") if payload is not None else None
@@ -40,7 +42,7 @@ def print_result(result: Dict[str, Any], output_json: bool) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Paper trading CLI for a-share paper trading skill")
-    parser.add_argument("--base-url", default="http://127.0.0.1:8765")
+    parser.add_argument("--base-url", default=f"http://{DEFAULT_HOST}:{DEFAULT_PORT}")
     parser.add_argument("--json", action="store_true")
     sub = parser.add_subparsers(dest="command", required=True)
     create = sub.add_parser("create-account")

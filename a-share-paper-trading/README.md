@@ -33,8 +33,37 @@
 
 ## 启动
 
+默认配置已经改成用户级运行目录，不再把数据库写进 skill 目录：
+
+- macOS: `~/Library/Application Support/a-share-paper-trading/`
+- Linux: `${XDG_DATA_HOME:-~/.local/share}/a-share-paper-trading/`
+
+默认 SQLite 路径：
+
+- `~/Library/Application Support/a-share-paper-trading/paper_trading.db`（macOS）
+
+默认监听地址：
+
+- `http://127.0.0.1:18765`
+
+前台启动：
+
 ```bash
-python3 /Users/yanyun/.openclaw/workspace/skills/a-share-paper-trading/scripts/paper_trading_service.py --host 127.0.0.1 --port 8765
+python3 /Users/yanyun/dev/git_repo/ai-stock/ai-stock-data-v2/a-share-skill/a-share-paper-trading/scripts/paper_trading_service.py --host 127.0.0.1 --port 18765
+```
+
+推荐用控制脚本后台常驻：
+
+```bash
+python3 /Users/yanyun/dev/git_repo/ai-stock/ai-stock-data-v2/a-share-skill/a-share-paper-trading/scripts/paper_trading_ctl.py start
+python3 /Users/yanyun/dev/git_repo/ai-stock/ai-stock-data-v2/a-share-skill/a-share-paper-trading/scripts/paper_trading_ctl.py status
+python3 /Users/yanyun/dev/git_repo/ai-stock/ai-stock-data-v2/a-share-skill/a-share-paper-trading/scripts/paper_trading_ctl.py stop
+```
+
+若希望开机自动拉起，可安装 launchd：
+
+```bash
+python3 /Users/yanyun/dev/git_repo/ai-stock/ai-stock-data-v2/a-share-skill/a-share-paper-trading/scripts/paper_trading_ctl.py install-launchd
 ```
 
 ## 验证脚本
