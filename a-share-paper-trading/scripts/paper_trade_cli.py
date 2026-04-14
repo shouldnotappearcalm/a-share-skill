@@ -104,8 +104,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    argv = list(sys.argv[1:])
+    output_json = False
+    filtered_argv = []
+    for token in argv:
+        if token == "--json":
+            output_json = True
+            continue
+        filtered_argv.append(token)
+
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(filtered_argv)
     base_url = args.base_url.rstrip("/")
     cmd = args.command
     if cmd == "create-account":
@@ -185,7 +194,7 @@ def main() -> None:
     else:
         parser.error(f"unknown command {cmd}")
         return
-    print_result(result, args.json)
+    print_result(result, output_json)
 
 
 if __name__ == "__main__":
