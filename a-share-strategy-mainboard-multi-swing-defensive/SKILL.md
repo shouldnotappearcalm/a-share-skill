@@ -7,6 +7,7 @@ description: A 股主板流动性池内按趋势回踩（trend_pullback）产出
 
 本 skill 核心做三件事：**选股范围**、**买入侧信号**、**卖出侧信号**；并可选使用 **`realtime_quotes.py`** 对指定代码批量拉取**现价类快照**（基于 `MarketDataProvider.get_quote`，腾讯报价 + 分钟 K 聚合）。  
 输出的是**决策参考**（结构化列表或 JSON），**不包含**历史回测撮合、**不包含**自动报单；真实下单请用券商或另接 `a-share-paper-trading` 等执行通道。
+策略信号定位为**条件有效**：在市场结构与交易成本变化下，信号强度可能衰减，需持续复核。
 
 ## 能力边界
 
@@ -22,6 +23,10 @@ description: A 股主板流动性池内按趋势回踩（trend_pullback）产出
 
 默认参数见 `scripts/strategy_lab/strategy_params.py`（均线快慢、回踩幅度、RSI 区间与离场 RSI 等）。  
 信号计算在 `scripts/strategy_lab/strategies.py` 的 `trend_pullback`。
+脚本会额外应用两层过滤：
+
+- **成本过滤**：按 `--roundtrip-cost-bps` 估算往返成本，只有 `edge_after_cost > 0` 的候选才进入最终买入列表。
+- **鲁棒性过滤**：在 `ROBUSTNESS_PARAM_GRID` 参数邻域内计算 `entry_consensus_ratio`，低于 `--entry-consensus-min` 的候选会被过滤。
 
 **买入参考（两组，请区分语义）：**
 
@@ -56,12 +61,22 @@ python3 "$SKILL_DIR/scripts/daily_decisions.py" --json
 - `--holdings`：持仓代码文件路径  
 - `--workers`：拉日线并发数  
 - `--json`：输出一份 JSON，便于程序消费（JSON 内含截断前数量 `*_total`）  
+- `--roundtrip-cost-bps`：往返交易成本估计（单位 bps），默认 45  
+- `--entry-consensus-min`：参数邻域入场一致性阈值，默认 0.67  
+- `--disable-robust-check`：关闭参数邻域一致性过滤（仅在调试时使用）  
 
 示例：
 
 ```bash
 python3 "$SKILL_DIR/scripts/daily_decisions.py" --top-n 120 --holdings "$HOME/my_holdings.txt"
 ```
+
+JSON 输出中会同时包含原始候选与过滤后候选：
+
+- `from_previous_day_close_raw` / `from_last_close_raw`：仅满足信号的原始候选
+- `from_previous_day_close` / `from_last_close`：通过成本与鲁棒过滤后的候选
+- 单条候选附带 `entry_consensus_ratio`、`edge_after_cost`、`cost_filter_passed`、`consensus_filter_passed`
+- `todo_confirm_items`：当前采用口径的记录项（roundtrip=45bps、consensus=0.67、RSI 区间偏移）
 
 ### 实时行情快照（增强）
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -54,22 +55,71 @@ def _row_snapshot(enriched: pd.DataFrame, idx: int) -> dict | None:
     }
 
 
+def _build_param_variants(base_params: dict, grid: dict) -> list[dict]:
+    keys = [k for k, v in grid.items() if isinstance(v, list) and v]
+    if not keys:
+        return [dict(base_params)]
+    values = [list(dict.fromkeys(grid[k])) for k in keys]
+    variants: list[dict] = []
+    for combo in itertools.product(*values):
+        params = dict(base_params)
+        for key, val in zip(keys, combo):
+            params[key] = val
+        variants.append(params)
+    return variants
+
+
+def _entry_consensus_ratio(df: pd.DataFrame, variants: list[dict], use_previous_day: bool) -> float:
+    if df is None or df.empty or not variants:
+        return 0.0
+    idx = -2 if use_previous_day else -1
+    if len(df) < 2 and use_previous_day:
+        return 0.0
+    votes = 0
+    valid = 0
+    for params in variants:
+        try:
+            enriched = trend_pullback(df, params)
+            if enriched is None or enriched.empty:
+                continue
+            if abs(idx) > len(enriched):
+                continue
+            valid += 1
+            if bool(enriched.iloc[idx].get("entry", False)):
+                votes += 1
+        except Exception:
+            continue
+    if valid == 0:
+        return 0.0
+    return votes / valid
+
+
+def _edge_after_cost(signal_bar: dict, roundtrip_cost_bps: float) -> float:
+    score = max(float(signal_bar.get("score", 0.0)), 0.0)
+    cost = max(float(roundtrip_cost_bps), 0.0) / 10000.0
+    return score - cost
+
+
+def _passes_cost_filter(signal_bar: dict, roundtrip_cost_bps: float) -> bool:
+    return _edge_after_cost(signal_bar, roundtrip_cost_bps) > 0
+
+
 def _scan_one(
     provider: MarketDataProvider,
     code: str,
     history_count: int,
-) -> tuple[str, pd.DataFrame | None, str | None]:
+) -> tuple[str, pd.DataFrame | None, pd.DataFrame | None, str | None]:
     try:
         df = provider.get_history(code, count=history_count)
         if df is None or len(df) < max(
             int(strategy_params.TREND_PULLBACK_PARAMS.get("slow", 20)) + 3,
             30,
         ):
-            return code, None, "short_history"
+            return code, df, None, "short_history"
         out = trend_pullback(df, strategy_params.TREND_PULLBACK_PARAMS)
-        return code, out, None
+        return code, df, out, None
     except Exception as exc:
-        return code, None, str(exc)[:200]
+        return code, None, None, str(exc)[:200]
 
 
 def main() -> None:
@@ -111,6 +161,23 @@ def main() -> None:
         default=strategy_params.MAX_BUY_CANDIDATES,
         help="Cap buy lists after score sort; 0 means no cap",
     )
+    parser.add_argument(
+        "--roundtrip-cost-bps",
+        type=float,
+        default=strategy_params.DEFAULT_ROUNDTRIP_COST_BPS,
+        help="Estimated roundtrip cost in bps for cost-aware filtering",
+    )
+    parser.add_argument(
+        "--entry-consensus-min",
+        type=float,
+        default=strategy_params.ENTRY_CONSENSUS_MIN_DEFAULT,
+        help="Minimum consensus ratio from robustness grid",
+    )
+    parser.add_argument(
+        "--disable-robust-check",
+        action="store_true",
+        help="Disable entry robustness check against parameter grid",
+    )
     args = parser.parse_args()
 
     provider = MarketDataProvider()
@@ -119,17 +186,24 @@ def main() -> None:
         print("ERROR: empty universe", file=sys.stderr)
         sys.exit(1)
 
-    rows: list[tuple[str, pd.DataFrame | None, str | None]] = []
+    rows: list[tuple[str, pd.DataFrame | None, pd.DataFrame | None, str | None]] = []
     with ThreadPoolExecutor(max_workers=max(1, int(args.workers))) as pool:
         futs = {pool.submit(_scan_one, provider, c, int(args.history_count)): c for c in universe}
         for fut in as_completed(futs):
             rows.append(fut.result())
 
+    param_variants = _build_param_variants(
+        strategy_params.TREND_PULLBACK_PARAMS,
+        strategy_params.ROBUSTNESS_PARAM_GRID,
+    )
+
+    buy_prev_raw: list[dict] = []
+    buy_last_raw: list[dict] = []
     buy_prev: list[dict] = []
     buy_last: list[dict] = []
     errors: list[dict] = []
 
-    for code, enriched, err in rows:
+    for code, history_df, enriched, err in rows:
         if err:
             errors.append({"code": code, "error": err})
             continue
@@ -137,10 +211,42 @@ def main() -> None:
         last = _row_snapshot(enriched, len(enriched) - 1)
         prev = _row_snapshot(enriched, len(enriched) - 2) if len(enriched) >= 2 else None
         if prev and prev.get("entry"):
-            item = {"code": code, "signal_bar": prev, "asof_bar": last}
-            buy_prev.append(item)
+            consensus_ratio = (
+                _entry_consensus_ratio(history_df, param_variants, use_previous_day=True)
+                if (history_df is not None and not args.disable_robust_check)
+                else 1.0
+            )
+            edge_after_cost = _edge_after_cost(prev, float(args.roundtrip_cost_bps))
+            item = {
+                "code": code,
+                "signal_bar": prev,
+                "asof_bar": last,
+                "entry_consensus_ratio": round(consensus_ratio, 4),
+                "edge_after_cost": round(edge_after_cost, 6),
+                "cost_filter_passed": edge_after_cost > 0,
+                "consensus_filter_passed": consensus_ratio >= float(args.entry_consensus_min),
+            }
+            buy_prev_raw.append(item)
+            if item["cost_filter_passed"] and item["consensus_filter_passed"]:
+                buy_prev.append(item)
         if last and last.get("entry"):
-            buy_last.append({"code": code, "signal_bar": last})
+            consensus_ratio = (
+                _entry_consensus_ratio(history_df, param_variants, use_previous_day=False)
+                if (history_df is not None and not args.disable_robust_check)
+                else 1.0
+            )
+            edge_after_cost = _edge_after_cost(last, float(args.roundtrip_cost_bps))
+            item = {
+                "code": code,
+                "signal_bar": last,
+                "entry_consensus_ratio": round(consensus_ratio, 4),
+                "edge_after_cost": round(edge_after_cost, 6),
+                "cost_filter_passed": edge_after_cost > 0,
+                "consensus_filter_passed": consensus_ratio >= float(args.entry_consensus_min),
+            }
+            buy_last_raw.append(item)
+            if item["cost_filter_passed"] and item["consensus_filter_passed"]:
+                buy_last.append(item)
 
     buy_prev.sort(key=lambda x: float(x["signal_bar"]["score"]), reverse=True)
     buy_last.sort(key=lambda x: float(x["signal_bar"]["score"]), reverse=True)
@@ -157,7 +263,7 @@ def main() -> None:
     sell_signals: list[dict] = []
     for code in holdings:
         enriched = None
-        for c, en, err in rows:
+        for c, _, en, err in rows:
             if c == code and en is not None:
                 enriched = en
                 break
@@ -189,7 +295,7 @@ def main() -> None:
             item["name"] = names[c]
 
     latest_bar_date = None
-    for _, enriched, err in rows:
+    for _, _, enriched, err in rows:
         if err or enriched is None or enriched.empty:
             continue
         t = enriched.iloc[-1]["time"]
@@ -201,13 +307,22 @@ def main() -> None:
         "latest_bar_date": latest_bar_date,
         "universe_size": len(universe),
         "max_buy_candidates": cap if cap > 0 else None,
+        "roundtrip_cost_bps": float(args.roundtrip_cost_bps),
+        "entry_consensus_min": float(args.entry_consensus_min),
+        "robust_check_enabled": not bool(args.disable_robust_check),
         "params": strategy_params.TREND_PULLBACK_PARAMS,
+        "robustness_param_grid": strategy_params.ROBUSTNESS_PARAM_GRID,
+        "todo_confirm_items": strategy_params.TODO_CONFIRM_ITEMS,
         "reference_intraday_stop_pct": strategy_params.REFERENCE_INTRADAY_STOP_PCT,
         "buy": {
             "from_previous_day_close": buy_prev_out,
             "from_last_close": buy_last_out,
+            "from_previous_day_close_raw": buy_prev_raw,
+            "from_last_close_raw": buy_last_raw,
             "from_previous_day_close_total": len(buy_prev),
             "from_last_close_total": len(buy_last),
+            "from_previous_day_close_raw_total": len(buy_prev_raw),
+            "from_last_close_raw_total": len(buy_last_raw),
         },
         "sell": sell_signals,
         "errors_sample": errors[:20],

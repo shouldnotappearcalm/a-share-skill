@@ -9,6 +9,19 @@ import pandas as pd
 from .indicators import add_atr, add_breakout_levels, add_ma, add_rsi
 
 
+def _trend_pullback_rsi_bounds(out: pd.DataFrame, fast: int, slow: int, params: dict) -> tuple[pd.Series, pd.Series]:
+    bull_mask = out[f"ma_{fast}"] > out[f"ma_{slow}"]
+    bull_low = float(params.get("bull_rsi_low", params.get("rsi_low", 42)))
+    bull_high = float(params.get("bull_rsi_high", params.get("rsi_high", 68)))
+    bear_low = float(params.get("bear_rsi_low", 30))
+    bear_high = float(params.get("bear_rsi_high", 60))
+    low = pd.Series(bear_low, index=out.index, dtype="float64")
+    high = pd.Series(bear_high, index=out.index, dtype="float64")
+    low.loc[bull_mask] = bull_low
+    high.loc[bull_mask] = bull_high
+    return low, high
+
+
 def breakout_momentum(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     lookback = int(params.get("lookback", 20))
     fast = int(params.get("fast", 10))
@@ -26,11 +39,13 @@ def trend_pullback(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     rsi_period = int(params.get("rsi_period", 14))
     out = add_rsi(add_ma(df, [fast, slow]), rsi_period)
     rsi_key = f"rsi_{rsi_period}"
+    rsi_low, rsi_high = _trend_pullback_rsi_bounds(out, fast, slow, params)
     out["entry"] = (
         (out[f"ma_{fast}"] > out[f"ma_{slow}"])
         & (out["close"] > out[f"ma_{slow}"])
         & (out["close"] < out[f"ma_{fast}"] * float(params.get("pullback_ceiling", 1.01)))
-        & (out[rsi_key].between(float(params.get("rsi_low", 42)), float(params.get("rsi_high", 60))))
+        & (out[rsi_key] >= rsi_low)
+        & (out[rsi_key] <= rsi_high)
     )
     out["exit"] = (out["close"] < out[f"ma_{slow}"]) | (out[rsi_key] > float(params.get("exit_rsi", 72)))
     out["score"] = ((out[f"ma_{fast}"] / out[f"ma_{slow}"]) - 1.0).fillna(0.0)
