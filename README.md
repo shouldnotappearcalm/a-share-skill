@@ -9,6 +9,7 @@ a-share-skill/
   a-share-data/                                   # A股综合数据分析
   a-share-paper-trading/                          # 模拟盘交易与回测
   a-share-strategy-mainboard-multi-swing-defensive/  # 主板动态池趋势回踩：买卖决策信号
+  macd-second-golden-cross/                       # MACD 底背离 + 零轴下二次金叉
   macd-trend-resonance-stock-picker/              # 均线 + MACD 趋势共振选股
   README.md
 ```
@@ -62,6 +63,16 @@ a-share-skill/
     - 盘中结合触发条件识别回踩再上或突破买点  
     - 盘后复盘顶背离减仓与趋势失效信号
 
+- `macd-second-golden-cross`：基于“MACD 底背离 + 零轴下二次金叉”的修复型交易决策 Skill  
+  - **主要能力**：  
+    - 将“第一脚/第二脚/水下二次金叉”结构转成可执行的三档决策（观察 / 试错 / 放弃）  
+    - 提供盘中检查单（10 条）与判定阈值（7 条以上可试错）  
+    - 输出触发条件、入场方式、失效信号、止损位与仓位建议模板  
+  - **典型使用场景**：  
+    - 用户问“这个位置是不是二次金叉能不能做”时快速分档  
+    - 低位修复与超跌反弹场景下，先结构验证再轻仓试错  
+    - 避免情绪化抄底，统一到条件触发与纪律止损框架
+
 ## 全局安装（openclaw / cursor / claude code / opencode / codex）
 
 以下写法以“安装到用户级全局目录”为主，适合你这种一套技能多项目复用的场景。命令在本仓库根目录执行。
@@ -86,6 +97,7 @@ mkdir -p ~/.openclaw/workspace/skills
 cp -R a-share-data ~/.openclaw/workspace/skills/
 cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.openclaw/workspace/skills/
+cp -R macd-second-golden-cross ~/.openclaw/workspace/skills/
 cp -R macd-trend-resonance-stock-picker ~/.openclaw/workspace/skills/
 ```
 
@@ -96,6 +108,7 @@ mkdir -p ~/.cursor/skills
 cp -R a-share-data ~/.cursor/skills/
 cp -R a-share-paper-trading ~/.cursor/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.cursor/skills/
+cp -R macd-second-golden-cross ~/.cursor/skills/
 cp -R macd-trend-resonance-stock-picker ~/.cursor/skills/
 ```
 
@@ -106,6 +119,7 @@ mkdir -p ~/.claude/skills
 cp -R a-share-data ~/.claude/skills/
 cp -R a-share-paper-trading ~/.claude/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.claude/skills/
+cp -R macd-second-golden-cross ~/.claude/skills/
 cp -R macd-trend-resonance-stock-picker ~/.claude/skills/
 ```
 
@@ -116,6 +130,7 @@ mkdir -p ~/.opencode/skills
 cp -R a-share-data ~/.opencode/skills/
 cp -R a-share-paper-trading ~/.opencode/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.opencode/skills/
+cp -R macd-second-golden-cross ~/.opencode/skills/
 cp -R macd-trend-resonance-stock-picker ~/.opencode/skills/
 ```
 
@@ -128,16 +143,18 @@ mkdir -p ~/.agents/skills
 cp -R a-share-data ~/.agents/skills/
 cp -R a-share-paper-trading ~/.agents/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.agents/skills/
+cp -R macd-second-golden-cross ~/.agents/skills/
 cp -R macd-trend-resonance-stock-picker ~/.agents/skills/
 ```
 
 ### 安装后快速自检
 
-1. 确认目标目录下存在 `a-share-data/SKILL.md`、`a-share-paper-trading/SKILL.md`、`a-share-strategy-mainboard-multi-swing-defensive/SKILL.md` 与 `macd-trend-resonance-stock-picker/SKILL.md`
+1. 确认目标目录下存在 `a-share-data/SKILL.md`、`a-share-paper-trading/SKILL.md`、`a-share-strategy-mainboard-multi-swing-defensive/SKILL.md`、`macd-second-golden-cross/SKILL.md` 与 `macd-trend-resonance-stock-picker/SKILL.md`
 2. 新开会话后发一个明确请求，例如：
    - “用 a-share-data 拉取 600519 最近 20 个交易日的日线”
    - “用 a-share-paper-trading 创建模拟账户并下一个限价单”
    - “用 a-share-strategy-mainboard-multi-swing-defensive 跑 `daily_decisions.py` 看今日买入参考”
+  - “用 macd-second-golden-cross 给我这只票做三档分级并给出止损位”
   - “用 macd-trend-resonance-stock-picker 生成今日 A/B/C/D 候选并给出触发与失效条件”
 
 ### 参考文档
