@@ -137,6 +137,30 @@ def run_engine_checks() -> None:
             with sqlite3.connect(db_path) as conn:
                 conn.execute("UPDATE position_lots SET acquired_date = '2026-04-10' WHERE account_id = 'alpha'")
                 conn.commit()
+            fake_data.quote.price = fake_data.quote.limit_up
+            fake_data.quote.open = fake_data.quote.limit_up - 1.0
+            fake_data.quote.high = fake_data.quote.limit_up
+            fake_data.quote.low = fake_data.quote.limit_up - 1.0
+            blocked_buy = engine.place_order(OrderRequest(account_id="alpha", symbol="600519", side="buy", qty=100, order_type="market"))
+            _assert(blocked_buy["status"] == "open", "market buy should stay open at limit-up")
+            blocked_buy_result = engine.process_orders()
+            _assert(blocked_buy_result["filled"] == 0, "market buy should not fill at limit-up")
+            engine.cancel_order(blocked_buy["order_id"])
+
+            fake_data.quote.price = fake_data.quote.limit_down
+            fake_data.quote.open = fake_data.quote.limit_down + 1.0
+            fake_data.quote.high = fake_data.quote.limit_down + 1.0
+            fake_data.quote.low = fake_data.quote.limit_down
+            blocked_sell = engine.place_order(OrderRequest(account_id="alpha", symbol="600519", side="sell", qty=100, order_type="market"))
+            _assert(blocked_sell["status"] == "open", "market sell should stay open at limit-down")
+            blocked_sell_result = engine.process_orders()
+            _assert(blocked_sell_result["filled"] == 0, "market sell should not fill at limit-down")
+            engine.cancel_order(blocked_sell["order_id"])
+
+            fake_data.quote.price = 1450.0
+            fake_data.quote.open = 1448.0
+            fake_data.quote.high = 1452.0
+            fake_data.quote.low = 1446.0
             sell_order = engine.place_order(OrderRequest(account_id="alpha", symbol="600519", side="sell", qty=100, order_type="limit", limit_price=1450.0))
             processed = engine.process_orders()
             _assert(processed["filled"] >= 1, "sell order not processed")

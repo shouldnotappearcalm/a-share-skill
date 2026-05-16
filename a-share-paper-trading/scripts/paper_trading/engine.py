@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from .market_data import MarketDataProvider
+from .market_data import MarketDataProvider, infer_limit_prices
 
 
 def now_ts() -> str:
@@ -526,7 +526,11 @@ class PaperTradingEngine:
                         signal = "sell"
             else:
                 raise ValueError("unsupported strategy")
-            if signal == "buy" and qty == 0:
+            prev_close = float(bars.iloc[i - 1]["close"]) if i > 0 else price
+            limit_up, limit_down = infer_limit_prices(symbol, prev_close)
+            blocked_buy = limit_up is not None and price >= float(limit_up) - 1e-9
+            blocked_sell = limit_down is not None and price <= float(limit_down) + 1e-9
+            if signal == "buy" and qty == 0 and not blocked_buy:
                 lot_qty = int((cash / price) // 100) * 100
                 if lot_qty >= 100:
                     amount = lot_qty * price
@@ -535,7 +539,7 @@ class PaperTradingEngine:
                     qty = lot_qty
                     avg_cost = price
                     trades.append({"date": date_str, "action": "buy", "price": round(price, 3), "qty": lot_qty, "amount": round(amount, 2), "profit": 0.0})
-            elif signal == "sell" and qty > 0:
+            elif signal == "sell" and qty > 0 and not blocked_sell:
                 amount = qty * price
                 commission = calc_commission(amount, symbol)
                 tax = calc_tax("sell", amount)
@@ -640,7 +644,7 @@ class PaperTradingEngine:
         if not self._is_quote_tradable(quote):
             return None
         if order["order_type"] == "market":
-            return None if self._is_locked_limit(order["side"], quote) else quote.price
+            return quote.price if self._can_fill_with_quote_only(order["side"], quote) else None
         limit_price = float(order["limit_price"])
         if self._is_locked_limit(order["side"], quote):
             return None
