@@ -85,6 +85,24 @@ a-share-skill/
     - 对单只个股快速归类当前结构，并输出触发与失效条件  
     - 盘中避免情绪化追单，回到统一退出与仓位纪律框架
 
+## 交流群
+
+<img width="1050" height="1566" alt="39afc5617ddc27f26af912496edd3d34" src="https://github.com/user-attachments/assets/081691bf-c13f-4a33-83b4-12bf1a04a126" />
+
+### 模拟仓一个半月 30 个点收益
+
+#### 4.16 初始化账户100w
+<img width="1280" height="2774" alt="7259c3d33aca6e81f948d90f89be5d15" src="https://github.com/user-attachments/assets/ef7d9b23-b9a3-4c49-afc2-3f81fd489058" />
+
+#### 6.5 盘中 132w（持续更新中）
+
+ 当前持仓：鹏鼎控股、华电辽能、太极实业、晶方科技
+
+<img width="1280" height="2774" alt="510dc971161e47e91114bdf1a0cab2a7" src="https://github.com/user-attachments/assets/1a37359b-b7cf-4beb-b882-d44a452d3130" />
+<img width="1280" height="2774" alt="10a8b5bbfa7bbaba2ca2a9fc1b8aa98c" src="https://github.com/user-attachments/assets/cfb14495-7a46-4656-be20-d1e9779a9093" />
+
+
+
 ## 全局安装（openclaw / cursor / claude code / opencode / codex）
 
 以下写法以“安装到用户级全局目录”为主，适合你这种一套技能多项目复用的场景。命令在本仓库根目录执行。
