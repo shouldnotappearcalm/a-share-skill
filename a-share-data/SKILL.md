@@ -97,8 +97,10 @@ python3 "$SKILL_DIR/scripts/fetch_sector_info.py" [参数]
 ## 常用命令最小集
 
 ```bash
-# 实时
+# 实时（单只）
 python3 fetch_realtime.py --quote 600519 --json
+# 实时（多只，逗号分隔，最多10只）
+python3 fetch_realtime.py --multi-quote 002491,002364,600519 --json
 python3 fetch_realtime.py --index --json
 python3 fetch_realtime.py --boards-summary --boards-limit 20 --json
 python3 fetch_realtime.py --all-quote --sort change_pct_desc --top 50 --json
