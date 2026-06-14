@@ -1,6 +1,6 @@
 # a-share-skill
 
-面向 AI 工具的 A 股 skill 集合，核心覆盖三层能力：
+面向 AI 工具的 A 股数据分析、量化选股与模拟交易 skill 集合，适合 stock analysis、quant trading、paper trading、A-share strategy workflow：
 
 - `a-share-data`：数据查询与分析
 - `a-share-strategy-mainboard-multi-swing-defensive`：主板趋势回踩信号
@@ -51,7 +51,7 @@
 
 文档：
 
-- [docs/a-share-data-ai-usage.md](docs/a-share-data-ai-usage.md)
+- [docs/a-share-data-install-and-usage.md](docs/a-share-data-install-and-usage.md)
 
 ### `a-share-strategy-mainboard-multi-swing-defensive`
 
@@ -67,7 +67,7 @@
 
 文档：
 
-- [docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md](docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md)
+- [docs/a-share-strategy-mainboard-multi-swing-defensive-install-and-usage.md](docs/a-share-strategy-mainboard-multi-swing-defensive-install-and-usage.md)
 
 ### `a-share-paper-trading`
 
@@ -84,7 +84,7 @@
 
 文档：
 
-- [docs/a-share-paper-trading-ai-usage.md](docs/a-share-paper-trading-ai-usage.md)
+- [docs/a-share-paper-trading-install-and-usage.md](docs/a-share-paper-trading-install-and-usage.md)
 
 ## 最短案例
 
@@ -155,9 +155,9 @@ cp -R a-share-paper-trading ~/.qoder/skills/
 
 ## 文档导航
 
-- [a-share-data 安装使用文档](docs/a-share-data-ai-usage.md)
-- [a-share-strategy-mainboard-multi-swing-defensive 安装使用文档](docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md)
-- [模拟仓（a-share-paper-trading）安装使用文档](docs/a-share-paper-trading-ai-usage.md)
+- [a-share-data 安装使用文档](docs/a-share-data-install-and-usage.md)
+- [a-share-strategy-mainboard-multi-swing-defensive 安装使用文档](docs/a-share-strategy-mainboard-multi-swing-defensive-install-and-usage.md)
+- [模拟仓（a-share-paper-trading）安装使用文档](docs/a-share-paper-trading-install-and-usage.md)
 - [策略 + 模拟盘组合工作流](docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md)
 
 ## 其他 Skill
