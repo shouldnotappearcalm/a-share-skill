@@ -155,9 +155,9 @@ cp -R a-share-paper-trading ~/.qoder/skills/
 
 ## 文档导航
 
-- [a-share-data 使用文档](docs/a-share-data-ai-usage.md)
-- [a-share-strategy-mainboard-multi-swing-defensive 使用文档](docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md)
-- [a-share-paper-trading 使用文档](docs/a-share-paper-trading-ai-usage.md)
+- [a-share-data 安装使用文档](docs/a-share-data-ai-usage.md)
+- [a-share-strategy-mainboard-multi-swing-defensive 安装使用文档](docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md)
+- [模拟仓（a-share-paper-trading）安装使用文档](docs/a-share-paper-trading-ai-usage.md)
 - [策略 + 模拟盘组合工作流](docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md)
 
 ## 其他 Skill

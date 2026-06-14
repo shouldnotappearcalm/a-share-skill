@@ -1,4 +1,4 @@
-# a-share-paper-trading AI 使用流程
+# 模拟仓（a-share-paper-trading）安装使用文档
 
 这份文档说明如何把 `a-share-paper-trading` 配到常见 AI 工具里使用，并给出安装、提问方式和典型使用案例。
 
