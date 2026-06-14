@@ -98,17 +98,17 @@ cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
 ### 最常用问法
 
 - `用 a-share-paper-trading 启动模拟盘服务`
-- `用 a-share-paper-trading 创建一个 100w 初始资金的模拟账户`
-- `用 a-share-paper-trading 给 alpha 账户买入 600519 100 股`
-- `用 a-share-paper-trading 查看 alpha 的持仓、订单和成交`
+- `用 a-share-paper-trading 创建一个名为 calm1、初始资金 1000000 的模拟账户`
+- `用 a-share-paper-trading 给 calm1 账户买入 600519 100 股`
+- `用 a-share-paper-trading 查看 calm1 的持仓、订单和成交`
 - `用 a-share-paper-trading 跑 600519 的简单回测`
 
 ### 带执行语义的问法
 
-- `用 a-share-paper-trading 创建账户 alpha，初始资金 500000`
-- `用 a-share-paper-trading 给 alpha 下 600519 的市价买单 100 股`
-- `用 a-share-paper-trading 给 alpha 下 600519 的限价卖单，价格 1450，数量 100`
-- `用 a-share-paper-trading 撤掉 alpha 当前未成交订单`
+- `用 a-share-paper-trading 创建账户 calm1，初始资金 500000`
+- `用 a-share-paper-trading 给 calm1 下 600519 的市价买单 100 股`
+- `用 a-share-paper-trading 给 calm1 下 600519 的限价卖单，价格 1450，数量 100`
+- `用 a-share-paper-trading 撤掉 calm1 当前未成交订单`
 
 ## AI 背后实际会跑什么
 
@@ -135,14 +135,14 @@ python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" stop
 ```bash
 SKILL_DIR="$(pwd)/a-share-paper-trading"
 
-python3 "$SKILL_DIR/scripts/paper_trade_cli.py" create-account alpha --cash 500000
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" create-account calm1 --cash 500000
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" list-accounts
-python3 "$SKILL_DIR/scripts/paper_trade_cli.py" show-account alpha
-python3 "$SKILL_DIR/scripts/paper_trade_cli.py" positions alpha
-python3 "$SKILL_DIR/scripts/paper_trade_cli.py" orders alpha
-python3 "$SKILL_DIR/scripts/paper_trade_cli.py" trades alpha
-python3 "$SKILL_DIR/scripts/paper_trade_cli.py" buy alpha 600519 100 --market
-python3 "$SKILL_DIR/scripts/paper_trade_cli.py" sell alpha 600519 100 --price 1450
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" show-account calm1
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" positions calm1
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" orders calm1
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" trades calm1
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" buy calm1 600519 100 --market
+python3 "$SKILL_DIR/scripts/paper_trade_cli.py" sell calm1 600519 100 --price 1450
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" cancel <order_id>
 python3 "$SKILL_DIR/scripts/paper_trade_cli.py" backtest 600519 --strategy sma_cross --start 2025-01-01 --end 2026-03-31 --cash 200000
 ```
@@ -153,7 +153,7 @@ python3 "$SKILL_DIR/scripts/paper_trade_cli.py" backtest 600519 --strategy sma_c
 
 可以这样问：
 
-- `用 a-share-paper-trading 创建一个默认模拟账户，初始资金 1000000`
+- `用 a-share-paper-trading 创建一个名为 calm1 的模拟账户，初始资金 1000000`
 
 适合场景：
 
@@ -164,7 +164,7 @@ python3 "$SKILL_DIR/scripts/paper_trade_cli.py" backtest 600519 --strategy sma_c
 
 可以这样问：
 
-- `用 a-share-paper-trading 给 alpha 买入 600519 100 股，市价单`
+- `用 a-share-paper-trading 给 calm1 买入 600519 100 股，市价单`
 
 适合场景：
 
@@ -175,7 +175,7 @@ python3 "$SKILL_DIR/scripts/paper_trade_cli.py" backtest 600519 --strategy sma_c
 
 可以这样问：
 
-- `用 a-share-paper-trading 看 alpha 的账户资金、持仓、未完成订单和最近成交`
+- `用 a-share-paper-trading 看 calm1 的账户资金、持仓、未完成订单和最近成交`
 
 适合场景：
 
