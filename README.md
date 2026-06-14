@@ -87,7 +87,8 @@ a-share-skill/
 
 ## 交流群
 
-<img width="400" alt="39afc5617ddc27f26af912496edd3d34" src="https://github.com/user-attachments/assets/081691bf-c13f-4a33-83b4-12bf1a04a126" />
+
+<img width="400" alt="39afc5617ddc27f26af912496edd3d34" src="https://github.com/user-attachments/assets/46d48fbf-6a9e-4d34-9966-0df52fe06a86" />
 
 ### 模拟仓一个半月 32 个点收益
 
