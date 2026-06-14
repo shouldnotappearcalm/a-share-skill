@@ -1,6 +1,6 @@
 # a-share-paper-trading AI 使用流程
 
-这份文档说明如何把 `a-share-paper-trading` 配到常见 AI 工具里使用，并给出安装、启动、自检、提问方式和典型使用案例。
+这份文档说明如何把 `a-share-paper-trading` 配到常见 AI 工具里使用，并给出安装、提问方式和典型使用案例。
 
 适用场景：
 
@@ -72,22 +72,15 @@ mkdir -p ~/.openclaw/workspace/skills
 cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
 ```
 
-## 启动服务
+## 让 AI 启动服务
 
-前台启动：
+更推荐直接让 AI 帮你启动、检查和停止服务，而不是自己手动执行命令。
 
-```bash
-SKILL_DIR="$(pwd)/a-share-paper-trading"
-python3 "$SKILL_DIR/scripts/paper_trading_service.py" --host 127.0.0.1 --port 18765
-```
+可以直接这样问：
 
-更推荐后台常驻：
-
-```bash
-python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" start
-python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" status
-python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" stop
-```
+- `用 a-share-paper-trading 启动模拟盘服务`
+- `用 a-share-paper-trading 检查模拟盘服务状态`
+- `用 a-share-paper-trading 停止模拟盘服务`
 
 默认监听：
 
@@ -128,7 +121,16 @@ CLI 层：
 
 - `scripts/paper_trade_cli.py`
 
-常用命令：
+如果你让 AI 执行“启动 / 状态 / 停止”，它通常会跑这些命令：
+
+```bash
+SKILL_DIR="$(pwd)/a-share-paper-trading"
+python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" start
+python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" status
+python3 "$SKILL_DIR/scripts/paper_trading_ctl.py" stop
+```
+
+其他常用命令：
 
 ```bash
 SKILL_DIR="$(pwd)/a-share-paper-trading"
