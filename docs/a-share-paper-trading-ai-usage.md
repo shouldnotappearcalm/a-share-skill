@@ -58,6 +58,13 @@ mkdir -p ~/.claude/skills
 cp -R a-share-paper-trading ~/.claude/skills/
 ```
 
+### Qoder
+
+```bash
+mkdir -p ~/.qoder/skills
+cp -R a-share-paper-trading ~/.qoder/skills/
+```
+
 ### OpenCode
 
 ```bash

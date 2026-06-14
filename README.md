@@ -44,6 +44,7 @@ a-share-skill/
     - 验证撮合、冻结资金、可卖数量等账户逻辑  
     - 快速回测单票策略并观察收益曲线
   - **AI 工具使用流程**：见 [docs/a-share-paper-trading-ai-usage.md](docs/a-share-paper-trading-ai-usage.md)
+  - **与策略联动案例**：见 [docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md](docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md)
 
 - `a-share-strategy-mainboard-multi-swing-defensive`：主板流动性池 + 日线 `trend_pullback` 的**选股与买卖信号** Skill  
   - **主要能力**（见该目录 `SKILL.md`）：  
@@ -55,6 +56,7 @@ a-share-skill/
     - 与 `a-share-paper-trading` 配合时：先跑信号脚本，再按需向模拟盘下单（本 skill 不自动下单）  
   - **说明**：不包含混合回测；策略参数在 `scripts/strategy_lab/strategy_params.py`
   - **AI 工具使用流程**：见 [docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md](docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md)
+  - **与模拟盘联动案例**：见 [docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md](docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md)
 
 - `macd-trend-resonance-stock-picker`：基于“均线定方向，MACD 定节奏”的趋势共振选股 Skill  
   - **主要能力**：  
@@ -112,7 +114,7 @@ a-share-skill/
 
 
 
-## 全局安装（openclaw / cursor / claude code / opencode / codex）
+## 全局安装（openclaw / cursor / claude code / qoder / opencode / codex）
 
 以下写法以“安装到用户级全局目录”为主，适合你这种一套技能多项目复用的场景。命令在本仓库根目录执行。
 
@@ -163,6 +165,18 @@ cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.claude/skills/
 cp -R macd-second-golden-cross ~/.claude/skills/
 cp -R macd-trend-resonance-stock-picker ~/.claude/skills/
 cp -R tuige-shortline-trading ~/.claude/skills/
+```
+
+### Qoder
+
+```bash
+mkdir -p ~/.qoder/skills
+cp -R a-share-data ~/.qoder/skills/
+cp -R a-share-paper-trading ~/.qoder/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.qoder/skills/
+cp -R macd-second-golden-cross ~/.qoder/skills/
+cp -R macd-trend-resonance-stock-picker ~/.qoder/skills/
+cp -R tuige-shortline-trading ~/.qoder/skills/
 ```
 
 ### OpenCode

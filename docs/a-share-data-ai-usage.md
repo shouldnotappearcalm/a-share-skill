@@ -52,6 +52,13 @@ mkdir -p ~/.claude/skills
 cp -R a-share-data ~/.claude/skills/
 ```
 
+### Qoder
+
+```bash
+mkdir -p ~/.qoder/skills
+cp -R a-share-data ~/.qoder/skills/
+```
+
 ### OpenCode
 
 ```bash
