@@ -51,7 +51,7 @@
 
 文档：
 
-- [docs/a-share-data-install-and-usage.md](docs/a-share-data-install-and-usage.md)
+- [docs/A股数据安装使用文档.md](docs/A股数据安装使用文档.md)
 
 ### `a-share-strategy-mainboard-multi-swing-defensive`
 
@@ -67,7 +67,7 @@
 
 文档：
 
-- [docs/a-share-strategy-mainboard-multi-swing-defensive-install-and-usage.md](docs/a-share-strategy-mainboard-multi-swing-defensive-install-and-usage.md)
+- [docs/主板趋势回踩策略安装使用文档.md](docs/主板趋势回踩策略安装使用文档.md)
 
 ### `a-share-paper-trading`
 
@@ -155,8 +155,8 @@ cp -R a-share-paper-trading ~/.qoder/skills/
 
 ## 文档导航
 
-- [a-share-data 安装使用文档](docs/a-share-data-install-and-usage.md)
-- [a-share-strategy-mainboard-multi-swing-defensive 安装使用文档](docs/a-share-strategy-mainboard-multi-swing-defensive-install-and-usage.md)
+- [A股数据安装使用文档](docs/A股数据安装使用文档.md)
+- [主板趋势回踩策略安装使用文档](docs/主板趋势回踩策略安装使用文档.md)
 - [模拟仓（a-share-paper-trading）安装使用文档](docs/a-share-paper-trading-install-and-usage.md)
 - [策略 + 模拟盘组合工作流](docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md)
 
