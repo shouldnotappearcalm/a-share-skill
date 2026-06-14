@@ -108,6 +108,8 @@ cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
 - `用 a-share-paper-trading 创建一个名为 calm1、初始资金 1000000 的模拟账户`
 - `用 a-share-paper-trading 给 calm1 账户买入 600519 100 股`
 - `用 a-share-paper-trading 查看 calm1 的持仓、订单和成交`
+- `用 a-share-paper-trading 查看 calm1 的账户详情`
+- `用 a-share-paper-trading 查看 calm1 的全部交易记录`
 - `用 a-share-paper-trading 跑 600519 的简单回测`
 
 ### 带执行语义的问法
@@ -116,6 +118,7 @@ cp -R a-share-paper-trading ~/.openclaw/workspace/skills/
 - `用 a-share-paper-trading 给 calm1 下 600519 的市价买单 100 股`
 - `用 a-share-paper-trading 给 calm1 下 600519 的限价卖单，价格 1450，数量 100`
 - `用 a-share-paper-trading 撤掉 calm1 当前未成交订单`
+- `用 a-share-paper-trading 把 calm1 的账户详情、当前持仓、未完成订单和全部交易记录一起汇总给我`
 
 ## AI 背后实际会跑什么
 
@@ -183,6 +186,7 @@ python3 "$SKILL_DIR/scripts/paper_trade_cli.py" backtest 600519 --strategy sma_c
 可以这样问：
 
 - `用 a-share-paper-trading 看 calm1 的账户资金、持仓、未完成订单和最近成交`
+- `用 a-share-paper-trading 看 calm1 的账户详情和全部交易记录`
 
 适合场景：
 
