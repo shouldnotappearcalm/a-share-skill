@@ -109,7 +109,7 @@
 
 详细案例：
 
-- [docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md](docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md)
+- [主板趋势回踩策略与模拟仓联动案例](docs/主板趋势回踩策略与模拟仓联动案例.md)
 
 ## 安装
 
@@ -158,7 +158,7 @@ cp -R a-share-paper-trading ~/.qoder/skills/
 - [A股数据安装使用文档](docs/A股数据安装使用文档.md)
 - [主板趋势回踩策略安装使用文档](docs/主板趋势回踩策略安装使用文档.md)
 - [模拟仓（a-share-paper-trading）安装使用文档](docs/a-share-paper-trading-install-and-usage.md)
-- [策略 + 模拟盘组合工作流](docs/a-share-strategy-mainboard-multi-swing-defensive-paper-trading-workflow.md)
+- [主板趋势回踩策略与模拟仓联动案例](docs/主板趋势回踩策略与模拟仓联动案例.md)
 
 ## 其他 Skill
 
