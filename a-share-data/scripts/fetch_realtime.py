@@ -51,6 +51,18 @@ TENCENT_MIN_URL = "https://ifzq.gtimg.cn/appstock/app/kline/mkline"
 SINA_QUOTE_URL = "https://hq.sinajs.cn/list="
 TENCENT_QUOTE_URL = "https://qt.gtimg.cn/q="
 TENCENT_TICK_URL = "https://stock.gtimg.cn/data/index.php"
+INDEX_CODE_MAP = {
+    "000001": "sh000001",
+    "000002": "sh000002",
+    "000016": "sh000016",
+    "000300": "sh000300",
+    "000688": "sh000688",
+    "000852": "sh000852",
+    "000905": "sh000905",
+    "399001": "sz399001",
+    "399005": "sz399005",
+    "399006": "sz399006",
+}
 MARKET_NEWS_URL = "https://dang-invest.com/api/market/news"
 BOARDS_SUMMARY_URL = "https://dang-invest.com/api/market/boards/summary"
 BOARDS_DETAIL_URL = "https://dang-invest.com/api/market/boards/detail"
@@ -104,11 +116,17 @@ def normalize_code(code: str) -> str:
     if code.lower().startswith(('sh', 'sz')):
         return code.lower()
     if code.isdigit():
+        if code in INDEX_CODE_MAP:
+            return INDEX_CODE_MAP[code]
         if code.startswith('6'):
             return f"sh{code}"
         elif code.startswith(('0', '2', '3')):
             return f"sz{code}"
     return code.lower()
+
+
+def _is_index_symbol(code: str) -> bool:
+    return normalize_code(code) in INDEX_CODE_MAP.values()
 
 
 def _get_price_sina(code: str, count: int, frequency: str) -> pd.DataFrame:
@@ -191,13 +209,22 @@ def get_price(code: str, frequency: str = '1d', count: int = 60) -> pd.DataFrame
         df = _get_price_day_tx(normalized, count, frequency)
         if df is not None and not df.empty:
             return df
-        # 最后兜底：akshare 新浪日线（仅1d可用）
+        # 最后兜底：指数走 akshare 指数日线，个股走 akshare A 股日线
         if frequency == '1d':
             try:
-                ak_df = ak.stock_zh_a_daily(symbol=normalized, adjust='')
+                if _is_index_symbol(normalized):
+                    ak_df = ak.index_zh_a_hist(symbol=normalized[2:], period='daily')
+                    if ak_df is not None and not ak_df.empty:
+                        ak_df = ak_df.tail(count).copy()
+                        ak_df = ak_df.rename(columns={'日期': 'time', '开盘': 'open', '最高': 'high', '最低': 'low', '收盘': 'close', '成交量': 'volume'})
+                    else:
+                        ak_df = None
+                else:
+                    ak_df = ak.stock_zh_a_daily(symbol=normalized, adjust='')
                 if ak_df is not None and not ak_df.empty:
                     ak_df = ak_df.tail(count).copy()
-                    ak_df = ak_df.rename(columns={'date': 'time'})
+                    if 'date' in ak_df.columns:
+                        ak_df = ak_df.rename(columns={'date': 'time'})
                     ak_df['time'] = pd.to_datetime(ak_df['time'])
                     ak_df = ak_df.set_index('time')
                     ak_df.index.name = ''
@@ -449,7 +476,7 @@ def cmd_multi_quote(codes_str: str, output_json: bool):
 def cmd_index(output_json: bool):
     try:
         df = ak.stock_zh_index_spot_sina()
-        major = ["sh000001", "sh000002", "sz399001", "sz399006", "sh000688"]
+        major = ["sh000001", "sh000002", "sz399001", "sz399006", "sh000300", "sh000688"]
         df = df[df["代码"].isin(major)].copy()
         results = []
         for _, row in df.iterrows():

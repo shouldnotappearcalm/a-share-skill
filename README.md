@@ -31,6 +31,7 @@ a-share-skill/
     - 帮用户做单只股票的综合分析（行情 + 技术面 + 基本面）  
     - 盘中情绪与热点跟踪（指数、涨跌停统计、热点板块、北向资金、龙虎榜）  
     - 为量化 / 回测准备历史行情与财务因子数据
+  - **AI 工具使用流程**：见 [docs/a-share-data-ai-usage.md](docs/a-share-data-ai-usage.md)
 
 - `a-share-paper-trading`：A 股模拟交易与回测 Skill  
   - **主要能力**：  
@@ -42,6 +43,7 @@ a-share-skill/
     - 在不动真资金的情况下做交易流程演练  
     - 验证撮合、冻结资金、可卖数量等账户逻辑  
     - 快速回测单票策略并观察收益曲线
+  - **AI 工具使用流程**：见 [docs/a-share-paper-trading-ai-usage.md](docs/a-share-paper-trading-ai-usage.md)
 
 - `a-share-strategy-mainboard-multi-swing-defensive`：主板流动性池 + 日线 `trend_pullback` 的**选股与买卖信号** Skill  
   - **主要能力**（见该目录 `SKILL.md`）：  
@@ -52,6 +54,7 @@ a-share-skill/
     - 盘前或盘后生成当日可关注标的与减仓参考  
     - 与 `a-share-paper-trading` 配合时：先跑信号脚本，再按需向模拟盘下单（本 skill 不自动下单）  
   - **说明**：不包含混合回测；策略参数在 `scripts/strategy_lab/strategy_params.py`
+  - **AI 工具使用流程**：见 [docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md](docs/a-share-strategy-mainboard-multi-swing-defensive-ai-usage.md)
 
 - `macd-trend-resonance-stock-picker`：基于“均线定方向，MACD 定节奏”的趋势共振选股 Skill  
   - **主要能力**：  
