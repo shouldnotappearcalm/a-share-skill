@@ -4,12 +4,13 @@
 
 - `a-share-data`：数据查询与分析
 - `a-share-strategy-mainboard-multi-swing-defensive`：主板趋势回踩信号
+- `a-share-strategy-allmarket-multi-swing-defensive`：全市场趋势回踩信号
 - `a-share-paper-trading`：模拟盘执行与回测
 
 你可以直接让 AI：
 
 - 查个股实时行情、历史走势、技术指标、事件和行业信息
-- 扫描主板候选，输出买入参考和持仓卖出参考
+- 扫描主板或全市场候选，输出买入参考和持仓卖出参考
 - 创建 `calm1` 模拟账户，查看账户详情、全部交易记录并下模拟单
 - 结合大盘、候选、持仓和账户状态，判断今天该买、卖、持有还是不动
 
@@ -34,7 +35,7 @@
   </tr>
 </table>
 
-## 三个核心 Skill
+## 四个核心 Skill
 
 ### `a-share-data`
 
@@ -69,6 +70,22 @@
 
 - [docs/主板趋势回踩策略安装使用文档.md](docs/主板趋势回踩策略安装使用文档.md)
 
+### `a-share-strategy-allmarket-multi-swing-defensive`
+
+适合问：
+
+- 今天全市场有哪些趋势回踩候选
+- 创业板和科创板要不要一起纳入扫描
+- 同一套趋势回踩逻辑下，全市场和主板版差异是什么
+
+能做：
+
+- 全市场高流动性池扫描、买入参考、卖出参考、批量现价快照
+
+文档：
+
+- [docs/a-share-strategy-allmarket-multi-swing-defensive.md](docs/a-share-strategy-allmarket-multi-swing-defensive.md)
+
 ### `a-share-paper-trading`
 
 适合问：
@@ -89,9 +106,9 @@
 ## 最短案例
 
 - `查数据`：用 `a-share-data` 看 600519 最新行情、最近 60 日日线和 MACD。
-- `跑策略`：用 `a-share-strategy-mainboard-multi-swing-defensive` 扫今天主板候选，只看最终过滤结果。
+- `跑主板策略`：用 `a-share-strategy-mainboard-multi-swing-defensive` 扫今天主板候选，只看最终过滤结果。
+- `跑全市场策略`：用 `a-share-strategy-allmarket-multi-swing-defensive` 扫今天全市场候选，只看最终过滤结果。
 - `管模拟盘`：用 `a-share-paper-trading` 创建 `calm1`，初始资金 `1000000`，再查看 `calm1` 账户详情和全部交易记录。
-- `组合工作流`：先扫候选，再结合大盘和 `calm1` 持仓，判断今天该买、卖、持有还是不动。
 
 ## 组合使用
 
@@ -101,7 +118,11 @@
 
 - `策略判断`
   - `a-share-data + a-share-strategy-mainboard-multi-swing-defensive`
-  - 适合做候选扫描、持仓卖出参考和环境判断
+  - 适合做主板候选扫描、持仓卖出参考和环境判断
+
+- `更宽股票池判断`
+  - `a-share-data + a-share-strategy-allmarket-multi-swing-defensive`
+  - 适合把创业板和科创板一起纳入趋势回踩扫描
 
 - `模拟执行闭环`
   - `a-share-strategy-mainboard-multi-swing-defensive + a-share-paper-trading`
@@ -113,7 +134,7 @@
 
 ## 安装
 
-以下示例只保留三个核心 skill：`a-share-data`、`a-share-strategy-mainboard-multi-swing-defensive`、`a-share-paper-trading`。
+以下示例包含四个核心 skill：`a-share-data`、`a-share-strategy-mainboard-multi-swing-defensive`、`a-share-strategy-allmarket-multi-swing-defensive`、`a-share-paper-trading`。
 
 ### Codex
 
@@ -121,6 +142,7 @@
 mkdir -p ~/.agents/skills
 cp -R a-share-data ~/.agents/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.agents/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.agents/skills/
 cp -R a-share-paper-trading ~/.agents/skills/
 ```
 
@@ -130,6 +152,7 @@ cp -R a-share-paper-trading ~/.agents/skills/
 mkdir -p ~/.cursor/skills
 cp -R a-share-data ~/.cursor/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.cursor/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.cursor/skills/
 cp -R a-share-paper-trading ~/.cursor/skills/
 ```
 
@@ -139,6 +162,7 @@ cp -R a-share-paper-trading ~/.cursor/skills/
 mkdir -p ~/.claude/skills
 cp -R a-share-data ~/.claude/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.claude/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.claude/skills/
 cp -R a-share-paper-trading ~/.claude/skills/
 ```
 
@@ -148,6 +172,7 @@ cp -R a-share-paper-trading ~/.claude/skills/
 mkdir -p ~/.qoder/skills
 cp -R a-share-data ~/.qoder/skills/
 cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.qoder/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.qoder/skills/
 cp -R a-share-paper-trading ~/.qoder/skills/
 ```
 
@@ -157,6 +182,7 @@ cp -R a-share-paper-trading ~/.qoder/skills/
 
 - [A股数据安装使用文档](docs/A股数据安装使用文档.md)
 - [主板趋势回踩策略安装使用文档](docs/主板趋势回踩策略安装使用文档.md)
+- [全市场趋势回踩策略说明](docs/a-share-strategy-allmarket-multi-swing-defensive.md)
 - [模拟仓安装使用文档](docs/模拟仓安装使用文档.md)
 - [主板趋势回踩策略与模拟仓联动案例](docs/主板趋势回踩策略与模拟仓联动案例.md)
 
