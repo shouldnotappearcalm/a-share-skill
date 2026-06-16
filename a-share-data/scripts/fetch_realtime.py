@@ -18,7 +18,7 @@ A股实时行情数据脚本
   python3 fetch_realtime.py --fund-flow 600519
   python3 fetch_realtime.py --consecutive-limit
   python3 fetch_realtime.py --market-news --news-limit 50
-  python3 fetch_realtime.py --boards-summary --boards-limit 60 --boards-sort market_cap_desc
+  python3 fetch_realtime.py --boards-summary --boards-limit 60 --boards-sort change_desc
   python3 fetch_realtime.py --boards-detail --boards-group-key 半导体 --boards-items-limit 300
   python3 fetch_realtime.py --all-quote --top 20
   python3 fetch_realtime.py --all-quote --sort change_pct_desc --top 50
@@ -1159,7 +1159,7 @@ def main():
     parser.add_argument("--boards-detail", action="store_true", help="行业板块成分明细（DangInvest）")
     parser.add_argument("--boards-mode", default="industry", help="板块模式（默认industry）")
     parser.add_argument("--boards-limit", type=int, default=60, help="板块概览返回条数（默认60）")
-    parser.add_argument("--boards-sort", default="market_cap_desc", help="板块排序（默认market_cap_desc）")
+    parser.add_argument("--boards-sort", default="change_desc", help="板块排序（默认change_desc 涨幅）")
     parser.add_argument("--boards-group-key", default="", help="板块key，--boards-detail 必填（例如 半导体）")
     parser.add_argument("--boards-items-limit", type=int, default=300, help="成分返回条数（默认300）")
     parser.add_argument("--boards-items-offset", type=int, default=0, help="成分偏移（默认0）")
