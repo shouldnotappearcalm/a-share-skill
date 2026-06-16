@@ -84,3 +84,41 @@ description: 基于退哥短线交易规则的A股场景化决策技能。Use wh
 - 没有触发，不算买点
 - 市场环境是总开关，环境不支持时不强行升级结论
 - 同一只标的若同时命中多个场景，优先保留风险更低、定义更清晰的场景解释
+
+## 工程化转换
+
+当前目录已提供可执行脚本，结构与 `a-share-strategy-mainboard-multi-swing-defensive` 对齐：
+
+- `scripts/daily_decisions.py`
+  - 主板流动性池扫描 + `trend_pullback` 信号
+  - 输出两类买入参考：`from_previous_day_close` 与 `from_last_close`
+  - 支持持仓文件卖出信号检查
+  - 默认最大持仓上限 `8`（可通过 `--max-holdings` 下调）
+- `scripts/realtime_quotes.py`
+  - 对指定代码批量拉取现价快照
+- `scripts/strategy_lab/strategy_params.py`
+  - 参数与仓位上限配置
+- `scripts/strategy_lab/strategies.py`
+  - 规则引擎核心（当前版本：趋势回踩 + RSI 区间 + 失效退出）
+
+### 运行
+
+```bash
+SKILL_DIR="<本 skill 绝对路径>"
+python3 "$SKILL_DIR/scripts/daily_decisions.py" --json
+```
+
+常用参数：
+
+- `--top-n`：股票池大小，默认 120
+- `--max-holdings`：最大持仓上限，默认 8
+- `--max-buys`：买入输出上限，默认 8（最终会再受 `max-holdings` 约束）
+- `--holdings`：持仓文件路径，一行一个代码
+- `--roundtrip-cost-bps`：成本过滤，默认 45
+- `--entry-consensus-min`：鲁棒一致性阈值，默认 0.67
+- `--disable-robust-check`：关闭鲁棒性检查（仅调试）
+
+### 说明
+
+- 当前工程化版本是 `tuige_shortline_v1`，优先落地“可量化且可复测”的部分。
+- 题材语义、公告语义、盘口封单博弈等仍属于下一阶段增强项。
