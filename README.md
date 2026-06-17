@@ -35,7 +35,7 @@
 
 <img width="280" alt="交流群" src="https://github.com/user-attachments/assets/ea8b8f99-9dd2-4f4b-9010-8e2e4b79207f" />
 
-## 模拟仓一个半月 32 个点收益
+## 模拟仓2个月 40 个点收益
 
 <table>
   <tr>
@@ -44,10 +44,9 @@
       <img width="240" alt="7259c3d33aca6e81f948d90f89be5d15" src="https://github.com/user-attachments/assets/ef7d9b23-b9a3-4c49-afc2-3f81fd489058" />
     </td>
     <td align="center" valign="top">
-      <strong>6.17 盘中 +39.8%（持续更新中）</strong><br/>
+      <strong>6.17 盘中 +39.9%（持续更新中）</strong><br/>
       当前持仓：中兴通讯、京东方 A、沪电股份、洁美科技、永鼎股份、沃格光电、立昂微、博迁新材<br/><br/>
-      <img width="698" height="755" alt="6.17 盘中持仓截图" src="https://github.com/user-attachments/assets/1d5fb156-7db2-4c2c-8d6a-6ba03ac0bf5e" />
-    </td>
+      <img width="731" height="859" alt="image" src="https://github.com/user-attachments/assets/3ed0eb21-34fe-4442-b49c-9adbdca31858" />
   </tr>
 </table>
 
