@@ -14,9 +14,21 @@
 - 创建 `calm1` 模拟账户，查看账户详情、全部交易记录并下模拟单
 - 结合大盘、候选、持仓和账户状态，判断今天该买、卖、持有还是不动
 
+## AI操作分享
+
+我会在小红书持续更新每天的操作。
+
+**小红书**
+
+<img width="200" alt="小红书" src="https://github.com/user-attachments/assets/7c63fe7f-14f1-487e-96db-755c75b144f4" />
+
+**小红书群**
+
+<img width="200" alt="小红书群" src="https://github.com/user-attachments/assets/d37b2861-24a0-4fba-a52f-18cb27fe8cb7" />
+
 ## 交流群
 
-<img width="400" alt="39afc5617ddc27f26af912496edd3d34" src="https://github.com/user-attachments/assets/46d48fbf-6a9e-4d34-9966-0df52fe06a86" />
+<img width="200" alt="交流群" src="https://github.com/user-attachments/assets/ea8b8f99-9dd2-4f4b-9010-8e2e4b79207f" />
 
 ## 模拟仓一个半月 32 个点收益
 
@@ -27,10 +39,9 @@
       <img width="240" alt="7259c3d33aca6e81f948d90f89be5d15" src="https://github.com/user-attachments/assets/ef7d9b23-b9a3-4c49-afc2-3f81fd489058" />
     </td>
     <td align="center" valign="top">
-      <strong>6.5 盘中 132w（持续更新中）</strong><br/>
-      当前持仓：鹏鼎控股、华电辽能、太极实业、晶方科技<br/><br/>
-      <img width="240" alt="510dc971161e47e91114bdf1a0cab2a7" src="https://github.com/user-attachments/assets/1a37359b-b7cf-4beb-b882-d44a452d3130" />
-      <img width="240" alt="10a8b5bbfa7bbaba2ca2a9fc1b8aa98c" src="https://github.com/user-attachments/assets/cfb14495-7a46-4656-be20-d1e9779a9093" />
+      <strong>6.17 盘中 +39.8%（持续更新中）</strong><br/>
+      当前持仓：中兴通讯、京东方 A、沪电股份、洁美科技、永鼎股份、沃格光电、立昂微、博迁新材<br/><br/>
+      <img width="200" alt="6.17 盘中持仓截图" src="https://github.com/user-attachments/assets/1d5fb156-7db2-4c2c-8d6a-6ba03ac0bf5e" />
     </td>
   </tr>
 </table>
