@@ -18,17 +18,22 @@
 
 我会在小红书持续更新每天的操作。
 
-**小红书**
-
-<img width="200" alt="小红书" src="https://github.com/user-attachments/assets/7c63fe7f-14f1-487e-96db-755c75b144f4" />
-
-**小红书群**
-
-<img width="200" alt="小红书群" src="https://github.com/user-attachments/assets/d37b2861-24a0-4fba-a52f-18cb27fe8cb7" />
+<table>
+  <tr>
+    <td align="center" valign="top">
+      <strong>小红书</strong><br/><br/>
+      <img width="280" alt="小红书" src="https://github.com/user-attachments/assets/7c63fe7f-14f1-487e-96db-755c75b144f4" />
+    </td>
+    <td align="center" valign="top">
+      <strong>小红书群</strong><br/><br/>
+      <img width="280" alt="小红书群" src="https://github.com/user-attachments/assets/d37b2861-24a0-4fba-a52f-18cb27fe8cb7" />
+    </td>
+  </tr>
+</table>
 
 ## 交流群
 
-<img width="200" alt="交流群" src="https://github.com/user-attachments/assets/ea8b8f99-9dd2-4f4b-9010-8e2e4b79207f" />
+<img width="280" alt="交流群" src="https://github.com/user-attachments/assets/ea8b8f99-9dd2-4f4b-9010-8e2e4b79207f" />
 
 ## 模拟仓一个半月 32 个点收益
 
@@ -41,7 +46,7 @@
     <td align="center" valign="top">
       <strong>6.17 盘中 +39.8%（持续更新中）</strong><br/>
       当前持仓：中兴通讯、京东方 A、沪电股份、洁美科技、永鼎股份、沃格光电、立昂微、博迁新材<br/><br/>
-      <img width="200" alt="6.17 盘中持仓截图" src="https://github.com/user-attachments/assets/1d5fb156-7db2-4c2c-8d6a-6ba03ac0bf5e" />
+      <img width="698" height="755" alt="6.17 盘中持仓截图" src="https://github.com/user-attachments/assets/1d5fb156-7db2-4c2c-8d6a-6ba03ac0bf5e" />
     </td>
   </tr>
 </table>
