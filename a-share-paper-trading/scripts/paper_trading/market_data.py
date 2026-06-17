@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, time as time_type, timedelta
 from typing import Dict, List, Optional
 
 import akshare as ak
@@ -309,6 +309,56 @@ class Quote:
     limit_down: Optional[float] = None
 
 
+def is_trading_session(now: datetime) -> bool:
+    if now.weekday() >= 5:
+        return False
+    current = now.time()
+    return (
+        time_type(9, 30) <= current <= time_type(11, 30)
+        or time_type(13, 0) <= current <= time_type(15, 0)
+    )
+
+
+def is_forming_minute_bar(bar_ts: pd.Timestamp, freq_minutes: int, now: datetime) -> bool:
+    if pd.Timestamp(bar_ts).date() != now.date():
+        return False
+    if not is_trading_session(now):
+        return False
+    return now < (pd.Timestamp(bar_ts).to_pydatetime() + timedelta(minutes=freq_minutes))
+
+
+def drop_forming_minute_bars(df: pd.DataFrame, freq_minutes: int, now: datetime | None = None) -> pd.DataFrame:
+    if df is None or df.empty:
+        return pd.DataFrame(columns=getattr(df, "columns", None))
+    now = now or datetime.now()
+    trimmed = df.sort_index().copy()
+    if is_forming_minute_bar(trimmed.index[-1], freq_minutes, now):
+        trimmed = trimmed.iloc[:-1]
+    return trimmed
+
+
+def aggregate_today_minute_bars(
+    minute_df: pd.DataFrame,
+    trade_day: date,
+    freq_minutes: int = 5,
+    now: datetime | None = None,
+) -> dict | None:
+    if minute_df is None or minute_df.empty:
+        return None
+    df_today = minute_df[minute_df.index.date == trade_day].sort_index().copy()
+    df_today = drop_forming_minute_bars(df_today, freq_minutes=freq_minutes, now=now)
+    if df_today.empty:
+        return None
+    return {
+        "open": float(df_today.iloc[0]["open"]),
+        "high": float(df_today["high"].max()),
+        "low": float(df_today["low"].min()),
+        "close": float(df_today.iloc[-1]["close"]),
+        "volume": int(df_today["volume"].sum()),
+        "bar_time": df_today.index[-1],
+    }
+
+
 class MarketDataProvider:
     def __init__(self) -> None:
         self._session = _build_session()
@@ -324,17 +374,20 @@ class MarketDataProvider:
         if day_df is None or day_df.empty or len(day_df) < 2:
             raise ValueError(f"failed to load daily bars for {symbol}")
 
-        prev_close = float(day_df.iloc[-2]["close"]) if len(day_df) >= 2 else float(day_df.iloc[-1]["close"])
+        now = datetime.now()
+        today = now.date()
+        last_day = pd.Timestamp(day_df.index[-1]).date()
+        prev_close = float(day_df.iloc[-2]["close"]) if last_day == today and len(day_df) >= 2 else float(day_df.iloc[-1]["close"])
         minute_df = get_price(self._session, normalized, frequency="5m", count=320)
-        if minute_df is not None and not minute_df.empty:
-            latest_bar = minute_df.iloc[-1]
-            ts = minute_df.index[-1].strftime("%Y-%m-%d %H:%M:%S")
-            open_price = float(latest_bar["open"])
-            high_price = float(minute_df["high"].max())
-            low_price = float(minute_df["low"].min())
-            latest_price = float(latest_bar["close"])
-            volume = int(minute_df["volume"].sum())
-            source = "tencent/sina-minute"
+        today_data = aggregate_today_minute_bars(minute_df, trade_day=today, freq_minutes=5, now=now)
+        if today_data:
+            ts = pd.Timestamp(today_data["bar_time"]).strftime("%Y-%m-%d %H:%M:%S")
+            open_price = float(today_data["open"])
+            high_price = float(today_data["high"])
+            low_price = float(today_data["low"])
+            latest_price = float(today_data["close"])
+            volume = int(today_data["volume"])
+            source = "tencent/sina-minute-closed"
         else:
             latest_bar = day_df.iloc[-1]
             ts = day_df.index[-1].strftime("%Y-%m-%d 15:00:00")
@@ -374,6 +427,9 @@ class MarketDataProvider:
                 snapshot.high = float(parsed.get("high") or snapshot.high)
                 snapshot.low = float(parsed.get("low") or snapshot.low)
                 snapshot.price = float(parsed.get("price") or snapshot.price)
+                snapshot.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                snapshot.change_pct = round(((snapshot.price - snapshot.prev_close) / snapshot.prev_close * 100.0), 3) if snapshot.prev_close else 0.0
+                snapshot.source = f"tencent-qt+{snapshot.source}"
         except Exception:
             pass
         if snapshot.limit_up is None or snapshot.limit_down is None:
