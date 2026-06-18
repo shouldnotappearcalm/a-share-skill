@@ -87,7 +87,7 @@ description: 基于退哥短线交易规则的A股场景化决策技能。Use wh
 
 ## 工程化转换
 
-当前目录已提供可执行脚本，结构与 `a-share-strategy-mainboard-multi-swing-defensive` 对齐：
+当前目录已提供可执行脚本，采用统一的 daily_decisions / realtime_quotes / strategy_lab 结构：
 
 - `scripts/daily_decisions.py`
   - 主板流动性池扫描 + `trend_pullback` 信号

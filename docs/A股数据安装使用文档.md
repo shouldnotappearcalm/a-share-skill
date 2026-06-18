@@ -192,11 +192,10 @@ python3 "$SKILL_DIR/scripts/fetch_sector_info.py" --no-concepts --json 600519
 ## 与其他 skill 的关系
 
 - `a-share-data`: 数据层
-- `a-share-strategy-mainboard-multi-swing-defensive`: 信号层
 - `a-share-paper-trading`: 执行层
 
 典型链路是：
 
 1. 用 `a-share-data` 拉数据
-2. 用策略 skill 出信号
-3. 用模拟盘 skill 执行
+2. 结合分析结论决定是否交易
+3. 用 `a-share-paper-trading` 执行模拟单
