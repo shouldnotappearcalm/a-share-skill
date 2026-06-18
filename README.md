@@ -15,7 +15,7 @@
 
 `a-share-strategy-mainboard-multi-swing-defensive`（主板趋势回踩）和 `a-share-strategy-allmarket-multi-swing-defensive`（全市场趋势回踩）**暂不对外公开**。
 
-策略相关的安装文档、联动案例和源码已从本仓库移除。想了解每日操作思路、候选扫描和持仓管理，可以关注下方小红书账号，我会在那里持续更新。
+想了解每日操作思路、候选扫描和持仓管理，可以关注下方小红书账号，我会在那里持续更新。
 
 <table>
   <tr>
