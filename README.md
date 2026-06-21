@@ -30,10 +30,6 @@
   </tr>
 </table>
 
-## 交流群
-
-<img width="280" alt="交流群" src="https://github.com/user-attachments/assets/ea8b8f99-9dd2-4f4b-9010-8e2e4b79207f" />
-
 ## 模拟仓2个月 40 个点收益
 
 <table>
