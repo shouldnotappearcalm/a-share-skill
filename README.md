@@ -1,104 +1,106 @@
 # a-share-skill
 
-面向 AI 工具的 A 股数据分析与模拟交易 skill 集合，适合 stock analysis、quant trading、paper trading、A-share workflow：
+> 中文文档 / Chinese README: [README.zh.md](README.zh.md)
 
-- `a-share-data`：数据查询与分析
-- `a-share-paper-trading`：模拟盘执行与回测
+A collection of A-share (China Shanghai/Shenzhen) data-analysis and paper-trading skills for AI tools — built for stock analysis, quant trading, paper trading, and A-share workflows:
 
-你可以直接让 AI：
+- `a-share-data`: market data query and analysis
+- `a-share-paper-trading`: paper-trading execution and backtesting
 
-- 查个股实时行情、历史走势、技术指标、事件和行业信息
-- 创建 `calm1` 模拟账户，查看账户详情、全部交易记录并下模拟单
-- 结合大盘、持仓和账户状态，判断今天该买、卖、持有还是不动
+You can simply ask your AI to:
 
-## 趋势回踩策略说明
+- Look up a stock's real-time quote, historical trend, technical indicators, events, and industry info
+- Create a `calm1` paper-trading account, view account details and full trade history, and place simulated orders
+- Combine the broad market, your holdings, and account status to decide whether to buy, sell, hold, or do nothing today
 
-`a-share-strategy-mainboard-multi-swing-defensive`（主板趋势回踩）和 `a-share-strategy-allmarket-multi-swing-defensive`（全市场趋势回踩）**暂不对外公开**。
+## Trend-Pullback Strategies
 
-想了解每日操作思路、候选扫描和持仓管理，可以关注下方小红书账号，我会在那里持续更新。
+`a-share-strategy-mainboard-multi-swing-defensive` (main-board trend pullback) and `a-share-strategy-allmarket-multi-swing-defensive` (all-market trend pullback) are **not open-sourced for now**.
+
+For daily trading ideas, candidate scans, and position management, follow my Xiaohongshu (RED) account below — I keep posting updates there.
 
 <table>
   <tr>
     <td align="center" valign="top">
-      <strong>小红书</strong><br/><br/>
-      <img width="280" alt="小红书" src="https://github.com/user-attachments/assets/7c63fe7f-14f1-487e-96db-755c75b144f4" />
+      <strong>Xiaohongshu (RED)</strong><br/><br/>
+      <img width="280" alt="Xiaohongshu" src="https://github.com/user-attachments/assets/7c63fe7f-14f1-487e-96db-755c75b144f4" />
     </td>
     <td align="center" valign="top">
-      <strong>小红书群</strong><br/><br/>
-      <img width="280" alt="小红书群" src="https://github.com/user-attachments/assets/d37b2861-24a0-4fba-a52f-18cb27fe8cb7" />
+      <strong>Xiaohongshu Group</strong><br/><br/>
+      <img width="280" alt="Xiaohongshu Group" src="https://github.com/user-attachments/assets/d37b2861-24a0-4fba-a52f-18cb27fe8cb7" />
     </td>
   </tr>
 </table>
 
-## 模拟仓2个月 40 个点收益
+## Paper Account: +40% in 2 Months
 
 <table>
   <tr>
     <td align="center" valign="top">
-      <strong>4.16 初始化账户100w</strong><br/><br/>
-      <img width="240" alt="7259c3d33aca6e81f948d90f89be5d15" src="https://github.com/user-attachments/assets/ef7d9b23-b9a3-4c49-afc2-3f81fd489058" />
+      <strong>Apr 16 — account initialized with 1,000,000</strong><br/><br/>
+      <img width="240" alt="account init" src="https://github.com/user-attachments/assets/ef7d9b23-b9a3-4c49-afc2-3f81fd489058" />
     </td>
     <td align="center" valign="top">
-      <strong>6.17 盘中 +39.9%（持续更新中）</strong><br/>
-      当前持仓：中兴通讯、京东方 A、沪电股份、洁美科技、永鼎股份、沃格光电、立昂微、博迁新材<br/><br/>
+      <strong>Jun 17 — intraday +39.9% (still updating)</strong><br/>
+      Current holdings: ZTE, BOE A, WUS Printed Circuit, Jiemei Technology, Yongding, Voage Optoelectronics, LION Microelectronics, Boqian New Materials<br/><br/>
       <img width="731" height="859" alt="image" src="https://github.com/user-attachments/assets/3ed0eb21-34fe-4442-b49c-9adbdca31858" />
   </tr>
 </table>
 
-## 两个核心 Skill
+## Two Core Skills
 
 ### `a-share-data`
 
-适合问：
+Good for questions like:
 
-- 这只票现在怎么样
-- 最近 60 天走势怎样
-- 有没有事件驱动
-- 沪深300、热点板块、北向资金现在怎么样
+- How is this stock doing right now?
+- What's the trend over the last 60 days?
+- Are there any event-driven catalysts?
+- How are the CSI 300, hot sectors, and northbound capital doing right now?
 
-能做：
+Capabilities:
 
-- 实时行情、历史 K 线、技术指标、事件、行业、指数与宏观数据
+- Real-time quotes, historical K-line, technical indicators, events, industry, index, and macro data
 
-文档：
+Docs:
 
-- [docs/A股数据安装使用文档.md](docs/A股数据安装使用文档.md)
+- [docs/A股数据安装使用文档.md](docs/A股数据安装使用文档.md) (Chinese)
 
 ### `a-share-paper-trading`
 
-适合问：
+Good for tasks like:
 
-- 给 `calm1` 创建模拟账户
-- 看 `calm1` 账户详情、持仓、订单、全部交易记录
-- 给 `calm1` 下模拟买单或卖单
-- 跑简单回测
+- Create a `calm1` paper-trading account
+- View `calm1` account details, positions, orders, and full trade history
+- Place a simulated buy or sell order for `calm1`
+- Run a simple backtest
 
-能做：
+Capabilities:
 
-- 账户管理、下单、撤单、持仓、订单、成交、账户估值、回测
+- Account management, order placement, cancellation, positions, orders, fills, account valuation, and backtesting
 
-文档：
+Docs:
 
-- [docs/模拟仓安装使用文档.md](docs/模拟仓安装使用文档.md)
+- [docs/模拟仓安装使用文档.md](docs/模拟仓安装使用文档.md) (Chinese)
 
-## 最短案例
+## Quickest Examples
 
-- `查数据`：用 `a-share-data` 看 600519 最新行情、最近 60 日日线和 MACD。
-- `管模拟盘`：用 `a-share-paper-trading` 创建 `calm1`，初始资金 `1000000`，再查看 `calm1` 账户详情和全部交易记录。
+- `Query data`: use `a-share-data` to check 600519's latest quote, the last 60 daily candles, and MACD.
+- `Manage paper trading`: use `a-share-paper-trading` to create `calm1` with an initial balance of `1000000`, then view `calm1`'s account details and full trade history.
 
-## 组合使用
+## Combined Usage
 
-- `数据分析`
+- `Data analysis`
   - `a-share-data`
-  - 适合做单票分析、市场状态观察和批量拉数
+  - Good for single-stock analysis, market-state monitoring, and batch data pulls
 
-- `模拟执行`
+- `Paper execution`
   - `a-share-data + a-share-paper-trading`
-  - 适合先拉数据做判断，再在 `calm1` 上执行模拟买卖
+  - Good for pulling data to form a view first, then executing simulated trades on `calm1`
 
-## 安装
+## Installation
 
-以下示例包含两个核心 skill：`a-share-data`、`a-share-paper-trading`。
+The examples below include the two core skills: `a-share-data` and `a-share-paper-trading`.
 
 ### Codex
 
@@ -132,25 +134,25 @@ cp -R a-share-data ~/.qoder/skills/
 cp -R a-share-paper-trading ~/.qoder/skills/
 ```
 
-如果你用的是 OpenCode、openclaw 或其他支持 skills 的 AI 工具，只需要把路径替换成对应工具的 skills 目录。
+If you use OpenCode, openclaw, or another AI tool that supports skills, just replace the path with that tool's skills directory.
 
-## 文档导航
+## Documentation
 
-- [A股数据安装使用文档](docs/A股数据安装使用文档.md)
-- [模拟仓安装使用文档](docs/模拟仓安装使用文档.md)
+- [A-share Data — install & usage (Chinese)](docs/A股数据安装使用文档.md)
+- [Paper Trading — install & usage (Chinese)](docs/模拟仓安装使用文档.md)
 
-## 其他 Skill
+## Other Skills
 
 - `macd-second-golden-cross`
-  - 适合判断“MACD 底背离 + 零轴下二次金叉”这类修复型机会
+  - Good for spotting repair-type setups like "MACD bullish divergence + a second golden cross below the zero axis"
 
 - `macd-trend-resonance-stock-picker`
-  - 适合做“均线定方向，MACD 定节奏”的趋势共振选股
+  - Good for "moving averages set the direction, MACD sets the rhythm" trend-resonance stock picking
 
 - `tuige-shortline-trading`
-  - 适合按短线场景做 trigger / invalidation / risk / position_grade 判断
+  - Good for short-line trigger / invalidation / risk / position_grade decisions
 
-## 参考
+## References
 
 - Cursor: [Agent Skills](https://www.trycursor.com/docs/context/skills)
 - Claude Code: [Extend Claude with skills](https://code.claude.com/docs/en/skills.md)
