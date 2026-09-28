@@ -2,35 +2,19 @@
 
 > English README: [README.md](README.md)
 
-面向 AI 工具的 A 股数据分析与模拟交易 skill 集合，适合 stock analysis、quant trading、paper trading、A-share workflow：
+面向 AI 工具的 A 股数据分析、趋势回踩策略与模拟交易 skill 集合，适合 stock analysis、quant trading、paper trading、A-share workflow：
 
 - `a-share-data`：数据查询与分析
+- `a-share-strategy-mainboard-multi-swing-defensive`：主板趋势回踩信号
+- `a-share-strategy-allmarket-multi-swing-defensive`：全市场趋势回踩信号
 - `a-share-paper-trading`：模拟盘执行与回测
 
 你可以直接让 AI：
 
 - 查个股实时行情、历史走势、技术指标、事件和行业信息
+- 扫描主板或全市场候选，查看持仓卖出参考
 - 创建 `calm1` 模拟账户，查看账户详情、全部交易记录并下模拟单
 - 结合大盘、持仓和账户状态，判断今天该买、卖、持有还是不动
-
-## 趋势回踩策略说明
-
-`a-share-strategy-mainboard-multi-swing-defensive`（主板趋势回踩）和 `a-share-strategy-allmarket-multi-swing-defensive`（全市场趋势回踩）**暂不对外公开**。
-
-想了解每日操作思路、候选扫描和持仓管理，可以关注下方小红书账号，我会在那里持续更新。
-
-<table>
-  <tr>
-    <td align="center" valign="top">
-      <strong>小红书</strong><br/><br/>
-      <img width="280" alt="小红书" src="https://github.com/user-attachments/assets/7c63fe7f-14f1-487e-96db-755c75b144f4" />
-    </td>
-    <td align="center" valign="top">
-      <strong>小红书群</strong><br/><br/>
-      <img width="280" alt="小红书群" src="https://github.com/user-attachments/assets/d37b2861-24a0-4fba-a52f-18cb27fe8cb7" />
-    </td>
-  </tr>
-</table>
 
 ## 模拟仓2个月 40 个点收益
 
@@ -47,7 +31,7 @@
   </tr>
 </table>
 
-## 两个核心 Skill
+## 四个核心 Skill
 
 ### `a-share-data`
 
@@ -65,6 +49,14 @@
 文档：
 
 - [docs/A股数据安装使用文档.md](docs/A股数据安装使用文档.md)
+
+### `a-share-strategy-mainboard-multi-swing-defensive`
+
+扫描主板高流动性股票，给出趋势回踩买入参考和持仓卖出参考。详见 [Skill 说明](a-share-strategy-mainboard-multi-swing-defensive/SKILL.md)。
+
+### `a-share-strategy-allmarket-multi-swing-defensive`
+
+使用同一套信号规则扫描全市场高流动性股票，包含创业板和科创板。详见 [Skill 说明](a-share-strategy-allmarket-multi-swing-defensive/SKILL.md)。
 
 ### `a-share-paper-trading`
 
@@ -86,6 +78,7 @@
 ## 最短案例
 
 - `查数据`：用 `a-share-data` 看 600519 最新行情、最近 60 日日线和 MACD。
+- `跑趋势回踩策略`：运行对应策略的 `scripts/daily_decisions.py --json`，查看过滤后的候选。
 - `管模拟盘`：用 `a-share-paper-trading` 创建 `calm1`，初始资金 `1000000`，再查看 `calm1` 账户详情和全部交易记录。
 
 ## 组合使用
@@ -94,19 +87,25 @@
   - `a-share-data`
   - 适合做单票分析、市场状态观察和批量拉数
 
+- `策略信号`
+  - `a-share-data + a-share-strategy-mainboard-multi-swing-defensive` 或 `a-share-data + a-share-strategy-allmarket-multi-swing-defensive`
+  - 适合扫描候选和检查持仓卖出信号
+
 - `模拟执行`
-  - `a-share-data + a-share-paper-trading`
-  - 适合先拉数据做判断，再在 `calm1` 上执行模拟买卖
+  - `a-share-data + a-share-strategy-mainboard-multi-swing-defensive + a-share-paper-trading`
+  - 适合查看策略信号后，在 `calm1` 上执行模拟买卖
 
 ## 安装
 
-以下示例包含两个核心 skill：`a-share-data`、`a-share-paper-trading`。
+以下示例包含四个核心 skill。
 
 ### Codex
 
 ```bash
 mkdir -p ~/.agents/skills
 cp -R a-share-data ~/.agents/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.agents/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.agents/skills/
 cp -R a-share-paper-trading ~/.agents/skills/
 ```
 
@@ -115,6 +114,8 @@ cp -R a-share-paper-trading ~/.agents/skills/
 ```bash
 mkdir -p ~/.cursor/skills
 cp -R a-share-data ~/.cursor/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.cursor/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.cursor/skills/
 cp -R a-share-paper-trading ~/.cursor/skills/
 ```
 
@@ -123,6 +124,8 @@ cp -R a-share-paper-trading ~/.cursor/skills/
 ```bash
 mkdir -p ~/.claude/skills
 cp -R a-share-data ~/.claude/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.claude/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.claude/skills/
 cp -R a-share-paper-trading ~/.claude/skills/
 ```
 
@@ -131,6 +134,8 @@ cp -R a-share-paper-trading ~/.claude/skills/
 ```bash
 mkdir -p ~/.qoder/skills
 cp -R a-share-data ~/.qoder/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.qoder/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.qoder/skills/
 cp -R a-share-paper-trading ~/.qoder/skills/
 ```
 
@@ -140,6 +145,8 @@ cp -R a-share-paper-trading ~/.qoder/skills/
 
 - [A股数据安装使用文档](docs/A股数据安装使用文档.md)
 - [模拟仓安装使用文档](docs/模拟仓安装使用文档.md)
+- [主板趋势回踩 Skill](a-share-strategy-mainboard-multi-swing-defensive/SKILL.md)
+- [全市场趋势回踩 Skill](a-share-strategy-allmarket-multi-swing-defensive/SKILL.md)
 
 ## 其他 Skill
 

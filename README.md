@@ -2,35 +2,19 @@
 
 > 中文文档 / Chinese README: [README.zh.md](README.zh.md)
 
-A collection of A-share (China Shanghai/Shenzhen) data-analysis and paper-trading skills for AI tools — built for stock analysis, quant trading, paper trading, and A-share workflows:
+A collection of A-share (China Shanghai/Shenzhen) data-analysis, trend-pullback strategy, and paper-trading skills for AI tools — built for stock analysis, quant trading, paper trading, and A-share workflows:
 
 - `a-share-data`: market data query and analysis
+- `a-share-strategy-mainboard-multi-swing-defensive`: main-board trend-pullback signals
+- `a-share-strategy-allmarket-multi-swing-defensive`: all-market trend-pullback signals
 - `a-share-paper-trading`: paper-trading execution and backtesting
 
 You can simply ask your AI to:
 
 - Look up a stock's real-time quote, historical trend, technical indicators, events, and industry info
+- Scan main-board or all-market candidates and review position exit signals
 - Create a `calm1` paper-trading account, view account details and full trade history, and place simulated orders
 - Combine the broad market, your holdings, and account status to decide whether to buy, sell, hold, or do nothing today
-
-## Trend-Pullback Strategies
-
-`a-share-strategy-mainboard-multi-swing-defensive` (main-board trend pullback) and `a-share-strategy-allmarket-multi-swing-defensive` (all-market trend pullback) are **not open-sourced for now**.
-
-For daily trading ideas, candidate scans, and position management, follow my Xiaohongshu (RED) account below — I keep posting updates there.
-
-<table>
-  <tr>
-    <td align="center" valign="top">
-      <strong>Xiaohongshu (RED)</strong><br/><br/>
-      <img width="280" alt="Xiaohongshu" src="https://github.com/user-attachments/assets/7c63fe7f-14f1-487e-96db-755c75b144f4" />
-    </td>
-    <td align="center" valign="top">
-      <strong>Xiaohongshu Group</strong><br/><br/>
-      <img width="280" alt="Xiaohongshu Group" src="https://github.com/user-attachments/assets/d37b2861-24a0-4fba-a52f-18cb27fe8cb7" />
-    </td>
-  </tr>
-</table>
 
 ## Paper Account: +40% in 2 Months
 
@@ -47,7 +31,7 @@ For daily trading ideas, candidate scans, and position management, follow my Xia
   </tr>
 </table>
 
-## Two Core Skills
+## Four Core Skills
 
 ### `a-share-data`
 
@@ -65,6 +49,14 @@ Capabilities:
 Docs:
 
 - [docs/A股数据安装使用文档.md](docs/A股数据安装使用文档.md) (Chinese)
+
+### `a-share-strategy-mainboard-multi-swing-defensive`
+
+Scans a liquid main-board stock pool for trend-pullback entry and position exit signals. See [the skill guide](a-share-strategy-mainboard-multi-swing-defensive/SKILL.md).
+
+### `a-share-strategy-allmarket-multi-swing-defensive`
+
+Uses the same signal rules across a liquid A-share pool that also includes ChiNext and STAR Market stocks. See [the skill guide](a-share-strategy-allmarket-multi-swing-defensive/SKILL.md).
 
 ### `a-share-paper-trading`
 
@@ -86,6 +78,7 @@ Docs:
 ## Quickest Examples
 
 - `Query data`: use `a-share-data` to check 600519's latest quote, the last 60 daily candles, and MACD.
+- `Scan trend pullbacks`: run either strategy’s `scripts/daily_decisions.py --json` and review the filtered candidate lists.
 - `Manage paper trading`: use `a-share-paper-trading` to create `calm1` with an initial balance of `1000000`, then view `calm1`'s account details and full trade history.
 
 ## Combined Usage
@@ -94,19 +87,25 @@ Docs:
   - `a-share-data`
   - Good for single-stock analysis, market-state monitoring, and batch data pulls
 
+- `Strategy signals`
+  - `a-share-data + a-share-strategy-mainboard-multi-swing-defensive` or `a-share-data + a-share-strategy-allmarket-multi-swing-defensive`
+  - Good for candidate scans and position exit checks
+
 - `Paper execution`
-  - `a-share-data + a-share-paper-trading`
-  - Good for pulling data to form a view first, then executing simulated trades on `calm1`
+  - `a-share-data + a-share-strategy-mainboard-multi-swing-defensive + a-share-paper-trading`
+  - Good for reviewing signals and then executing simulated trades on `calm1`
 
 ## Installation
 
-The examples below include the two core skills: `a-share-data` and `a-share-paper-trading`.
+The examples below include all four skills.
 
 ### Codex
 
 ```bash
 mkdir -p ~/.agents/skills
 cp -R a-share-data ~/.agents/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.agents/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.agents/skills/
 cp -R a-share-paper-trading ~/.agents/skills/
 ```
 
@@ -115,6 +114,8 @@ cp -R a-share-paper-trading ~/.agents/skills/
 ```bash
 mkdir -p ~/.cursor/skills
 cp -R a-share-data ~/.cursor/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.cursor/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.cursor/skills/
 cp -R a-share-paper-trading ~/.cursor/skills/
 ```
 
@@ -123,6 +124,8 @@ cp -R a-share-paper-trading ~/.cursor/skills/
 ```bash
 mkdir -p ~/.claude/skills
 cp -R a-share-data ~/.claude/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.claude/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.claude/skills/
 cp -R a-share-paper-trading ~/.claude/skills/
 ```
 
@@ -131,6 +134,8 @@ cp -R a-share-paper-trading ~/.claude/skills/
 ```bash
 mkdir -p ~/.qoder/skills
 cp -R a-share-data ~/.qoder/skills/
+cp -R a-share-strategy-mainboard-multi-swing-defensive ~/.qoder/skills/
+cp -R a-share-strategy-allmarket-multi-swing-defensive ~/.qoder/skills/
 cp -R a-share-paper-trading ~/.qoder/skills/
 ```
 
@@ -140,6 +145,8 @@ If you use OpenCode, openclaw, or another AI tool that supports skills, just rep
 
 - [A-share Data — install & usage (Chinese)](docs/A股数据安装使用文档.md)
 - [Paper Trading — install & usage (Chinese)](docs/模拟仓安装使用文档.md)
+- [Main-board trend-pullback skill](a-share-strategy-mainboard-multi-swing-defensive/SKILL.md)
+- [All-market trend-pullback skill](a-share-strategy-allmarket-multi-swing-defensive/SKILL.md)
 
 ## Other Skills
 
