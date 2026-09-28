@@ -25,11 +25,13 @@
       <img width="240" alt="7259c3d33aca6e81f948d90f89be5d15" src="https://github.com/user-attachments/assets/ef7d9b23-b9a3-4c49-afc2-3f81fd489058" />
     </td>
     <td align="center" valign="top">
-      <strong>6.17 盘中 +39.9%（持续更新中）</strong><br/>
+      <strong>6.17 盘中 +39.9%</strong><br/>
       当前持仓：中兴通讯、京东方 A、沪电股份、洁美科技、永鼎股份、沃格光电、立昂微、博迁新材<br/><br/>
       <img width="731" height="859" alt="image" src="https://github.com/user-attachments/assets/3ed0eb21-34fe-4442-b49c-9adbdca31858" />
   </tr>
 </table>
+
+后续情况：7、8 月亏损约 30%，账户资金回落到 120 万左右。上图展示的是 6 月的阶段性收益。
 
 ## 四个核心 Skill
 

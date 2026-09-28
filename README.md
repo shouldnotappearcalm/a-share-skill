@@ -25,11 +25,13 @@ You can simply ask your AI to:
       <img width="240" alt="account init" src="https://github.com/user-attachments/assets/ef7d9b23-b9a3-4c49-afc2-3f81fd489058" />
     </td>
     <td align="center" valign="top">
-      <strong>Jun 17 — intraday +39.9% (still updating)</strong><br/>
+      <strong>Jun 17 — intraday +39.9%</strong><br/>
       Current holdings: ZTE, BOE A, WUS Printed Circuit, Jiemei Technology, Yongding, Voage Optoelectronics, LION Microelectronics, Boqian New Materials<br/><br/>
       <img width="731" height="859" alt="image" src="https://github.com/user-attachments/assets/3ed0eb21-34fe-4442-b49c-9adbdca31858" />
   </tr>
 </table>
+
+Later update: The account saw a loss of about 30% during July and August, and its value fell to around 1.2 million. The figures above show the earlier June snapshot.
 
 ## Four Core Skills
 
