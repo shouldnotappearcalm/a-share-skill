@@ -167,3 +167,6 @@ If you use OpenCode, openclaw, or another AI tool that supports skills, just rep
 - Claude Code: [Extend Claude with skills](https://code.claude.com/docs/en/skills.md)
 - Codex: [Agent Skills](https://developers.openai.com/codex/skills)
 - Qoder: [Skills](https://docs.qoder.com/extensions/skills)
+
+
+Data contract and industry updates: [数据口径与行业扩展](docs/data-contracts-2026-10-11.md).

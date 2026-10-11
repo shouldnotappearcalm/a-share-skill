@@ -30,6 +30,11 @@ from datetime import datetime
 
 import pandas as pd
 import requests
+
+try:
+    from .data_runtime import call_source, cached_fetch
+except ImportError:
+    from data_runtime import call_source, cached_fetch
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -68,7 +73,12 @@ INDEX_CODE_MAP = {
 }
 
 
+_SESSIONS = threading.local()
+
+
 def _build_session() -> requests.Session:
+    if getattr(_SESSIONS,"session",None) is not None:
+        return _SESSIONS.session
     s = requests.Session()
     s.headers.update(
         {
@@ -88,6 +98,7 @@ def _build_session() -> requests.Session:
     adapter = HTTPAdapter(max_retries=retry)
     s.mount("http://", adapter)
     s.mount("https://", adapter)
+    _SESSIONS.session = s
     return s
 
 
@@ -166,21 +177,25 @@ def get_kline_sina(session: requests.Session, norm_code: str, freq: str, count: 
         return pd.DataFrame()
 
 
-def get_kline_tencent(session: requests.Session, norm_code: str, freq: str, count: int) -> pd.DataFrame:
+def get_kline_tencent(session: requests.Session, norm_code: str, freq: str, count: int, adjust: str = "raw") -> pd.DataFrame:
     if freq not in TENCENT_DAY_FREQ_MAP:
         return pd.DataFrame()
     unit = TENCENT_DAY_FREQ_MAP[freq]
-    url = f"{TENCENT_DAY_URL}?param={norm_code},{unit},,,{count},qfq"
+    if adjust not in ("raw", "qfq", "hfq"):
+        raise ValueError("adjust=raw/qfq/hfq")
+    endpoint = TENCENT_DAY_URL if adjust != "raw" else "https://web.ifzq.gtimg.cn/appstock/app/kline/kline"
+    basis = "" if adjust == "raw" else adjust
+    url = f"{endpoint}?param={norm_code},{unit},,,{count},{basis}"
     try:
         payload = _get_json(session, url, timeout=10)
         if "data" not in payload or norm_code not in payload["data"]:
             return pd.DataFrame()
         block = payload["data"][norm_code]
-        key = "qfq" + unit
-        arr = block.get(key) or block.get(unit) or []
+        key = unit if adjust == "raw" else adjust + unit
+        arr = block.get(key) or []
         if not arr:
             return pd.DataFrame()
-        df = pd.DataFrame(arr, columns=["time", "open", "close", "high", "low", "volume"])
+        df = pd.DataFrame([row[:6] for row in arr], columns=["time", "open", "close", "high", "low", "volume"])
         for col in ["open", "high", "low", "close", "volume"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
         df["time"] = pd.to_datetime(df["time"], errors="coerce")
@@ -263,7 +278,7 @@ def get_kline_xueqiu(session: requests.Session, norm_code: str, freq: str, count
         return pd.DataFrame()
 
 
-def get_kline_eastmoney(norm_code: str, freq: str, start: str = None, end: str = None) -> pd.DataFrame:
+def get_kline_eastmoney(norm_code: str, freq: str, start: str = None, end: str = None, adjust: str = "raw") -> pd.DataFrame:
     """东方财富日/周/月K线（akshare）兜底。"""
     try:
         import akshare as ak
@@ -292,7 +307,7 @@ def get_kline_eastmoney(norm_code: str, freq: str, start: str = None, end: str =
             period=period_map[freq],
             start_date=_fmt(start),
             end_date=_fmt(end),
-            adjust="qfq",
+            adjust="" if adjust == "raw" else adjust,
         )
         if df is None or df.empty:
             return pd.DataFrame()
@@ -317,34 +332,50 @@ def get_kline_eastmoney(norm_code: str, freq: str, start: str = None, end: str =
         return pd.DataFrame()
 
 
-def _fetch_kline_with_fallback(session: requests.Session, norm: str, freq: str, fetch_count: int, start: str = None, end: str = None, retry: int = 2):
-    """历史K线主链路：腾讯优先 -> 新浪 -> 雪球 -> 东方财富(akshare)。含重试。"""
-    last_df = pd.DataFrame()
-    for _ in range(max(1, retry)):
-        df = get_kline_tencent(session, norm, freq, fetch_count)
-        if not df.empty:
-            return df, "腾讯"
-        last_df = df
+def _fetch_kline_uncached(session: requests.Session, norm: str, freq: str, fetch_count: int, start: str = None, end: str = None, retry: int = 2, adjust: str = "raw"):
+    """Only fail over to providers supporting the requested adjustment contract."""
+    if adjust not in ("raw", "qfq", "hfq"):
+        raise ValueError("adjust=raw/qfq/hfq")
+    callbacks = [("腾讯", lambda: get_kline_tencent(_build_session(), norm, freq, fetch_count, adjust))]
+    if adjust == "raw":
+        callbacks.append(("新浪", lambda: get_kline_sina(_build_session(), norm, freq, fetch_count)))
+    # Xueqiu's existing adapter does not establish a raw/adjusted contract, so it is not used here.
+    callbacks.append(("东财", lambda: get_kline_eastmoney(norm, freq, start=start, end=end, adjust=adjust)))
+    errors = {}
+    for source, callback in callbacks:
+        try:
+            df = call_source(callback, 8)
+            if df is None or df.empty:
+                raise ValueError("empty response")
+            required = ["time", "open", "high", "low", "close"]
+            if not all(column in df for column in required) or df[required].isna().any().any():
+                raise ValueError("missing OHLC/time")
+            if ((df["high"] < df[["open", "close"]].max(axis=1)) | (df["low"] > df[["open", "close"]].min(axis=1))).any():
+                raise ValueError("invalid OHLC ordering")
+            df.attrs.update(adjust_requested=adjust, adjust_actual=adjust, source_errors=errors, timezone="Asia/Shanghai")
+            return df, source
+        except Exception as exc:
+            errors[source] = f"{type(exc).__name__}: {str(exc)[:200]}"
+    df = pd.DataFrame()
+    df.attrs["source_errors"] = errors
+    return df, None
 
-        df = get_kline_sina(session, norm, freq, fetch_count)
-        if not df.empty:
-            return df, "新浪"
-        last_df = df
 
-        df = get_kline_xueqiu(session, norm, freq, fetch_count)
-        if not df.empty:
-            return df, "雪球"
-        last_df = df
-
-    # 最后兜底东方财富
-    df = get_kline_eastmoney(norm, freq, start=start, end=end)
-    if not df.empty:
-        return df, "东财"
-
-    return last_df, None
+def _fetch_kline_with_fallback(session: requests.Session, norm: str, freq: str, fetch_count: int, start: str = None, end: str = None, retry: int = 2, adjust: str = "raw", no_cache: bool = False):
+    def load(_):
+        frame, source = _fetch_kline_uncached(session,norm,freq,fetch_count,start,end,retry,adjust)
+        return {"data":json.loads(frame.to_json(orient="records",date_format="iso",force_ascii=False)),"source":source,"attributes":frame.attrs}
+    value,cache=cached_fetch(f"history-v2:{norm}:{freq}:{fetch_count}:{start}:{end}:{adjust}",load,300,no_cache,cacheable=lambda value:bool(value["data"]))
+    frame=pd.DataFrame(value["data"])
+    if not frame.empty:frame["time"]=pd.to_datetime(frame["time"])
+    frame.attrs.update(value["attributes"],cache=cache)
+    return frame,value["source"]
 
 
 def _format_kline_output(df: pd.DataFrame, norm: str, count: int, start: str = None, end: str = None) -> pd.DataFrame:
+    df = df.sort_values("time").copy()
+    df["preclose"] = df["close"].shift(1)
+    df["pctChg"] = (df["close"] / df["preclose"] - 1) * 100
     start_dt = pd.to_datetime(start) if start else None
     end_dt = pd.to_datetime(end) if end else None
     if start_dt is not None:
@@ -357,8 +388,6 @@ def _format_kline_output(df: pd.DataFrame, norm: str, count: int, start: str = N
 
     out = df.copy()
     out["code"] = norm
-    out["preclose"] = out["close"].shift(1)
-    out["pctChg"] = (out["close"] / out["preclose"] - 1) * 100
     out["time"] = out["time"].dt.strftime("%Y-%m-%d")
     cols = ["time", "code", "open", "high", "low", "close", "preclose", "volume", "pctChg"]
     return out[cols]
@@ -370,19 +399,22 @@ def cmd_kline(args):
     fetch_count = _estimate_fetch_count(args.start, args.end, args.freq, args.count)
 
     df, source = _fetch_kline_with_fallback(
-        session, norm, args.freq, fetch_count, start=args.start, end=args.end, retry=2
+        session, norm, args.freq, fetch_count, start=args.start, end=args.end, retry=2, adjust=getattr(args,"adjust","raw"), no_cache=getattr(args,"no_cache",False)
     )
     if df.empty:
-        print(f"未获取到 {norm} 的K线数据（腾讯/新浪/东财均失败）")
+        print(json.dumps({"status":"unavailable","error":"history sources unavailable","errors":df.attrs.get("source_errors",{}),"data":[]},ensure_ascii=False) if args.output_json else f"未获取到 {norm} 的K线数据（腾讯/新浪/东财均失败）")
         return
 
     out = _format_kline_output(df, norm, args.count, args.start, args.end)
     if out.empty:
-        print(f"未找到 {norm} 在指定区间内的K线数据")
+        print(json.dumps({"status":"empty","data":[]},ensure_ascii=False) if args.output_json else f"未找到 {norm} 在指定区间内的K线数据")
         return
 
     if args.output_json:
-        print(out.to_json(orient="records", force_ascii=False))
+        if getattr(args,"with_meta",False):
+            print(json.dumps({"meta": {"source":source,"adjust_requested":getattr(args,"adjust","raw"),"adjust_actual":getattr(args,"adjust","raw"),"timezone":"Asia/Shanghai","source_errors":df.attrs.get("source_errors",{}),"cache":df.attrs.get("cache",{})}, "data":json.loads(out.to_json(orient="records", force_ascii=False))},ensure_ascii=False))
+        else:
+            print(out.to_json(orient="records", force_ascii=False))
     else:
         print(f"【{norm} 历史K线】频率={args.freq} 共{len(out)}条 数据源：{source}")
         print(out.to_string(index=False))
@@ -417,7 +449,7 @@ def cmd_kline_batch(args):
     def _one(code):
         session = _get_thread_session()
         df, source = _fetch_kline_with_fallback(
-            session, code, args.freq, fetch_count, start=args.start, end=args.end, retry=max(1, int(args.retries or 2))
+            session, code, args.freq, fetch_count, start=args.start, end=args.end, retry=max(1, int(args.retries or 2)), adjust=getattr(args,"adjust","raw"), no_cache=getattr(args,"no_cache",False)
         )
         if df.empty:
             return {
@@ -442,6 +474,8 @@ def cmd_kline_batch(args):
             "code": code,
             "ok": True,
             "source": source,
+            "adjust_actual": getattr(args,"adjust","raw"),
+            "source_errors": df.attrs.get("source_errors",{}),
             "rows": len(out),
             "data": json.loads(out.to_json(orient="records", force_ascii=False)),
             "error": None,
@@ -1116,6 +1150,12 @@ def _financial_single_from_akshare(norm: str, func_name: str) -> pd.DataFrame:
 def _filter_financial_periods(df, args):
     if df.empty:
         return df
+    as_of = getattr(args,"as_of",None)
+    if as_of:
+        if "公告日期" not in df:
+            raise ValueError("as_of unavailable: source has no announcement dates")
+        announced = pd.to_datetime(df["公告日期"],errors="coerce")
+        df = df[announced.notna() & (announced <= pd.Timestamp(as_of))]
     periods = pd.to_datetime(df["报告期"], errors="coerce")
     mask = periods.notna()
     if args.start:
@@ -1222,6 +1262,8 @@ def build_parser():
     p.add_argument("--retries", type=int, default=2, help="批量K线每只代码重试次数，默认2")
     p.add_argument("--start", help="开始日期 YYYY-MM-DD")
     p.add_argument("--end", help="结束日期 YYYY-MM-DD")
+    p.add_argument("--with-meta", action="store_true", help="K线JSON增加来源、复权口径和错误诊断；默认保持裸数组兼容")
+    p.add_argument("--adjust", choices=["raw","qfq","hfq"], default="raw", help="显式复权口径，切换源不改变口径")
     p.add_argument("--freq", default="1d", choices=["1d", "1w", "1M"], help="K线频率，默认1d")
     p.add_argument("--count", type=int, default=120, help="K线条数，默认120")
     
@@ -1262,6 +1304,7 @@ def build_parser():
     p.add_argument("--balance", metavar="CODE", help="偿债能力")
     p.add_argument("--cashflow", metavar="CODE", help="现金流量")
     p.add_argument("--dupont", metavar="CODE", help="杜邦分析")
+    p.add_argument("--as-of", help="财务指标：只返回此日期之前公告的记录，无公告日期的源拒绝推断")
     p.add_argument("--quarter", type=int, choices=[1, 2, 3, 4], help="季度")
     
     # 宏观数据

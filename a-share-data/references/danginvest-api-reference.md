@@ -17,7 +17,7 @@
 | `--summary` | `/api/market/boards/summary` | 板块热力图列表 |
 | `--detail` | `/api/market/boards/detail` | 板块成分股列表 |
 
-所有 HTTP 请求均带重试（urllib3 Retry + 应用层重试，默认 `--retries 2`）。
+网络失败使用应用层有限重试，默认`--retries 2`；已知陈旧或未知时效在require-fresh模式下直接失败。
 
 ---
 
@@ -27,7 +27,7 @@
 
 | 别名 | API mode | 说明 | 板块总数（约） |
 |------|----------|------|----------------|
-| `sub` / `ths_industry` / `细分行业` | `ths_industry` | 细分行业（同花顺 GICS 风格） | 588 |
+| `sub` / `ths_industry` / `细分行业` | `ths_industry` | 上游标为ths_industry的细分行业，未独立认证为GICS | 588 |
 | `major` / `industry` / `大类行业` | `industry` | 大类行业 | 110 |
 | `concept` / `ths_concept` / `概念` | `ths_concept` | 概念 | 396 |
 
@@ -65,17 +65,17 @@
 示例（今日涨幅 Top 10，三个维度各一份）：
 
 ```bash
-python3 fetch_danginvest.py --summary --mode major --limit 10 --json
-python3 fetch_danginvest.py --summary --mode sub --limit 10 --json
-python3 fetch_danginvest.py --summary --mode concept --limit 10 --json
+python3 scripts/fetch_danginvest.py --summary --mode major --limit 10 --json
+python3 scripts/fetch_danginvest.py --summary --mode sub --limit 10 --json
+python3 scripts/fetch_danginvest.py --summary --mode concept --limit 10 --json
 ```
 
 示例（今日跌幅 Top 10）：
 
 ```bash
-python3 fetch_danginvest.py --summary --mode major --sort change_asc --limit 10 --json
-python3 fetch_danginvest.py --summary --mode sub --sort change_asc --limit 10 --json
-python3 fetch_danginvest.py --summary --mode concept --sort change_asc --limit 10 --json
+python3 scripts/fetch_danginvest.py --summary --mode major --sort change_asc --limit 10 --json
+python3 scripts/fetch_danginvest.py --summary --mode sub --sort change_asc --limit 10 --json
+python3 scripts/fetch_danginvest.py --summary --mode concept --sort change_asc --limit 10 --json
 ```
 
 若用户指定了某一维度（如「概念涨幅 Top 5」「细分行业谁跌最多」「大类行业领涨」），只查对应 `--mode` 即可。
@@ -99,46 +99,46 @@ python3 fetch_danginvest.py --summary --mode concept --sort change_asc --limit 1
 ### 市场新闻
 
 ```bash
-python3 fetch_danginvest.py --news --limit 50 --json
-python3 fetch_danginvest.py --news --limit 120 --offset 0
+python3 scripts/fetch_danginvest.py --news --limit 50 --json
+python3 scripts/fetch_danginvest.py --news --limit 120 --offset 0
 ```
 
 ### 板块概览（三个维度 × 四种排序）
 
 ```bash
 # 细分行业 · 涨幅（默认 sort，可省略 --sort change_desc）
-python3 fetch_danginvest.py --summary --mode sub --limit 300 --json
+python3 scripts/fetch_danginvest.py --summary --mode sub --limit 300 --json
 
 # 细分行业 · 成交额
-python3 fetch_danginvest.py --summary --mode sub --sort turnover_desc --limit 300 --json
+python3 scripts/fetch_danginvest.py --summary --mode sub --sort turnover_desc --limit 300 --json
 
 # 细分行业 · 总市值
-python3 fetch_danginvest.py --summary --mode sub --sort market_cap_desc --limit 300 --json
+python3 scripts/fetch_danginvest.py --summary --mode sub --sort market_cap_desc --limit 300 --json
 
 # 细分行业 · 跌幅
-python3 fetch_danginvest.py --summary --mode sub --sort change_asc --limit 300 --json
+python3 scripts/fetch_danginvest.py --summary --mode sub --sort change_asc --limit 300 --json
 
 # 大类行业 · 涨幅（默认 sort）
-python3 fetch_danginvest.py --summary --mode major --limit 300 --json
+python3 scripts/fetch_danginvest.py --summary --mode major --limit 300 --json
 
 # 概念 · 涨幅（默认 sort）
-python3 fetch_danginvest.py --summary --mode concept --limit 300 --json
+python3 scripts/fetch_danginvest.py --summary --mode concept --limit 300 --json
 ```
 
 ### 板块成分明细
 
 ```bash
 # 细分行业 · 印制电路板 · 总市值
-python3 fetch_danginvest.py --detail --mode sub --group-key "I:印制电路板" --sort market_cap_desc --json
+python3 scripts/fetch_danginvest.py --detail --mode sub --group-key "I:印制电路板" --sort market_cap_desc --json
 
 # 大类行业 · 元器件 · 成交额
-python3 fetch_danginvest.py --detail --mode major --group-key 元器件 --sort turnover_desc --json
+python3 scripts/fetch_danginvest.py --detail --mode major --group-key 元器件 --sort turnover_desc --json
 
 # 概念 · 先进封装 · 涨幅（默认 sort）
-python3 fetch_danginvest.py --detail --mode concept --group-key "N:先进封装" --json
+python3 scripts/fetch_danginvest.py --detail --mode concept --group-key "N:先进封装" --json
 
 # 分页（超过 300 只时）
-python3 fetch_danginvest.py --detail --mode concept --group-key "N:深股通" \
+python3 scripts/fetch_danginvest.py --detail --mode concept --group-key "N:深股通" \
   --sort market_cap_desc --items-limit 300 --items-offset 300 --json
 ```
 
@@ -184,3 +184,8 @@ GET /api/market/boards/detail?mode={mode}&groupKey={key}&sort={sort}&items_limit
 
 `fetch_realtime.py` 仍保留 `--market-news` / `--boards-summary` / `--boards-detail` 作为兼容入口。  
 新能力请优先使用 `fetch_danginvest.py`（mode/sort 别名更完整，detail 参数校验更严格）。
+
+
+## 新鲜度与原始输出
+
+默认保留meta.stale、tradeDate、snapshotTsMs及data_quality。stale=true为旧快照；查询成功不证明今天更新。需要新鲜结果可用`python3 scripts/fetch_danginvest.py --summary --mode sub --require-fresh --json`，上游陈旧或未知时效会明确失败。查询原始skill能力时保留完整JSON；不要自行筛选新闻或隐藏源状态。文中的板块数量和groupKey仅为历史示例，实际值从本次summary结果读取。

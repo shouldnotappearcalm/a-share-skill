@@ -1,0 +1,529 @@
+{
+  "date": "2026-10-11",
+  "scope": "data only; no strategy/backtest/trading execution",
+  "reference": {
+    "repository": "https://github.com/zhangxiangliang/stock-api",
+    "local_path": "../stock-api",
+    "commit": "bdab24063fbb7e317608bb5ea3e51f9319dd9d95"
+  },
+  "tests": {
+    "a_share_skill": 25,
+    "a_share_mcp": 39,
+    "hkus": 47
+  },
+  "new_entry_checks": [
+    {
+      "case": "hk-history-raw",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5,
+      "seconds": 0.702,
+      "error": null,
+      "meta": {}
+    },
+    {
+      "case": "us-class-share",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5,
+      "seconds": 0.855,
+      "error": null,
+      "meta": {}
+    },
+    {
+      "case": "hk-history-qfq",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5,
+      "seconds": 0.7,
+      "error": null,
+      "meta": {}
+    },
+    {
+      "case": "us-history-total-return",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5,
+      "seconds": 1.773,
+      "error": null,
+      "meta": {}
+    },
+    {
+      "case": "hk-industry-members",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 31,
+      "seconds": 1.007,
+      "error": null,
+      "meta": {
+        "source": "Yahoo Equity Screener",
+        "taxonomy": "Yahoo sector/industry",
+        "industry": {
+          "sector": "Technology",
+          "sector_key": "technology",
+          "industry": "Semiconductors",
+          "industry_key": "semiconductors"
+        },
+        "market": "HK",
+        "count": 31,
+        "total": 31,
+        "coverage_limited": false,
+        "effective_at": null,
+        "membership_basis": "current vendor classification; no historical membership guarantee",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:21.685238+00:00",
+        "cache_ttl_seconds": 3600
+      }
+    },
+    {
+      "case": "us-industry-members",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 114,
+      "seconds": 1.041,
+      "error": null,
+      "meta": {
+        "source": "Yahoo Equity Screener",
+        "taxonomy": "Yahoo sector/industry",
+        "industry": {
+          "sector": "Technology",
+          "sector_key": "technology",
+          "industry": "Semiconductors",
+          "industry_key": "semiconductors"
+        },
+        "market": "US",
+        "count": 114,
+        "total": 114,
+        "coverage_limited": false,
+        "effective_at": null,
+        "membership_basis": "current vendor classification; no historical membership guarantee",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:21.756863+00:00",
+        "cache_ttl_seconds": 3600
+      }
+    },
+    {
+      "case": "hk-alibaba-disclosures",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 3,
+      "seconds": 4.327,
+      "error": null,
+      "meta": {
+        "source": "HKEXnews",
+        "issuer": {
+          "stockId": 1000015694,
+          "code": "09988",
+          "name": "阿里巴巴－Ｗ"
+        },
+        "timezone": "Asia/Hong_Kong",
+        "window_start": "2026-09-12",
+        "window_end": "2026-10-11",
+        "count": 3,
+        "total": 3,
+        "coverage_limited": false,
+        "has_next_row": false,
+        "language": "ZH",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:25.261588+00:00",
+        "cache_ttl_seconds": 120
+      }
+    },
+    {
+      "case": "hk-zijin-disclosures",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 9,
+      "seconds": 5.065,
+      "error": null,
+      "meta": {
+        "source": "HKEXnews",
+        "issuer": {
+          "stockId": 6898,
+          "code": "02899",
+          "name": "紫金礦業"
+        },
+        "timezone": "Asia/Hong_Kong",
+        "window_start": "2026-09-12",
+        "window_end": "2026-10-11",
+        "count": 9,
+        "total": 9,
+        "coverage_limited": false,
+        "has_next_row": false,
+        "language": "ZH",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:26.845591+00:00",
+        "cache_ttl_seconds": 120
+      }
+    },
+    {
+      "case": "hk-statements",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 4,
+      "seconds": 1.255,
+      "error": null,
+      "meta": {
+        "source": "yfinance",
+        "kind": "income",
+        "period": "annual",
+        "currency": null,
+        "unit": "provider_native",
+        "as_of_supported": false,
+        "coverage_note": "Current vendor statement snapshot; publication dates and historical revisions are not established.",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:23.046253+00:00",
+        "cache_ttl_seconds": 3600
+      }
+    },
+    {
+      "case": "us-statements",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 4,
+      "seconds": 1.251,
+      "error": null,
+      "meta": {
+        "source": "yfinance",
+        "kind": "cashflow",
+        "period": "annual",
+        "currency": null,
+        "unit": "provider_native",
+        "as_of_supported": false,
+        "coverage_note": "Current vendor statement snapshot; publication dates and historical revisions are not established.",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:23.078489+00:00",
+        "cache_ttl_seconds": 3600
+      }
+    },
+    {
+      "case": "batch-quotes",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 4,
+      "seconds": 0.748,
+      "error": null,
+      "meta": {
+        "requested": 4,
+        "success": 4,
+        "fail": 0,
+        "success_rate": 1.0,
+        "batch_errors": [],
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:23.833173+00:00",
+        "cache_ttl_seconds": 3
+      }
+    },
+    {
+      "case": "ashare-history-raw",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5,
+      "seconds": 0.341,
+      "error": null,
+      "meta": {
+        "source": "腾讯",
+        "adjust_requested": "raw",
+        "adjust_actual": "raw",
+        "timezone": "Asia/Shanghai",
+        "source_errors": {},
+        "cache": {
+          "cache_hit": false,
+          "fetched_at": "2026-10-11T05:02:23.455907+00:00",
+          "cache_ttl_seconds": 300
+        }
+      }
+    },
+    {
+      "case": "ashare-history-qfq",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5,
+      "seconds": 0.349,
+      "error": null,
+      "meta": {
+        "source": "腾讯",
+        "adjust_requested": "qfq",
+        "adjust_actual": "qfq",
+        "timezone": "Asia/Shanghai",
+        "source_errors": {},
+        "cache": {
+          "cache_hit": false,
+          "fetched_at": "2026-10-11T05:02:23.806186+00:00",
+          "cache_ttl_seconds": 300
+        }
+      }
+    },
+    {
+      "case": "ashare-industry-directory",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 31,
+      "seconds": 1.469,
+      "error": null,
+      "meta": {
+        "source": "legulegu/SW classification",
+        "taxonomy": "sw",
+        "taxonomy_version": null,
+        "level": 1,
+        "action": "directory",
+        "symbol": null,
+        "count": 31,
+        "effective_at": null,
+        "membership_basis": "current provider snapshot; no historical membership guarantee",
+        "price_basis": null,
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:25.243273+00:00",
+        "cache_ttl_seconds": 86400
+      }
+    },
+    {
+      "case": "ashare-industry-members",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 496,
+      "seconds": 1.931,
+      "error": null,
+      "meta": {
+        "source": "legulegu/SW constituents",
+        "taxonomy": "sw",
+        "taxonomy_version": null,
+        "level": null,
+        "action": "members",
+        "symbol": "801080",
+        "count": 496,
+        "effective_at": null,
+        "membership_basis": "current provider snapshot; no historical membership guarantee",
+        "price_basis": null,
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:25.750803+00:00",
+        "cache_ttl_seconds": 300
+      }
+    },
+    {
+      "case": "ashare-industry-history",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 2,
+      "seconds": 2.299,
+      "error": null,
+      "meta": {
+        "source": "SW Research index history",
+        "taxonomy": "sw",
+        "taxonomy_version": null,
+        "level": null,
+        "action": "history",
+        "symbol": "801080",
+        "count": 2,
+        "effective_at": null,
+        "membership_basis": "current provider snapshot; no historical membership guarantee",
+        "price_basis": "provider_index_level",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:27.532353+00:00",
+        "cache_ttl_seconds": 300
+      }
+    },
+    {
+      "case": "hk-news-raw",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 100,
+      "seconds": 2.095,
+      "error": null,
+      "meta": {
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T13:02:25.596053+08:00",
+        "fetched_at": "2026-10-11T13:02:27.350693+08:00",
+        "count": 100,
+        "limit_per_source": 100,
+        "sources": [
+          {
+            "source": "eastmoney_search",
+            "status": "ok",
+            "coverage_limited": true,
+            "errors": [],
+            "elapsed_sec": 0.656
+          },
+          {
+            "source": "yahoo_news",
+            "status": "empty",
+            "fetched": 0,
+            "coverage_limited": true,
+            "coverage_reason": "Yahoo search is a bounded candidate set, not a complete news archive",
+            "unknown_timestamps": 0,
+            "elapsed_sec": 1.754
+          }
+        ],
+        "notes": "data contains unmodified provider records under raw; no semantic filtering, classification, deduplication or sentiment. Content may be snippets; source/page limits apply."
+      }
+    },
+    {
+      "case": "yahoo-forced-fallback",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5,
+      "seconds": 1.612,
+      "error": null,
+      "meta": {}
+    },
+    {
+      "case": "industry-profile",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 2,
+      "seconds": 1.13,
+      "error": null,
+      "meta": {
+        "taxonomy": "Yahoo sector/industry",
+        "industry": {
+          "sector": "Technology",
+          "sector_key": "technology",
+          "industry": "Semiconductors",
+          "industry_key": "semiconductors"
+        },
+        "market": "US",
+        "source": "Yahoo Industry",
+        "coverage_limited": true,
+        "coverage_note": "Top companies only; use members for paginated screener membership.",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:27.966855+00:00",
+        "cache_ttl_seconds": 3600
+      }
+    },
+    {
+      "case": "official-rss",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 20,
+      "seconds": 1.213,
+      "error": null,
+      "meta": {
+        "source_url": "https://nvidianews.nvidia.com/releases.xml",
+        "count": 20,
+        "unknown_timestamps": 0,
+        "coverage_limited": true,
+        "coverage_note": "Feed contains its publisher-selected entries; no semantic filtering.",
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T05:02:28.561100+00:00",
+        "cache_ttl_seconds": 120
+      }
+    },
+    {
+      "case": "symbol-search",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 9,
+      "seconds": 0.858,
+      "error": null,
+      "meta": {
+        "source": "Tencent smartbox",
+        "keyword": "阿里巴巴",
+        "count": 9,
+        "coverage_limited": true
+      }
+    },
+    {
+      "case": "provider-inspection",
+      "exit_code": 0,
+      "status": "ok",
+      "count": 0,
+      "seconds": 0.665,
+      "error": null,
+      "meta": {}
+    }
+  ],
+  "sec_limitations": [
+    {
+      "case": "sec-baba-explicit",
+      "status": "unavailable",
+      "error": "HTTPError: 403 Client Error: Forbidden for url: https://data.sec.gov/submissions/CIK0001577552.json"
+    },
+    {
+      "case": "sec-baba-identity",
+      "status": "unavailable",
+      "error": "ValueError: CIK identity unavailable; provide --cik from the official issuer record"
+    },
+    {
+      "case": "sec-facts-asof",
+      "status": "unavailable",
+      "error": "HTTPError: 403 Client Error: Forbidden for url: https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+    }
+  ],
+  "benchmark": {
+    "batch": {
+      "seconds": {
+        "before": [
+          0.7514190829824656,
+          0.6508207090664655,
+          0.5647825000341982
+        ],
+        "after_cold": [
+          1.3069077499676496,
+          0.617331082932651,
+          0.588847832987085
+        ],
+        "after_cached": [
+          0.1898774579167366,
+          0.17503262497484684,
+          0.18596150004304945
+        ]
+      },
+      "median_seconds": {
+        "before": 0.651,
+        "after_cold": 0.617,
+        "after_cached": 0.186
+      },
+      "same_prices_and_counts": true,
+      "cache_metadata": {
+        "requested": 10,
+        "success": 10,
+        "fail": 0,
+        "success_rate": 1.0,
+        "batch_errors": [],
+        "cache_hit": true,
+        "fetched_at": "2026-10-11T05:03:44.288636+00:00",
+        "cache_ttl_seconds": 3
+      }
+    },
+    "history": {
+      "seconds": {
+        "before": [
+          0.3640285418368876,
+          0.3253524580504745,
+          0.36299908300861716
+        ],
+        "after_cold": [
+          0.3814148330129683,
+          0.35584024991840124,
+          0.3747000000439584
+        ],
+        "after_cached": [
+          0.18839774979278445,
+          0.19498429191298783,
+          0.17918883287347853
+        ]
+      },
+      "median_seconds": {
+        "before": 0.363,
+        "after_cold": 0.375,
+        "after_cached": 0.188
+      },
+      "same_prices_and_counts": true,
+      "cache_metadata": {
+        "cache_hit": true,
+        "fetched_at": "2026-10-11T05:03:45.601067+00:00",
+        "cache_ttl_seconds": 300
+      }
+    }
+  },
+  "existing_data_smoke": {
+    "total": 21,
+    "success": 21,
+    "fail": 0
+  },
+  "mcp_protocol": {
+    "tool_count": 63,
+    "standalone_without_siblings": true,
+    "history_data_identical_to_skill": true
+  }
+}

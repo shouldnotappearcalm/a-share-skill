@@ -36,7 +36,9 @@ def _normalize_argv(argv):
     if limit and "--count" not in args:
         args.extend(["--count", limit])
 
-    _consume_option(args, "--adjust")
+    adjust = _consume_option(args, "--adjust")
+    if adjust:
+        args.extend(["--adjust", {"none":"raw", "3":"raw", "2":"qfq", "1":"hfq"}.get(adjust, adjust)])
 
     if "--operation" in args:
         print("当前历史脚本不再支持 --operation，请改用 --financials 或 --profit")

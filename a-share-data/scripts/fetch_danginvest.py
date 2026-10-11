@@ -19,6 +19,8 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import requests
+
+_REQUIRE_FRESH = False
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -97,7 +99,13 @@ def _get_json(
             payload = resp.json()
             if isinstance(payload, dict) and payload.get("error"):
                 raise RuntimeError(str(payload.get("error")))
+            if isinstance(payload, dict):
+                payload["data_quality"] = "stale" if payload.get("stale") else "unknown" if "stale" not in payload else "provider_fresh"
+                if _REQUIRE_FRESH and payload.get("stale") is not False:
+                    raise ValueError("fresh data unavailable: upstream snapshot is stale or freshness unknown")
             return payload
+        except ValueError:
+            raise
         except Exception as exc:
             last_error = exc
             if attempt < attempts - 1:
@@ -197,6 +205,7 @@ def cmd_summary(mode: str, limit: int, sort: str, retries: int, output_json: boo
         "tradeDate": payload.get("tradeDate"),
         "snapshotTsMs": payload.get("snapshotTsMs"),
         "stale": payload.get("stale"),
+        "data_quality": payload.get("data_quality"),
         "count": data.get("count"),
         "total": data.get("total"),
         "update_time": _now_meta(),
@@ -269,6 +278,7 @@ def cmd_detail(
         "tradeDate": payload.get("tradeDate"),
         "snapshotTsMs": payload.get("snapshotTsMs"),
         "stale": payload.get("stale"),
+        "data_quality": payload.get("data_quality"),
         "update_time": _now_meta(),
         "data_source": "DangInvest",
     }
@@ -323,6 +333,7 @@ def cmd_detail(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="DangInvest 市场数据（板块热力图 + 新闻）")
+    parser.add_argument("--require-fresh", action="store_true", help="上游stale或时效未知时明确失败；默认保留旧快照原始数据")
     parser.add_argument("--news", action="store_true", help="7x24 市场新闻")
     parser.add_argument("--summary", action="store_true", help="板块热力图概览")
     parser.add_argument("--detail", action="store_true", help="板块成分明细")
@@ -344,6 +355,8 @@ def main() -> None:
     parser.add_argument("--retries", type=int, default=2, help="失败重试次数（默认 2）")
     parser.add_argument("--json", dest="output_json", action="store_true", help="输出 JSON")
     args = parser.parse_args()
+    global _REQUIRE_FRESH
+    _REQUIRE_FRESH = args.require_fresh
 
     selected = sum(bool(x) for x in (args.news, args.summary, args.detail))
     if selected != 1:
@@ -365,7 +378,7 @@ def main() -> None:
                 args.output_json,
             )
     except ValueError as exc:
-        print(str(exc))
+        print(json.dumps({"status":"unavailable","error":str(exc),"data":[]},ensure_ascii=False) if args.output_json else str(exc))
         sys.exit(1)
     except RuntimeError as exc:
         print(str(exc))

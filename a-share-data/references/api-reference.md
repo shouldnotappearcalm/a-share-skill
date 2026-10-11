@@ -86,14 +86,17 @@
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| --freq | d | 频率：d(日)/w(周)/m(月) |
-| --limit | 500 | 最大返回行数（会映射到内部 count） |
+| --freq | 1d | 频率：d/w/m或1d/1w/1M |
+| --count | 120 | 最大返回行数；旧--limit仍映射到count |
+| --adjust | raw | raw/qfq/hfq，跨源口径一致 |
+| --with-meta | 关闭 | 单票JSON附来源、复权与缓存元信息 |
+| --no-cache | 关闭 | 绕过历史结果缓存 |
 
 返回字段（常见）：time / code / open / high / low / close / preclose / volume / pctChg
 
 ### --financials CODE --start YYYY-MM-DD --end YYYY-MM-DD
 
-查询综合财务指标，优先 AKShare 东方财富现行接口，失败降级新浪财务摘要。按报告期排序，`--start/--end/--year/--quarter/--count` 筛选报告期（不是公告发布时间）。输出含数据源、报告期；金额为元，比率单位见字段名。
+查询综合财务指标，优先 AKShare 东方财富现行接口，失败降级新浪财务摘要。按报告期排序，`--start/--end/--year/--quarter/--count` 筛选报告期（不是公告发布时间）。另可用`--as-of YYYY-MM-DD`按公告日期过滤，缺公告日期时拒绝推断；详见[数据口径](data-contracts.md#财务指标与公告日期)。输出含数据源、报告期；金额为元，比率单位见字段名。
 
 ### 单项财务指标
 
@@ -177,9 +180,9 @@ CODE        股票代码（必填）
 
 ### 用法
 
-- 单票按名称：`python3 fetch_ah_ipo_timeline.py --name 赛力斯 --json`
-- 单票按代码：`python3 fetch_ah_ipo_timeline.py --code 601127 --json`
-- 全量（按 H 股上市年份过滤）：`python3 fetch_ah_ipo_timeline.py --since 2020 --workers 4 --json`
+- 单票按名称：`python3 scripts/fetch_ah_ipo_timeline.py --name 赛力斯 --json`
+- 单票按代码：`python3 scripts/fetch_ah_ipo_timeline.py --code 601127 --json`
+- 全量（按 H 股上市年份过滤）：`python3 scripts/fetch_ah_ipo_timeline.py --since 2020 --workers 4 --json`
 
 ### 参数
 
@@ -211,8 +214,8 @@ CODE        股票代码（必填）
 
 ### 用法
 
-- 单只：`python3 fetch_sector_info.py --no-concepts --json 600519`
-- 多只（空格或逗号分隔，内部线程池并行）：`python3 fetch_sector_info.py --workers 8 --no-concepts --timeout 15 --json 600519 000001 300750`
+- 单只：`python3 scripts/fetch_sector_info.py --no-concepts --json 600519`
+- 多只（空格或逗号分隔，内部线程池并行）：`python3 scripts/fetch_sector_info.py --workers 8 --no-concepts --timeout 15 --json 600519 000001 300750`
 
 | 参数 | 说明 |
 |---|---|
@@ -250,3 +253,8 @@ CODE        股票代码（必填）
 | 科创50 | sh000688 | 科创板 |
 | 沪深300 | sh000300 | 两市核心 |
 | 中证500 | sh000905 | 中小盘 |
+
+
+## 行业目录、真实成分与行业指数历史
+
+入口 `scripts/fetch_industry.py`，支持directory/members/history、明确sw/eastmoney_industry/eastmoney_concept、SW目录1/2/3级及no-cache。完整参数与输出见 [行业参考](data-contracts.md#行业目录成分和指数历史)。
