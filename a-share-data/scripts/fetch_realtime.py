@@ -630,8 +630,8 @@ def cmd_lhb(start: str, end: str, top: int, output_json: bool):
             "龙虎榜净买额": "净买额(万)", "上榜原因": "上榜原因",
         }
         available = [c for c in cols_map if c in df.columns]
-        df = df[available].copy().head(top)
-        df = df.rename(columns=cols_map)
+        df = (df if output_json else df[available]).copy().head(top)
+        df = df.assign(**{alias: df[key] for key, alias in cols_map.items() if key in df and alias != key}) if output_json else df.rename(columns=cols_map)
         if "净买额(万)" in df.columns:
             df["净买额(万)"] = (df["净买额(万)"] / 1e4).round(2)
         if output_json:
@@ -678,10 +678,11 @@ def cmd_limit_up_pool(date_str: str, top: int, output_json: bool):
             return
         keep = ["序号", "代码", "名称", "涨跌幅", "最新价", "成交额", "换手率", "封板资金", "连板数", "所属行业"]
         available = [c for c in keep if c in df.columns]
-        df = df[available].head(top).copy()
+        df = (df if output_json else df[available]).head(top).copy()
         if "成交额" in df.columns:
             df["成交额(亿)"] = (df["成交额"] / 1e8).round(2)
-            df = df.drop(columns=["成交额"])
+            if not output_json:
+                df = df.drop(columns=["成交额"])
         if output_json:
             print(df.to_json(orient="records", force_ascii=False))
         else:

@@ -258,3 +258,9 @@ CODE        股票代码（必填）
 ## 行业目录、真实成分与行业指数历史
 
 入口 `scripts/fetch_industry.py`，支持directory/members/history、明确sw/eastmoney_industry/eastmoney_concept、SW目录1/2/3级及no-cache。完整参数与输出见 [行业参考](data-contracts.md#行业目录成分和指数历史)。
+
+## 概念、公司事件、池详情与龙虎榜席位
+
+新增数据入口的参数、原始字段、日期、分页、市场范围和缓存说明见 [重点数据使用说明书](reference-data.md)。概念与入选依据用 `scripts/fetch_stock_concepts.py`；解禁/回购/已披露增减持用 `scripts/fetch_corporate_actions.py`；涨停/炸板详情与买卖席位用 `scripts/fetch_market_details.py`。
+
+旧`fetch_realtime.py --limit-up-pool --json`和`--lhb --json`也保留原先被裁掉的供应商列，保留原始金额并附加旧显示单位别名；仍受`--top`限制。需要明确真实交易日、原始记录与覆盖诊断时，优先新入口。
