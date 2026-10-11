@@ -147,8 +147,12 @@ def _load_stock_name_cache(deadline_ts: float, ttl_seconds: int = _STOCK_NAME_CA
 
 def get_stock_name(code6: str, deadline_ts: float) -> Optional[str]:
     """通过股票代码获取股票简称（带缓存）。"""
-    mapping = _load_stock_name_cache(deadline_ts)
-    return mapping.get(code6)
+    from fetch_company_news import resolve_name
+    name = resolve_name(code6, time.monotonic() + min(3, max(0, deadline_ts - time.time())))
+    if name:
+        return name
+    _load_stock_name_cache_from_disk()
+    return _STOCK_NAME_CACHE.get(code6)
 
 
 def to_hot_symbol(code6: str) -> str:
@@ -239,7 +243,7 @@ def query_performance(code6: str, dates: List[str], limit: int, deadline_ts: flo
         if _remaining_seconds(deadline_ts) <= 1:
             break
         try:
-            df = _safe_ak_call(ak.stock_yjbb_em, date=d, timeout_sec=min(8, _remaining_seconds(deadline_ts)))
+            df = _safe_ak_call(ak.stock_yjkb_em, date=d, timeout_sec=min(8, _remaining_seconds(deadline_ts)))
             if df is not None and not df.empty and "股票代码" in df.columns:
                 filtered = df[df["股票代码"].astype(str).str.zfill(6) == code6].copy()
                 if not filtered.empty:
@@ -293,102 +297,20 @@ def query_performance(code6: str, dates: List[str], limit: int, deadline_ts: flo
     }
 
 
-def _fetch_news_by_keywords(keywords: List[str], limit: int, deadline_ts: float) -> pd.DataFrame:
-    """多关键词检索新闻，合并去重"""
-    all_news = []
-    for kw in keywords[:2]:
-        if _remaining_seconds(deadline_ts) <= 1:
-            break
-        try:
-            df = _safe_ak_call(ak.stock_news_em, symbol=kw, timeout_sec=min(6, _remaining_seconds(deadline_ts)))
-            if df is not None and not df.empty:
-                df["_keyword"] = kw
-                all_news.append(df)
-        except Exception:
-            pass
+def query_news_categories(code6: str, stock_name: Optional[str], limit: int, deadline_ts: float, news_days: int = 30) -> Dict:
+    from fetch_company_news import build_payload as fetch_company_information
 
-    if not all_news:
-        return pd.DataFrame()
-
-    combined = pd.concat(all_news, ignore_index=True)
-
-    # 按新闻链接去重
-    if "新闻链接" in combined.columns:
-        combined = combined.drop_duplicates(subset=["新闻链接"], keep="first")
-    elif "新闻标题" in combined.columns:
-        combined = combined.drop_duplicates(subset=["新闻标题"], keep="first")
-
-    if "发布时间" in combined.columns:
-        combined = combined.sort_values(by="发布时间", ascending=False)
-
-    return combined.head(limit)
-
-
-def _filter_news_by_keywords(df: pd.DataFrame, keywords: List[str], limit: int) -> pd.DataFrame:
-    if df is None or df.empty:
-        return pd.DataFrame()
-
-    text_cols = [c for c in ["新闻标题", "新闻内容", "文章来源"] if c in df.columns]
-    if not text_cols:
-        return pd.DataFrame()
-
-    pattern = "|".join(re.escape(k) for k in keywords)
-    mask = pd.Series(False, index=df.index)
-    for col in text_cols:
-        mask = mask | df[col].astype(str).str.contains(pattern, case=False, na=False, regex=True)
-
-    out = df[mask].copy()
-    if "发布时间" in out.columns:
-        out = out.sort_values(by="发布时间", ascending=False)
-    return out.head(limit)
-
-
-def query_news_categories(code6: str, stock_name: Optional[str], limit: int, deadline_ts: float) -> Dict:
-    # 构建检索关键词列表：代码 + 公司名（如有）
-    search_keywords = [code6]
-    if stock_name:
-        # 添加公司简称和全称
-        search_keywords.append(stock_name)
-        # 如果公司名有后缀（如"科技"、"股份"），也尝试简称
-        short_name = re.sub(r"(科技|股份|集团|电子|信息|技术|实业|发展|投资|控股)$", "", stock_name)
-        if short_name and short_name != stock_name:
-            search_keywords.append(short_name)
-
-    # 多关键词检索并合并
-    news_df = _fetch_news_by_keywords(search_keywords, limit * 2, deadline_ts)
-
-    holder_buyback_kw = ["增持", "减持", "回购", "回购股份"]
-    regulatory_kw = ["监管", "问询", "警示", "立案", "处罚", "关注函", "监管函", "公告", "披露"]
-    contract_kw = ["重大合同", "重大订单", "中标", "订单", "签订合同", "框架协议", "项目", "签约", "合作", "在手订单", "拉货"]
-
-    holder_buyback = _filter_news_by_keywords(news_df, holder_buyback_kw, limit)
-    regulatory = _filter_news_by_keywords(news_df, regulatory_kw, limit)
-    contracts = _filter_news_by_keywords(news_df, contract_kw, limit)
-    contract_source = "东方财富-个股新闻关键词"
-    if contracts.empty and news_df is not None and not news_df.empty:
-        contracts = news_df.head(limit).copy()
-        contract_source = "东方财富-个股新闻兜底"
-
-    return {
-        "holder_change_buyback": {
-            "category": "增减持/回购",
-            "items": _to_records(holder_buyback),
-            "count": len(holder_buyback),
-            "source": f"东方财富-多关键词检索({'+'.join(search_keywords)})",
-        },
-        "regulatory": {
-            "category": "监管事项",
-            "items": _to_records(regulatory),
-            "count": len(regulatory),
-            "source": f"东方财富-多关键词检索({'+'.join(search_keywords)})",
-        },
-        "major_contracts": {
-            "category": "重大订单合同",
-            "items": _to_records(contracts),
-            "count": len(contracts),
-            "source": contract_source,
-        },
-    }
+    recent = fetch_company_information(
+        code6, stock_name or "", days=news_days, limit=min(200, max(20, limit * 3)),
+        max_seconds=max(0.1, deadline_ts - time.time()),
+    )
+    blocks = {"recent_information": recent}
+    labels = {"holder_change_buyback": "增减持/回购", "regulatory": "监管事项", "major_contracts": "重大订单合同"}
+    for key, label in labels.items():
+        blocks[key] = {"category": label, "items": [], "count": 0,
+                       "status": "unclassified", "source": "recent_information",
+                       "note": "未自动做语义分类；请根据recent_information中的新闻和公告原文判断，count=0不代表没有此类事件"}
+    return blocks
 
 
 def query_sentiment(code6: str, limit: int, deadline_ts: float) -> Dict:
@@ -465,7 +387,7 @@ def query_sentiment(code6: str, limit: int, deadline_ts: float) -> Dict:
     }
 
 
-def build_payload(code: str, stock_name: Optional[str], dates: List[str], limit: int, max_seconds: int, skip_sentiment: bool) -> Dict:
+def build_payload(code: str, stock_name: Optional[str], dates: List[str], limit: int, max_seconds: int, skip_sentiment: bool, news_days: int = 30) -> Dict:
     code6 = normalize_code(code)
     # 事件查询超时上限：60s（避免长时间阻塞）
     budget = min(60, max(8, int(max_seconds)))
@@ -499,7 +421,7 @@ def build_payload(code: str, stock_name: Optional[str], dates: List[str], limit:
     workers = 3 if not skip_sentiment else 2
     with ThreadPoolExecutor(max_workers=workers) as ex:
         fut_perf = ex.submit(query_performance, code6, dates, limit, deadline_ts)
-        fut_news = ex.submit(query_news_categories, code6, stock_name, limit, deadline_ts)
+        fut_news = ex.submit(query_news_categories, code6, stock_name, limit, deadline_ts, news_days)
         fut_sent = None
         if not skip_sentiment and _remaining_seconds(deadline_ts) > 1:
             fut_sent = ex.submit(query_sentiment, code6, limit, deadline_ts)
@@ -525,6 +447,7 @@ def build_payload(code: str, stock_name: Optional[str], dates: List[str], limit:
         "code": code6,
         "name": stock_name,
         "queried_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "recent_information": news_blocks.get("recent_information", {"status": "unavailable", "error": "新闻模块未在时间预算内完成", "data": []}),
         "performance": perf,
         "holder_change_buyback": news_blocks["holder_change_buyback"],
         "regulatory": news_blocks["regulatory"],
@@ -548,18 +471,22 @@ def print_text(payload: Dict, preview: int) -> None:
         if item.get("基本每股收益"):
             print(f"    | 每股收益: {item.get('基本每股收益')} | ROE: {item.get('净资产收益率(ROE)', 'N/A')} | 毛利率: {item.get('毛利率', 'N/A')}")
 
+    recent = payload.get("recent_information", {})
+    print(f"\n近期资讯：{recent.get('status', 'unknown')}")
+    for item in recent.get("data", [])[:preview]:
+        print(f"  - {item.get('published_at')} | {item.get('title')} | {item.get('url')}")
     hc = payload["holder_change_buyback"]
-    print(f"\n2) 增减持/回购：{hc['count']} 条")
+    print(f"\n2) 增减持/回购：未自动分类（请查看近期资讯）")
     for item in hc["items"][:preview]:
         print(f"  - {item.get('发布时间', '')} | {item.get('新闻标题', '')}")
 
     rg = payload["regulatory"]
-    print(f"\n3) 监管事项：{rg['count']} 条")
+    print(f"\n3) 监管事项：未自动分类（请查看近期资讯）")
     for item in rg["items"][:preview]:
         print(f"  - {item.get('发布时间', '')} | {item.get('新闻标题', '')}")
 
     mc = payload["major_contracts"]
-    print(f"\n4) 重大订单合同：{mc['count']} 条")
+    print(f"\n4) 重大订单合同：未自动分类（请查看近期资讯）")
     for item in mc["items"][:preview]:
         print(f"  - {item.get('发布时间', '')} | {item.get('新闻标题', '')}")
 
@@ -596,11 +523,14 @@ def main() -> None:
     parser.add_argument("--name", default="", help="股票简称，如 胜宏科技（用于增强新闻检索）")
     parser.add_argument("--dates", default="", help="业绩查询日期，逗号分隔，支持 YYYYMMDD 或 YYYY-MM-DD")
     parser.add_argument("--limit", type=int, default=50, help="每个类别最多返回条数，默认 50")
+    parser.add_argument("--news-days", type=int, default=30, help="资讯与公告查询窗口（自然日，默认30）")
     parser.add_argument("--preview", type=int, default=5, help="文本模式每类预览条数，默认 5")
     parser.add_argument("--max-seconds", type=int, default=60, help="整体最大执行秒数，默认 60（上限60）")
     parser.add_argument("--skip-sentiment", action="store_true", help="跳过舆情模块，提升稳定性和速度")
     parser.add_argument("--json", action="store_true", dest="output_json", help="输出 JSON")
     args = parser.parse_args()
+    if not 1 <= args.news_days <= 366:
+        parser.error("--news-days 须在 1–366 之间")
 
     dates = _parse_dates(args.dates.split(",")) if args.dates.strip() else _default_dates(120)
 
@@ -619,6 +549,7 @@ def main() -> None:
                     args.limit,
                     args.max_seconds,
                     args.skip_sentiment,
+                    args.news_days,
                 ): code
                 for code in batch_codes
             }
@@ -660,7 +591,7 @@ def main() -> None:
         sys.exit(1)
 
     stock_name = args.name.strip() if args.name.strip() else None
-    payload = build_payload(args.code, stock_name, dates, args.limit, args.max_seconds, args.skip_sentiment)
+    payload = build_payload(args.code, stock_name, dates, args.limit, args.max_seconds, args.skip_sentiment, args.news_days)
 
     if args.output_json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))

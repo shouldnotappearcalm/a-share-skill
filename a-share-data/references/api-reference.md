@@ -3,7 +3,7 @@
 ## fetch_realtime.py 参数详解
 
 ### --quote CODE
-实时行情快照，数据源：东方财富。
+实时行情快照，数据源：新浪/腾讯分钟线与日线。休市时展示最近交易日，并使用该交易日前一日收盘价计算涨跌。纯数字 `000001` 为平安银行，上证指数须写 `sh000001`。
 
 返回字段：代码 / 名称 / 最新价 / 涨跌额 / 涨跌幅(%) / 今开 / 最高 / 最低 / 昨收 / 成交量(手) / 成交额(亿) / 换手率(%)
 
@@ -93,24 +93,26 @@
 
 ### --financials CODE --start YYYY-MM-DD --end YYYY-MM-DD
 
-查询综合财务指标，数据源：akshare。
+查询综合财务指标，优先 AKShare 东方财富现行接口，失败降级新浪财务摘要。按报告期排序，`--start/--end/--year/--quarter/--count` 筛选报告期（不是公告发布时间）。输出含数据源、报告期；金额为元，比率单位见字段名。
 
 ### 单项财务指标
 
 `--profit` / `--growth` / `--balance` / `--cashflow` / `--dupont`
 
-说明：单项维度与综合指标同源，按脚本内部统一口径输出。
+说明：单项维度与综合指标同源，按所选维度筛选列。`--cashflow` 是现金流相关指标，不是完整现金流量表；`--dupont` 是杜邦相关指标，不保证构成口径一致的杜邦拆解。
 
 ### 业绩快报/预告
 
 `--perf-express CODE`  
 `--perf-forecast CODE`
 
+使用现行 `stock_yjyg_em` / `stock_yjkb_em`。可加 `--report-date 20260630`，默认最近已结束季度。无预告/快报时返回 `status=empty`，接口失败返回 `unavailable` 与原因，两者不能混用。
+
 ### 全市场股票列表
 
 `--all-stocks [--market sh|sz]`
 
-说明：已支持新浪/腾讯/雪球三路聚合，自动去重；单源失败不影响整体返回。
+说明：新浪8路并行分页，失败降级交易所列表（AKShare）。完整成功结果缓存12小时，`--no-cache` 强制刷新，失败记录保留。旧“腾讯”源实际也是新浪，不再重复抓取；雪球热门列表不作为全市场清单。
 JSON 输出结构：
 - `meta.market`：市场范围
 - `meta.total`：去重后总数
@@ -121,12 +123,16 @@ JSON 输出结构：
 
 | 命令 | 内容 | 日期格式 |
 |---|---|---|
-| `--deposit-rate` | 存款基准利率 | 接口可用即返回 |
-| `--loan-rate` | 贷款基准利率 | 接口可用即返回 |
+| `--deposit-rate` | 存款基准利率 | 当前不可用，返回结构化原因 |
+| `--loan-rate` | 贷款基准利率 | 当前不可用，返回结构化原因 |
 | `--reserve-ratio` | 存款准备金率 | 接口可用即返回 |
 | `--money-supply` | 货币供应量 | 接口可用即返回 |
 
 ---
+
+## 公司近期资讯与公告
+
+优先使用 `fetch_company_news.py --code CODE --days 7 --json`，详见 [company-news.md](company-news.md)。
 
 ## fetch_technical.py 参数详解
 

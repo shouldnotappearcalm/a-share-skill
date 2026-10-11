@@ -22,6 +22,9 @@ import json
 import re
 import sys
 import threading
+import queue
+import time
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
@@ -554,7 +557,7 @@ def _basic_from_tencent(session: requests.Session, norm: str):
 def cmd_basic(args):
     session = _build_session()
     norm = normalize_code(args.basic)
-    data = _basic_from_sina(session, norm) or _basic_from_tencent(session, norm)
+    data = _basic_from_tencent(session, norm) or _basic_from_sina(session, norm)
     if not data:
         print(f"未获取到 {norm} 基本信息（新浪/腾讯均失败）")
         return
@@ -691,96 +694,116 @@ def _match_market(code: str, market: str) -> bool:
 def _fetch_all_stocks_sina(session: requests.Session, market: str) -> pd.DataFrame:
     node_map = {None: "hs_a", "sh": "sh_a", "sz": "sz_a"}
     node = node_map.get(market, "hs_a")
-    try:
-        r = session.get(SINA_STOCK_LIST_COUNT, params={"node": node}, timeout=30)
-        total = int(r.text.strip('"'))
-    except Exception:
-        total = 5000
-
-    rows = []
+    deadline = time.monotonic() + 50
+    response = session.get(SINA_STOCK_LIST_COUNT, params={"node": node}, timeout=8)
+    response.raise_for_status()
+    total = int(response.text.strip('"'))
     page_size = 100
     total_pages = (total + page_size - 1) // page_size
+    tasks, completed = queue.Queue(), queue.Queue()
     for page in range(1, total_pages + 1):
-        params = {
-            "page": page,
-            "num": page_size,
-            "sort": "symbol",
-            "asc": 1,
-            "node": node,
-            "symbol": "",
-            "_s_r_a": "page",
-        }
-        r = session.get(SINA_STOCK_LIST_DATA, params=params, timeout=30)
-        r.raise_for_status()
-        data = r.json()
-        if not data:
-            break
-        for item in data:
+        tasks.put(page)
+
+    def fetch_pages():
+        worker_session = _build_session()
+        worker_session.trust_env = session.trust_env
+        adapter = HTTPAdapter(max_retries=0)
+        worker_session.mount("https://", adapter)
+        worker_session.mount("http://", adapter)
+        while time.monotonic() < deadline:
+            try:
+                page = tasks.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                params = {"page": page, "num": page_size, "sort": "symbol", "asc": 1,
+                          "node": node, "symbol": "", "_s_r_a": "page"}
+                response = worker_session.get(SINA_STOCK_LIST_DATA, params=params,
+                                              timeout=min(6, max(0.01, deadline - time.monotonic())))
+                response.raise_for_status()
+                completed.put((page, response.json() or [], None))
+            except Exception as exc:
+                completed.put((page, [], str(exc)))
+
+    for _ in range(min(8, total_pages)):
+        threading.Thread(target=fetch_pages, daemon=True).start()
+    page_data = {}
+    while len(page_data) < total_pages:
+        try:
+            page, batch, error = completed.get(timeout=max(0, deadline - time.monotonic()))
+        except queue.Empty:
+            raise TimeoutError("新浪股票列表分页整体超时50秒")
+        if error:
+            raise RuntimeError(f"新浪股票列表第{page}页失败: {error}")
+        page_data[page] = batch
+    rows = []
+    for page in sorted(page_data):
+        for item in page_data[page]:
             code = _normalize_list_code(item.get("symbol", ""))
             name = str(item.get("name", "")).strip()
-            if not _match_market(code, market):
-                continue
-            if code and name and not code.startswith("bj"):
+            if _match_market(code, market) and name and not code.startswith("bj"):
                 rows.append({"代码": code, "名称": name, "来源": "新浪"})
     return pd.DataFrame(rows)
 
 
-def _fetch_all_stocks_tencent(market: str) -> pd.DataFrame:
+def _fetch_all_stocks_exchange(market: str) -> pd.DataFrame:
     import akshare as ak
-
-    df = ak.stock_zh_a_spot()
-    if df is None or df.empty or "代码" not in df.columns or "名称" not in df.columns:
-        return pd.DataFrame()
-    out = df[["代码", "名称"]].copy()
-    out["代码"] = out["代码"].map(_normalize_list_code)
-    out["名称"] = out["名称"].astype(str).str.strip()
-    out = out[out["代码"].map(lambda x: _match_market(x, market))]
-    out = out[out["名称"] != ""]
-    out["来源"] = "腾讯"
-    return out
-
-
-def _fetch_all_stocks_xueqiu(market: str) -> pd.DataFrame:
-    import akshare as ak
-
-    df = ak.stock_hot_follow_xq(symbol="最热门")
+    df = ak.stock_info_a_code_name()
     if df is None or df.empty:
         return pd.DataFrame()
-    if "股票代码" not in df.columns or "股票简称" not in df.columns:
-        return pd.DataFrame()
-    out = df[["股票代码", "股票简称"]].copy()
-    out.columns = ["代码", "名称"]
+    out = df[["code", "name"]].rename(columns={"code": "代码", "name": "名称"}).copy()
     out["代码"] = out["代码"].map(_normalize_list_code)
-    out["名称"] = out["名称"].astype(str).str.strip()
-    out = out[out["代码"].map(lambda x: _match_market(x, market))]
-    out = out[out["名称"] != ""]
-    out["来源"] = "雪球"
+    out = out[out["代码"].map(lambda code: _match_market(code, market))]
+    out["来源"] = "交易所-AKShare"
     return out
 
 
 def cmd_all_stocks(args):
-    """获取全市场股票列表（新浪/腾讯/雪球 多源兜底）"""
+    """沪深股票列表：新浪并行分页，失败降级交易所列表，静态数据缓存12小时。"""
+    from fetch_company_news import load_cache, save_cache
+    cache_path = Path(__file__).resolve().parent.parent / "cache" / f"stock_list_{args.market or 'all'}.json"
+    cached = None if args.no_cache else load_cache(cache_path, 12 * 3600)
+    if cached is not None:
+        cached["meta"]["cache_hit"] = True
+        if args.output_json:
+            print(json.dumps(cached, ensure_ascii=False))
+        else:
+            print(pd.DataFrame(cached["data"]).to_string(index=False))
+        return
     session = _build_session()
     session.trust_env = False
 
     merged = []
     source_errors = {}
-    source_funcs = {
-        "新浪": lambda: _fetch_all_stocks_sina(session, args.market),
-        "腾讯": lambda: _fetch_all_stocks_tencent(args.market),
-        "雪球": lambda: _fetch_all_stocks_xueqiu(args.market),
-    }
-
-    with ThreadPoolExecutor(max_workers=3) as ex:
-        fut_map = {ex.submit(fn): name for name, fn in source_funcs.items()}
-        for fut in as_completed(fut_map):
-            src = fut_map[fut]
+    # The old "Tencent" function actually called Sina again; Xueqiu's
+    # popular-stock list is not a complete universe. Do not fetch either twice.
+    source_funcs = [("新浪", lambda: _fetch_all_stocks_sina(session, args.market)),
+                    ("交易所-AKShare", lambda: _fetch_all_stocks_exchange(args.market))]
+    deadline = time.monotonic() + 60
+    source_timings = {}
+    for source, fn in source_funcs:
+        completed = queue.Queue()
+        def fetch_source(fn=fn, completed=completed):
             try:
-                src_df = fut.result()
-                if src_df is not None and not src_df.empty:
-                    merged.append(src_df)
-            except Exception as e:
-                source_errors[src] = str(e)
+                completed.put((fn(), None))
+            except Exception as exc:
+                completed.put((None, str(exc)))
+        started = time.monotonic()
+        threading.Thread(target=fetch_source, daemon=True).start()
+        try:
+            src_df, error = completed.get(timeout=max(0, deadline - time.monotonic()))
+        except queue.Empty:
+            src_df, error = None, "overall timeout after 60s"
+        source_timings[source] = round(time.monotonic() - started, 3)
+        if error:
+            source_errors[source] = error
+        elif src_df is not None and not src_df.empty:
+            merged.append(src_df)
+            break
+        else:
+            source_errors[source] = "empty response"
+        if time.monotonic() >= deadline:
+            break
 
     if not merged:
         if source_errors:
@@ -811,15 +834,17 @@ def cmd_all_stocks(args):
         print("未获取到股票列表数据")
         return
 
+    payload = {
+        "meta": {"market": args.market or "all", "total": int(len(df)),
+                 "sources": source_summary.to_dict(orient="records"), "errors": source_errors,
+                 "cache_hit": False, "fetched_at": datetime.now().isoformat(), "cache_ttl_seconds": 12 * 3600,
+                 "source_elapsed_sec": source_timings},
+        "data": df.to_dict(orient="records"),
+    }
+    # Incomplete source runs are never cached as complete stock universes.
+    if not source_errors:
+        save_cache(cache_path, payload)
     if args.output_json:
-        payload = {
-            "meta": {
-                "market": args.market or "all",
-                "total": int(len(df)),
-                "sources": source_summary.to_dict(orient="records"),
-            },
-            "data": df.to_dict(orient="records"),
-        }
         print(json.dumps(payload, ensure_ascii=False))
     else:
         market_label = {"sh": "上海", "sz": "深圳"}.get(args.market, "全市场")
@@ -947,8 +972,11 @@ def _dividend_from_akshare(norm: str, year: str) -> pd.DataFrame:
         import akshare as ak
         df = ak.stock_dividend_cninfo(symbol=digits)
         if df is not None and not df.empty:
-            if year and "分红年度" in df.columns:
-                df = df[df["分红年度"].astype(str).str.contains(year)]
+            if year:
+                year_col = next((c for c in ("分红年度", "报告时间") if c in df.columns), None)
+                if year_col is None:
+                    raise ValueError("分红源缺少报告年度字段，无法按年筛选")
+                df = df[df[year_col].astype(str).str.startswith(str(year))]
             return df
     except Exception:
         pass
@@ -961,124 +989,174 @@ def cmd_dividend(args):
     df = _dividend_from_akshare(norm, args.year)
     
     if df.empty:
-        print(f"未获取到 {norm} {args.year}年的分红数据（akshare接口暂不可用）")
+        if args.output_json:
+            print(json.dumps({"status": "empty", "meta": {"year": args.year}, "data": []}, ensure_ascii=False))
+        else:
+            print(f"未获取到 {norm} {args.year}年的分红数据")
         return
     
     if args.output_json:
-        print(df.to_json(orient="records", force_ascii=False))
+        print(df.to_json(orient="records", force_ascii=False, date_format="iso"))
     else:
         print(f"【{norm} 分红配送】{args.year}年  数据源：akshare")
         print(df.to_string(index=False))
 
 
 # ============ 业绩预告/快报 ============
-def _performance_from_akshare(norm: str, kind: str) -> pd.DataFrame:
-    """akshare 业绩预告/快报"""
+def _latest_report_date():
+    today = datetime.now().date()
+    candidates = [f"{year}{month_day}" for year in (today.year, today.year - 1)
+                  for month_day in ("0331", "0630", "0930", "1231")]
+    return max(d for d in candidates if datetime.strptime(d, "%Y%m%d").date() <= today)
+
+
+def _performance_from_akshare(norm: str, kind: str, report_date: str = None) -> pd.DataFrame:
     digits = _code_digits(norm)
+    report_date = report_date or _latest_report_date()
     try:
         import akshare as ak
-        if kind == "forecast":
-            # 业绩预告
-            df = ak.stock_em_yjyg(date="")  # 空日期取全部
-            if df is not None and not df.empty:
-                df = df[df["股票代码"].astype(str).str.contains(digits)]
-                return df
-        else:
-            # 业绩快报
-            df = ak.stock_em_yjkb(date="")
-            if df is not None and not df.empty:
-                df = df[df["股票代码"].astype(str).str.contains(digits)]
-                return df
-    except Exception:
-        pass
-    return pd.DataFrame()
+        fn = ak.stock_yjyg_em if kind == "forecast" else ak.stock_yjkb_em
+        df = fn(date=report_date)
+        if df is not None and not df.empty:
+            df = df[df["股票代码"].astype(str).str.zfill(6) == digits].copy()
+            df["报告期"] = report_date
+            if "公告日期" in df:
+                df["公告日期"] = df["公告日期"].astype(str)
+            return df
+        return pd.DataFrame()
+    except Exception as exc:
+        df = pd.DataFrame()
+        df.attrs["errors"] = [f"{type(exc).__name__}: {str(exc)[:250]}"]
+        return df
 
 
 def cmd_performance(args):
     norm = normalize_code(args.code)
-    
-    df = _performance_from_akshare(norm, args.kind)
-    
+    report_date = args.report_date or _latest_report_date()
+    if not re.fullmatch(r"\d{4}(0331|0630|0930|1231)", report_date):
+        raise ValueError("--report-date 须为财报季末 YYYYMMDD，如 20260630")
+    df = _performance_from_akshare(norm, args.kind, report_date)
+    label = "业绩预告" if args.kind == "forecast" else "业绩快报"
     if df.empty:
-        label = "业绩预告" if args.kind == "forecast" else "业绩快报"
-        print(f"未获取到 {norm} 的{label}数据（akshare接口暂不可用）")
+        errors = df.attrs.get("errors", [])
+        if args.output_json:
+            print(json.dumps({"status": "unavailable" if errors else "empty", "code": norm,
+                              "meta": {"report_date": report_date, "kind": args.kind},
+                              "errors": errors, "data": []}, ensure_ascii=False))
+        else:
+            print(f"{norm} {report_date} {label}：" + ("上游不可用" if errors else "该报告期未检索到记录"))
         return
-    
     if args.output_json:
         print(df.to_json(orient="records", force_ascii=False))
     else:
-        label = "业绩预告" if args.kind == "forecast" else "业绩快报"
-        print(f"【{norm} {label}】数据源：akshare")
+        print(f"【{norm} {report_date} {label}】数据源：akshare")
         print(df.to_string(index=False))
 
 
 # ============ 财务指标 ============
+FINANCIAL_FIELDS = {
+    "REPORT_DATE": "报告期", "NOTICE_DATE": "公告日期", "EPSJB": "基本每股收益",
+    "BPS": "每股净资产", "MGJYXJJE": "每股经营现金流",
+    "TOTALOPERATEREVE": "营业总收入", "PARENTNETPROFIT": "归母净利润", "KCFJCXSYJLR": "扣非净利润",
+    "TOTALOPERATEREVETZ": "营收同比增长率(%)", "PARENTNETPROFITTZ": "归母净利润同比增长率(%)",
+    "KCFJCXSYJLRTZ": "扣非净利润同比增长率(%)", "ROEJQ": "加权净资产收益率(%)",
+    "XSJLL": "销售净利率(%)", "XSMLL": "销售毛利率(%)", "ZZCJLL": "总资产净利率(%)",
+    "LD": "流动比率", "SD": "速动比率", "ZCFZL": "资产负债率(%)", "QYCS": "权益乘数",
+    "TOAZZL": "总资产周转率", "CHZZL": "存货周转率", "YSZKZZL": "应收账款周转率",
+    "JYXJLYYSR": "经营现金净流量与营业收入比率(%)", "XJLLB": "现金流量比率",
+}
+
+
 def _financials_from_akshare(norm: str) -> pd.DataFrame:
-    """akshare 综合财务指标"""
+    """Current Eastmoney indicators, then Sina abstract (transposed by period)."""
+    import akshare as ak
     digits = _code_digits(norm)
+    errors = []
     try:
-        import akshare as ak
-        # 主要财务指标
-        df = ak.stock_financial_analysis_indicator(symbol=digits)
+        suffix = "SH" if norm.startswith("sh") else "BJ" if norm.startswith("bj") else "SZ"
+        df = ak.stock_financial_analysis_indicator_em(symbol=f"{digits}.{suffix}", indicator="按报告期")
         if df is not None and not df.empty:
+            df = df[[c for c in FINANCIAL_FIELDS if c in df.columns]].rename(columns=FINANCIAL_FIELDS)
+            df["数据源"] = "eastmoney"
             return df
-    except Exception:
-        pass
-    return pd.DataFrame()
+    except Exception as exc:
+        errors.append(f"eastmoney: {type(exc).__name__}: {str(exc)[:200]}")
+    try:
+        df = ak.stock_financial_abstract(symbol=digits)
+        if df is not None and not df.empty:
+            periods = [c for c in df if re.fullmatch(r"\d{8}", str(c))]
+            data = df.drop_duplicates("指标").set_index("指标")[periods].T
+            data.index.name = "报告期"
+            data = data.reset_index()
+            data["报告期"] = pd.to_datetime(data["报告期"], format="%Y%m%d").astype(str)
+            data["数据源"] = "sina"
+            return data
+    except Exception as exc:
+        errors.append(f"sina: {type(exc).__name__}: {str(exc)[:200]}")
+    df = pd.DataFrame()
+    df.attrs["errors"] = errors
+    return df
 
 
 def _financial_single_from_akshare(norm: str, func_name: str) -> pd.DataFrame:
-    """akshare 单项财务指标"""
-    digits = _code_digits(norm)
-    try:
-        import akshare as ak
-        # 使用统一接口获取财务数据
-        df = ak.stock_financial_analysis_indicator(symbol=digits)
-        if df is not None and not df.empty:
-            return df
-    except Exception:
-        pass
-    return pd.DataFrame()
+    df = _financials_from_akshare(norm)
+    if df.empty:
+        return df
+    patterns = {
+        "profit": r"利润|净利率|毛利率|收益率|每股收益",
+        "growth": r"同比|增长",
+        "balance": r"负债|流动比率|速动比率|权益乘数|每股净资产",
+        "cashflow": r"现金|现金流",
+        "dupont": r"净资产收益率|销售净利率|总资产周转率|权益乘数",
+    }
+    fields = [c for c in df if c in ("报告期", "公告日期", "数据源") or re.search(patterns[func_name], c)]
+    return df[fields]
+
+
+def _filter_financial_periods(df, args):
+    if df.empty:
+        return df
+    periods = pd.to_datetime(df["报告期"], errors="coerce")
+    mask = periods.notna()
+    if args.start:
+        mask &= periods >= pd.Timestamp(args.start)
+    if args.end:
+        mask &= periods <= pd.Timestamp(args.end)
+    if args.year:
+        mask &= periods.dt.year == int(args.year)
+    if args.quarter:
+        mask &= periods.dt.quarter == args.quarter
+    return df[mask].sort_values("报告期", ascending=False).head(args.count)
+
+
+def _print_financial_result(df, args, norm, label):
+    if df.empty:
+        message = f"未获取到 {norm} 的{label}数据"
+        if args.output_json:
+            print(json.dumps({"status": "unavailable" if df.attrs.get("errors") else "empty",
+                              "error": message if df.attrs.get("errors") else None,
+                              "errors": df.attrs.get("errors", []), "data": []}, ensure_ascii=False))
+        else:
+            print(message)
+        return
+    if args.output_json:
+        print(df.to_json(orient="records", force_ascii=False))
+    else:
+        print(f"【{norm} {label}】金额原值单位为元，比率单位见列名")
+        print(df.to_string(index=False))
 
 
 def cmd_financials(args):
     norm = normalize_code(args.financials)
-    
-    df = _financials_from_akshare(norm)
-    
-    if df.empty:
-        print(f"未获取到 {norm} 的综合财务指标（akshare接口暂不可用）")
-        return
-    
-    if args.output_json:
-        print(df.to_json(orient="records", force_ascii=False))
-    else:
-        print(f"【{norm} 综合财务指标】数据源：akshare")
-        print(df.to_string(index=False))
+    df = _filter_financial_periods(_financials_from_akshare(norm), args)
+    _print_financial_result(df, args, norm, "综合财务指标")
 
 
 def cmd_financial_single(args):
     norm = normalize_code(args.code)
-    
-    df = _financial_single_from_akshare(norm, args.func_name)
-    
-    label_map = {
-        "profit": "盈利能力",
-        "growth": "成长能力",
-        "balance": "偿债能力",
-        "cashflow": "现金流量",
-        "dupont": "杜邦分析",
-    }
-    
-    if df.empty:
-        print(f"未获取到 {norm} 的{label_map[args.func_name]}数据（akshare接口暂不可用）")
-        return
-    
-    if args.output_json:
-        print(df.to_json(orient="records", force_ascii=False))
-    else:
-        print(f"【{norm} {label_map[args.func_name]}】数据源：akshare")
-        print(df.to_string(index=False))
+    df = _filter_financial_periods(_financial_single_from_akshare(norm, args.func_name), args)
+    labels = {"profit": "盈利能力", "growth": "成长能力", "balance": "偿债能力", "cashflow": "现金流指标", "dupont": "杜邦相关指标"}
+    _print_financial_result(df, args, norm, labels[args.func_name])
 
 
 # ============ 宏观数据 ============
@@ -1093,7 +1171,7 @@ def _macro_from_akshare(kind: str) -> pd.DataFrame:
             df = ak.rate_interbank(market="人民币", symbol="贷款利率")
             return df
         elif kind == "reserve":
-            df = ak.macro_china_rrr()
+            df = ak.macro_china_reserve_requirement_ratio()
             return df
         elif kind == "money":
             df = ak.macro_china_m2_yearly()
@@ -1104,6 +1182,13 @@ def _macro_from_akshare(kind: str) -> pd.DataFrame:
 
 
 def cmd_macro(args):
+    if args.kind in ("deposit", "loan"):
+        message = "原存贷款基准利率接口参数无效，当前未接入等价数据源；不可用同业拆借利率或LPR冒充"
+        if args.output_json:
+            print(json.dumps({"status": "unavailable", "error": message, "data": []}, ensure_ascii=False))
+        else:
+            print(message)
+        return
     df = _macro_from_akshare(args.kind)
     
     label_map = {
@@ -1149,6 +1234,7 @@ def build_parser():
     p.add_argument("--board-scan-limit", type=int, default=80, help="最多扫描多少个板块")
     
     # 全市场股票列表
+    p.add_argument("--no-cache", action="store_true", help="跳过全市场股票列表12小时缓存并刷新")
     p.add_argument("--all-stocks", action="store_true", help="获取全市场股票列表")
     p.add_argument("--market", choices=["sh", "sz"], help="配合 --all-stocks 筛选市场")
     
@@ -1165,6 +1251,7 @@ def build_parser():
     p.add_argument("--year", help="年度（配合 --dividend 或财务指标）")
     
     # 业绩预告/快报
+    p.add_argument("--report-date", help="业绩预告/快报报告期 YYYYMMDD，默认最近已结束季度")
     p.add_argument("--perf-forecast", metavar="CODE", help="业绩预告")
     p.add_argument("--perf-express", metavar="CODE", help="业绩快报")
     

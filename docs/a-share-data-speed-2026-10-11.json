@@ -1,0 +1,1505 @@
+{
+  "before": [
+    {
+      "name": "company_7d",
+      "seconds": 0.408,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 4,
+      "sources": [
+        {
+          "source": "cninfo",
+          "status": "ok",
+          "fetched": 1,
+          "truncated": false,
+          "elapsed_sec": 0.2
+        },
+        {
+          "source": "eastmoney_announcements",
+          "status": "ok",
+          "fetched": 200,
+          "truncated": true,
+          "elapsed_sec": 0.24
+        },
+        {
+          "source": "eastmoney_news:300476",
+          "status": "ok",
+          "fetched": 100,
+          "truncated": true,
+          "elapsed_sec": 0.28
+        },
+        {
+          "source": "eastmoney_news:胜宏科技",
+          "status": "ok",
+          "fetched": 100,
+          "truncated": true,
+          "elapsed_sec": 0.26
+        }
+      ]
+    },
+    {
+      "name": "company_30d",
+      "seconds": 0.314,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 20,
+      "sources": [
+        {
+          "source": "cninfo",
+          "status": "ok",
+          "fetched": 8,
+          "truncated": false,
+          "elapsed_sec": 0.14
+        },
+        {
+          "source": "eastmoney_announcements",
+          "status": "ok",
+          "fetched": 200,
+          "truncated": true,
+          "elapsed_sec": 0.22
+        },
+        {
+          "source": "eastmoney_news:300476",
+          "status": "ok",
+          "fetched": 100,
+          "truncated": true,
+          "elapsed_sec": 0.16
+        },
+        {
+          "source": "eastmoney_news:胜宏科技",
+          "status": "ok",
+          "fetched": 100,
+          "truncated": true,
+          "elapsed_sec": 0.18
+        }
+      ]
+    },
+    {
+      "name": "quote",
+      "seconds": 1.4,
+      "exit_code": 0,
+      "status": "ok",
+      "count": null,
+      "sources": null
+    },
+    {
+      "name": "basic",
+      "seconds": 5.64,
+      "exit_code": 0,
+      "status": "ok",
+      "count": null,
+      "sources": null
+    },
+    {
+      "name": "all_stocks",
+      "seconds": 16.077,
+      "exit_code": 0,
+      "status": "ok",
+      "count": null,
+      "sources": [
+        {
+          "来源": "新浪",
+          "数量": 5223
+        },
+        {
+          "来源": "腾讯",
+          "数量": 5223
+        }
+      ]
+    }
+  ],
+  "first_optimization": [
+    {
+      "name": "company_7d",
+      "seconds": 0.289,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 20,
+      "meta": {
+        "queried_at": "2026-10-11T09:57:47.842337+08:00",
+        "fetched_at": "2026-10-11T09:57:47.842337+08:00",
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T09:57:47.842337+08:00",
+        "cache_hit": false,
+        "count": 20,
+        "matched_before_limit": 69,
+        "latest_news_at": "2026-10-11T08:13:30+08:00",
+        "latest_announcement_at": "2026-10-08T00:00:00+08:00",
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.19
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.12
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 50,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.14
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "elapsed_sec": 0.2
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；不自动推断事件类别或情绪。",
+          "matched_in 仅记录精确文本出现位置，不是相关性评分；source_categories 仅保留上游原始分类。",
+          "empty 表示已查询页在窗口内无匹配；分页受限、partial/unavailable 都不能证明公司没有事件。"
+        ]
+      }
+    },
+    {
+      "name": "company_30d",
+      "seconds": 0.291,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 20,
+      "meta": {
+        "queried_at": "2026-10-11T09:57:48.140732+08:00",
+        "fetched_at": "2026-10-11T09:57:48.140732+08:00",
+        "window_start": "2026-09-12T00:00:00+08:00",
+        "window_end": "2026-10-11T09:57:48.140732+08:00",
+        "cache_hit": false,
+        "count": 20,
+        "matched_before_limit": 156,
+        "latest_news_at": "2026-10-11T08:13:30+08:00",
+        "latest_announcement_at": "2026-10-08T00:00:00+08:00",
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 8,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.16
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.2
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "elapsed_sec": 0.16
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "elapsed_sec": 0.12
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；不自动推断事件类别或情绪。",
+          "matched_in 仅记录精确文本出现位置，不是相关性评分；source_categories 仅保留上游原始分类。",
+          "empty 表示已查询页在窗口内无匹配；分页受限、partial/unavailable 都不能证明公司没有事件。"
+        ]
+      }
+    },
+    {
+      "name": "quote",
+      "seconds": 0.387,
+      "exit_code": 0,
+      "status": "ok",
+      "count": null,
+      "meta": null
+    },
+    {
+      "name": "basic",
+      "seconds": 0.398,
+      "exit_code": 0,
+      "status": "ok",
+      "count": null,
+      "meta": null
+    },
+    {
+      "name": "all_stocks",
+      "seconds": 14.969,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5223,
+      "meta": {
+        "market": "all",
+        "total": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          },
+          {
+            "来源": "腾讯",
+            "数量": 5223
+          }
+        ],
+        "errors": {
+          "雪球": "Expecting value: line 1 column 1 (char 0)"
+        },
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T09:58:04.063682",
+        "cache_ttl_seconds": 43200
+      }
+    },
+    {
+      "name": "all_stocks_warm",
+      "seconds": 15.36,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 5223,
+      "meta": {
+        "market": "all",
+        "total": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          },
+          {
+            "来源": "腾讯",
+            "数量": 5223
+          }
+        ],
+        "errors": {
+          "雪球": "Expecting value: line 1 column 1 (char 0)"
+        },
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T09:58:19.425339",
+        "cache_ttl_seconds": 43200
+      }
+    },
+    {
+      "name": "company_cache_seed",
+      "seconds": 0.807,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 17,
+      "meta": {
+        "queried_at": "2026-10-11T09:58:19.579478+08:00",
+        "fetched_at": "2026-10-11T09:58:19.579478+08:00",
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T09:58:19.579478+08:00",
+        "cache_hit": false,
+        "count": 17,
+        "matched_before_limit": 69,
+        "latest_news_at": "2026-10-11T08:13:30+08:00",
+        "latest_announcement_at": "2026-10-08T00:00:00+08:00",
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.61
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.69
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 50,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.54
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "elapsed_sec": 0.69
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；不自动推断事件类别或情绪。",
+          "matched_in 仅记录精确文本出现位置，不是相关性评分；source_categories 仅保留上游原始分类。",
+          "empty 表示已查询页在窗口内无匹配；分页受限、partial/unavailable 都不能证明公司没有事件。"
+        ]
+      }
+    },
+    {
+      "name": "company_source_cache",
+      "seconds": 0.235,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 19,
+      "meta": {
+        "queried_at": "2026-10-11T09:58:20.362030+08:00",
+        "fetched_at": "2026-10-11T09:58:20.362030+08:00",
+        "window_start": "2026-09-12T00:00:00+08:00",
+        "window_end": "2026-10-11T09:58:20.362030+08:00",
+        "cache_hit": false,
+        "count": 19,
+        "matched_before_limit": 156,
+        "latest_news_at": "2026-10-11T08:13:30+08:00",
+        "latest_announcement_at": "2026-10-08T00:00:00+08:00",
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 8,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.14
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 0,
+            "cache_hits": 1,
+            "elapsed_sec": 0.0
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 1,
+            "elapsed_sec": 0.08
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "network_requests": 0,
+            "cache_hits": 2,
+            "elapsed_sec": 0.0
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；不自动推断事件类别或情绪。",
+          "matched_in 仅记录精确文本出现位置，不是相关性评分；source_categories 仅保留上游原始分类。",
+          "empty 表示已查询页在窗口内无匹配；分页受限、partial/unavailable 都不能证明公司没有事件。"
+        ]
+      }
+    },
+    {
+      "name": "company_result_cache",
+      "seconds": 0.084,
+      "exit_code": 0,
+      "status": "ok",
+      "count": 19,
+      "meta": {
+        "queried_at": "2026-10-11T09:58:20.592611+08:00",
+        "fetched_at": "2026-10-11T09:58:20.362030+08:00",
+        "window_start": "2026-09-12T00:00:00+08:00",
+        "window_end": "2026-10-11T09:58:20.362030+08:00",
+        "cache_hit": true,
+        "count": 19,
+        "matched_before_limit": 156,
+        "latest_news_at": "2026-10-11T08:13:30+08:00",
+        "latest_announcement_at": "2026-10-08T00:00:00+08:00",
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 8,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "elapsed_sec": 0.14
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 0,
+            "cache_hits": 1,
+            "elapsed_sec": 0.0
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 1,
+            "elapsed_sec": 0.08
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "network_requests": 0,
+            "cache_hits": 2,
+            "elapsed_sec": 0.0
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；不自动推断事件类别或情绪。",
+          "matched_in 仅记录精确文本出现位置，不是相关性评分；source_categories 仅保留上游原始分类。",
+          "empty 表示已查询页在窗口内无匹配；分页受限、partial/unavailable 都不能证明公司没有事件。"
+        ]
+      }
+    }
+  ],
+  "final_stock_list": [
+    {
+      "name": "all_stocks",
+      "seconds": 3.279,
+      "exit_code": 0,
+      "count": 5223,
+      "meta": {
+        "market": "all",
+        "total": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          }
+        ],
+        "errors": {},
+        "cache_hit": false,
+        "fetched_at": "2026-10-11T09:59:13.452629",
+        "cache_ttl_seconds": 43200,
+        "source_elapsed_sec": {
+          "新浪": 2.878
+        }
+      }
+    },
+    {
+      "name": "all_stocks_warm",
+      "seconds": 0.223,
+      "exit_code": 0,
+      "count": 5223,
+      "meta": {
+        "market": "all",
+        "total": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          }
+        ],
+        "errors": {},
+        "cache_hit": true,
+        "fetched_at": "2026-10-11T09:59:13.452629",
+        "cache_ttl_seconds": 43200,
+        "source_elapsed_sec": {
+          "新浪": 2.878
+        }
+      }
+    }
+  ],
+  "targeted_regression": {
+    "checked_at": "2026-10-11T10:00:52.328219+08:00",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "platform": "macOS-26.3.1-arm64-arm-64bit",
+    "elapsed_sec": 7.57,
+    "summary": {
+      "ok": 10
+    },
+    "checks": [
+      {
+        "name": "all_stocks",
+        "status": "ok",
+        "records": 5223,
+        "exit_code": 0,
+        "elapsed_sec": 0.23,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --all-stocks --json",
+        "findings": [],
+        "preview": "{\"meta\": {\"market\": \"all\", \"total\": 5223, \"sources\": [{\"来源\": \"新浪\", \"数量\": 5223}], \"errors\": {}, \"cache_hit\": true, \"fetched_at\": \"2026-10-11T09:59:13.452629\", \"cache_ttl_seconds\": 43200, \"source_elapsed_sec\": {\"新浪\": 2.878}}, \"data\": [{\"代码\": \"sh600000\", \"名称\": \"浦发银行\"}, {\"代码\": \"sh600004\", \"名称\": \"白云机场\"}, {\"代码\": \"sh600006\", \"名称\": \"东风股份\"}, {\"代码\": \"sh60000",
+        "stderr_tail": ""
+      },
+      {
+        "name": "basic",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 0.4,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --basic 600519 --json",
+        "findings": [],
+        "preview": "{\"code\": \"sh600519\", \"name\": \"贵州茅台\", \"open\": \"1255.42\", \"preclose\": \"1255.79\", \"price\": \"1263.00\", \"high\": \"1282.00\", \"low\": \"1255.42\", \"volume\": \"35111\", \"amount\": \"445322\", \"source\": \"腾讯\"}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "company_news",
+        "status": "ok",
+        "records": 5,
+        "exit_code": 0,
+        "elapsed_sec": 0.08,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_company_news.py --code 300476 --name '胜宏科技' --days 30 --limit 5 --json",
+        "findings": [],
+        "preview": "{\n  \"status\": \"ok\",\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"meta\": {\n    \"queried_at\": \"2026-10-11T10:00:46.495780+08:00\",\n    \"fetched_at\": \"2026-10-11T09:58:20.119791+08:00\",\n    \"window_start\": \"2026-09-12T00:00:00+08:00\",\n    \"window_end\": \"2026-10-11T10:00:46.495780+08:00\",\n    \"cache_hit\": false,\n    \"count\": 5,\n    \"matched_before_limit\": 1",
+        "stderr_tail": ""
+      },
+      {
+        "name": "events",
+        "status": "ok",
+        "records": 7,
+        "exit_code": 0,
+        "elapsed_sec": 6.15,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_stock_events.py --code 300476 --name '胜宏科技' --limit 5 --max-seconds 20 --json",
+        "findings": [],
+        "preview": "{\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"queried_at\": \"2026-10-11 10:00:52\",\n  \"recent_information\": {\n    \"status\": \"ok\",\n    \"code\": \"300476\",\n    \"name\": \"胜宏科技\",\n    \"meta\": {\n      \"queried_at\": \"2026-10-11T10:00:46.485012+08:00\",\n      \"fetched_at\": \"2026-10-11T09:57:48.140732+08:00\",\n      \"window_start\": \"2026-09-12T00:00:00+08:00\",\n      ",
+        "stderr_tail": ""
+      },
+      {
+        "name": "history",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.41,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --kline 600519 --count 10 --json",
+        "findings": [],
+        "preview": "[{\"time\":\"2026-09-18\",\"code\":\"sh600519\",\"open\":1262.99,\"high\":1265.88,\"low\":1256.1,\"close\":1257.12,\"preclose\":null,\"volume\":24891.0,\"pctChg\":null},{\"time\":\"2026-09-21\",\"code\":\"sh600519\",\"open\":1259.0,\"high\":1259.95,\"low\":1250.8,\"close\":1252.57,\"preclose\":1257.12,\"volume\":25017.0,\"pctChg\":-0.3619383989},{\"time\":\"2026-09-22\",\"code\":\"sh600519\",\"open\":",
+        "stderr_tail": ""
+      },
+      {
+        "name": "history_batch",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.55,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --kline-batch 600519,000001,300750 --count 10 --retries 0 --json",
+        "findings": [],
+        "preview": "{\"meta\": {\"requested\": 3, \"success\": 3, \"fail\": 0, \"workers\": 8, \"retries\": 2, \"second_pass_retry\": true, \"freq\": \"1d\", \"count\": 10, \"start\": null, \"end\": null}, \"results\": [{\"code\": \"sh600519\", \"ok\": true, \"source\": \"腾讯\", \"rows\": 10, \"data\": [{\"time\": \"2026-09-18\", \"code\": \"sh600519\", \"open\": 1262.99, \"high\": 1265.88, \"low\": 1256.1, \"close\": 1257.",
+        "stderr_tail": ""
+      },
+      {
+        "name": "index",
+        "status": "ok",
+        "records": 6,
+        "exit_code": 0,
+        "elapsed_sec": 1.66,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --index --json",
+        "findings": [],
+        "preview": "[\n  {\n    \"名称\": \"上证指数\",\n    \"代码\": \"sh000001\",\n    \"最新价\": 3813.79,\n    \"涨跌额\": 1.89,\n    \"涨跌幅(%)\": 0.05\n  },\n  {\n    \"名称\": \"Ａ股指数\",\n    \"代码\": \"sh000002\",\n    \"最新价\": 3998.45,\n    \"涨跌额\": 1.94,\n    \"涨跌幅(%)\": 0.05\n  },\n  {\n    \"名称\": \"沪深300\",\n    \"代码\": \"sh000300\",\n    \"最新价\": 4317.25,\n    \"涨跌额\": 6.98,\n    \"涨跌幅(%)\": 0.16\n  },\n  {\n    \"名称\": \"科创50\",\n    \"代码\": ",
+        "stderr_tail": ""
+      },
+      {
+        "name": "multi_quote",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.62,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --multi-quote 600519,000001,300750 --json",
+        "findings": [],
+        "preview": "[\n  {\n    \"代码\": \"300750\",\n    \"最新价\": 297.75,\n    \"涨跌幅(%)\": 3.84,\n    \"昨收\": 286.75,\n    \"状态\": \"成功\"\n  },\n  {\n    \"代码\": \"600519\",\n    \"最新价\": 1263.0,\n    \"涨跌幅(%)\": 0.57,\n    \"昨收\": 1255.79,\n    \"状态\": \"成功\"\n  },\n  {\n    \"代码\": \"000001\",\n    \"最新价\": 11.59,\n    \"涨跌幅(%)\": -1.61,\n    \"昨收\": 11.78,\n    \"状态\": \"成功\"\n  }\n]\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "quote",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 0.6,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --quote 600519 --json",
+        "findings": [],
+        "preview": "{\n  \"代码\": \"600519\",\n  \"日期\": \"2026-10-09\",\n  \"最新价\": 1263.0,\n  \"涨跌额\": 7.21,\n  \"涨跌幅(%)\": 0.57,\n  \"今开\": 1255.42,\n  \"最高\": 1282.0,\n  \"最低\": 1255.42,\n  \"昨收\": 1255.79,\n  \"成交量\": 3511051,\n  \"市场状态\": \"休市\",\n  \"数据源\": \"新浪/腾讯\",\n  \"更新时间\": \"2026-10-11 10:00:45\",\n  \"备注\": \"非交易日或休市，显示最近交易日数据\"\n}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "technical",
+        "status": "ok",
+        "records": 50,
+        "exit_code": 0,
+        "elapsed_sec": 0.42,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_technical.py 600519 --count 120 --no-signal --json",
+        "findings": [],
+        "preview": "[{\"time\":\"2026-07-24T00:00:00.000\",\"open\":1305.0,\"close\":1297.41,\"high\":1309.21,\"low\":1286.2,\"volume\":3569892.0,\"MA5\":1305.984,\"MA10\":1271.884,\"MA20\":1233.596,\"MA60\":1276.403,\"MACD_DIF\":14.403,\"MACD_DEA\":1.141,\"MACD\":26.523,\"KDJ_K\":73.977,\"KDJ_D\":78.549,\"KDJ_J\":64.833,\"RSI\":54.512,\"BOLL_UP\":1327.834,\"BOLL_MID\":1233.596,\"BOLL_LOW\":1139.359},{\"time\":",
+        "stderr_tail": ""
+      }
+    ]
+  },
+  "paired_retest": {
+    "method": "Alternate before/after subprocesses; application data cache bypassed; company mapping may be cached; events tested with --skip-sentiment; news output filtering differs between versions. This measures CLI duration, not AI conversation latency.",
+    "samples": [
+      {
+        "case": "company_cold",
+        "version": "before",
+        "round": 1,
+        "seconds": 0.419,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 4,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "elapsed_sec": 0.18
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.3
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.27
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.26
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "after",
+        "round": 1,
+        "seconds": 0.384,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 20,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:13.403445+08:00",
+            "elapsed_sec": 0.14
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:13.488192+08:00",
+            "elapsed_sec": 0.23
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 50,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:13.338621+08:00",
+            "elapsed_sec": 0.08
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:13.369684+08:00",
+            "elapsed_sec": 0.14
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "after",
+        "round": 2,
+        "seconds": 0.247,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 20,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:13.740850+08:00",
+            "elapsed_sec": 0.16
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:13.696610+08:00",
+            "elapsed_sec": 0.12
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 50,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:13.673098+08:00",
+            "elapsed_sec": 0.09
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:13.674943+08:00",
+            "elapsed_sec": 0.12
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "before",
+        "round": 2,
+        "seconds": 0.715,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 4,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "elapsed_sec": 0.14
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.62
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.17
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.17
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "before",
+        "round": 3,
+        "seconds": 0.396,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 4,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "elapsed_sec": 0.15
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.29
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.19
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.16
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "after",
+        "round": 3,
+        "seconds": 0.227,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 20,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:15.080830+08:00",
+            "elapsed_sec": 0.13
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:15.056295+08:00",
+            "elapsed_sec": 0.11
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 50,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:15.027844+08:00",
+            "elapsed_sec": 0.08
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:15.043453+08:00",
+            "elapsed_sec": 0.12
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "after",
+        "round": 4,
+        "seconds": 0.55,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 20,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:15.611263+08:00",
+            "elapsed_sec": 0.44
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:15.313270+08:00",
+            "elapsed_sec": 0.15
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 50,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:15.245175+08:00",
+            "elapsed_sec": 0.08
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:15.253374+08:00",
+            "elapsed_sec": 0.11
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "before",
+        "round": 4,
+        "seconds": 0.321,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 4,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "elapsed_sec": 0.14
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.22
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.18
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.17
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "before",
+        "round": 5,
+        "seconds": 0.401,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 4,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "elapsed_sec": 0.17
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.29
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.16
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.18
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "company_cold",
+        "version": "after",
+        "round": 5,
+        "seconds": 0.283,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 20,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:16.625573+08:00",
+            "elapsed_sec": 0.18
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:16.568434+08:00",
+            "elapsed_sec": 0.12
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 50,
+            "truncated": false,
+            "network_requests": 1,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:16.540950+08:00",
+            "elapsed_sec": 0.09
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": false,
+            "network_requests": 2,
+            "cache_hits": 0,
+            "fetched_at": "2026-10-11T10:41:16.526454+08:00",
+            "elapsed_sec": 0.1
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "quote",
+        "version": "before",
+        "round": 1,
+        "seconds": 1.341,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "quote",
+        "version": "after",
+        "round": 1,
+        "seconds": 0.443,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "quote",
+        "version": "after",
+        "round": 2,
+        "seconds": 0.4,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "quote",
+        "version": "before",
+        "round": 2,
+        "seconds": 0.879,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "quote",
+        "version": "before",
+        "round": 3,
+        "seconds": 0.886,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "quote",
+        "version": "after",
+        "round": 3,
+        "seconds": 0.408,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "basic",
+        "version": "before",
+        "round": 1,
+        "seconds": 5.835,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "basic",
+        "version": "after",
+        "round": 1,
+        "seconds": 0.497,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "basic",
+        "version": "after",
+        "round": 2,
+        "seconds": 0.457,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "basic",
+        "version": "before",
+        "round": 2,
+        "seconds": 5.67,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "basic",
+        "version": "before",
+        "round": 3,
+        "seconds": 5.598,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "basic",
+        "version": "after",
+        "round": 3,
+        "seconds": 0.418,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "all_stocks_cold",
+        "version": "before",
+        "round": 1,
+        "seconds": 13.362,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          },
+          {
+            "来源": "腾讯",
+            "数量": 5223
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "all_stocks_cold",
+        "version": "after",
+        "round": 1,
+        "seconds": 2.929,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          }
+        ],
+        "source_errors": {}
+      },
+      {
+        "case": "all_stocks_cold",
+        "version": "after",
+        "round": 2,
+        "seconds": 1.329,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          }
+        ],
+        "source_errors": {}
+      },
+      {
+        "case": "all_stocks_cold",
+        "version": "before",
+        "round": 2,
+        "seconds": 15.348,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          },
+          {
+            "来源": "腾讯",
+            "数量": 5223
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "all_stocks_cold",
+        "version": "before",
+        "round": 3,
+        "seconds": 16.18,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          },
+          {
+            "来源": "腾讯",
+            "数量": 5223
+          }
+        ],
+        "source_errors": null
+      },
+      {
+        "case": "all_stocks_cold",
+        "version": "after",
+        "round": 3,
+        "seconds": 1.59,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": false,
+        "count": 5223,
+        "sources": [
+          {
+            "来源": "新浪",
+            "数量": 5223
+          }
+        ],
+        "source_errors": {}
+      },
+      {
+        "case": "events_current",
+        "version": "after",
+        "round": 1,
+        "seconds": 6.847,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "events_current",
+        "version": "after",
+        "round": 2,
+        "seconds": 5.633,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      },
+      {
+        "case": "events_current",
+        "version": "after",
+        "round": 3,
+        "seconds": 5.851,
+        "exit_code": 0,
+        "status": "ok",
+        "cache_hit": null,
+        "count": null,
+        "sources": null,
+        "source_errors": null
+      }
+    ],
+    "summaries": [
+      {
+        "case": "company_cold",
+        "version": "before",
+        "n": 5,
+        "median_seconds": 0.401,
+        "min_seconds": 0.321,
+        "max_seconds": 0.715
+      },
+      {
+        "case": "company_cold",
+        "version": "after",
+        "n": 5,
+        "median_seconds": 0.283,
+        "min_seconds": 0.227,
+        "max_seconds": 0.55
+      },
+      {
+        "case": "quote",
+        "version": "before",
+        "n": 3,
+        "median_seconds": 0.886,
+        "min_seconds": 0.879,
+        "max_seconds": 1.341
+      },
+      {
+        "case": "quote",
+        "version": "after",
+        "n": 3,
+        "median_seconds": 0.408,
+        "min_seconds": 0.4,
+        "max_seconds": 0.443
+      },
+      {
+        "case": "basic",
+        "version": "before",
+        "n": 3,
+        "median_seconds": 5.67,
+        "min_seconds": 5.598,
+        "max_seconds": 5.835
+      },
+      {
+        "case": "basic",
+        "version": "after",
+        "n": 3,
+        "median_seconds": 0.457,
+        "min_seconds": 0.418,
+        "max_seconds": 0.497
+      },
+      {
+        "case": "all_stocks_cold",
+        "version": "before",
+        "n": 3,
+        "median_seconds": 15.348,
+        "min_seconds": 13.362,
+        "max_seconds": 16.18
+      },
+      {
+        "case": "all_stocks_cold",
+        "version": "after",
+        "n": 3,
+        "median_seconds": 1.59,
+        "min_seconds": 1.329,
+        "max_seconds": 2.929
+      },
+      {
+        "case": "events_current",
+        "version": "after",
+        "n": 3,
+        "median_seconds": 5.851,
+        "min_seconds": 5.633,
+        "max_seconds": 6.847
+      }
+    ]
+  }
+}

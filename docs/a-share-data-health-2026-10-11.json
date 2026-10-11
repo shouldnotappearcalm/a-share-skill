@@ -1,0 +1,2320 @@
+{
+  "scope": "Data scripts only; no strategy/backtest/trading executed",
+  "base_commit": "6eb8d32",
+  "baseline": {
+    "checked_at": "2026-10-11T09:26:08.579618+08:00",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "platform": "macOS-26.3.1-arm64-arm-64bit",
+    "elapsed_sec": 25.22,
+    "summary": {
+      "ok": 27,
+      "non_json": 12,
+      "stale": 5,
+      "error": 1,
+      "needs_review": 2,
+      "quality_error": 1
+    },
+    "checks": [
+      {
+        "name": "ah_stocks",
+        "status": "ok",
+        "records": 209,
+        "exit_code": 0,
+        "elapsed_sec": 12.89,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_ah_stocks.py --workers 4 --no-cache --json",
+        "preview": "{\n  \"query\": {\n    \"since\": null,\n    \"until\": null,\n    \"workers\": 4,\n    \"no_cache\": true\n  },\n  \"meta\": {\n    \"cache_hit\": false,\n    \"cache_file\": \"/Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/cache/ah_stocks.json\",\n    \"total\": 209,\n    \"filtered\": 209,\n    \"generated_at\": \"2026-10-11 09:26:03\"\n  },\n  \"data\": [\n    {",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "ah_timeline",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 15.59,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_ah_ipo_timeline.py --code 002352 --json",
+        "preview": "{\n  \"query\": {\n    \"since\": 2020,\n    \"workers\": 4,\n    \"no_cache\": false,\n    \"code\": \"002352\",\n    \"name\": null,\n    \"target_mode\": true\n  },\n  \"meta\": {\n    \"generated_at\": \"2026-10-11 09:26:07\",\n    \"total\": 1,\n    \"target_candidates\": 1\n  },\n  \"data\": [\n    {\n      \"name\": \"顺丰控股\",\n      \"a_code\": \"002352\",\n      \"hk_code\": \"06936\",\n      \"list",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "all_quote",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.86,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --all-quote --top 3 --json",
+        "preview": "{\n  \"meta\": {\n    \"total\": 5571,\n    \"sort\": \"change_pct_desc\",\n    \"top\": 3,\n    \"update_time\": \"2026-10-11 09:25:46\",\n    \"data_source\": \"腾讯\"\n  },\n  \"data\": [\n    {\n      \"code\": \"sz300369\",\n      \"name\": \"绿盟科技\",\n      \"price\": 10.43,\n      \"prev_close\": 8.69,\n      \"open\": 8.69,\n      \"change_pct\": 20.02,\n      \"volume\": 1056409,\n      \"amount\":",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "all_stocks",
+        "status": "ok",
+        "records": 5223,
+        "exit_code": 0,
+        "elapsed_sec": 18.65,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --all-stocks --json",
+        "preview": "{\"meta\": {\"market\": \"all\", \"total\": 5223, \"sources\": [{\"来源\": \"新浪\", \"数量\": 5223}, {\"来源\": \"腾讯\", \"数量\": 5223}]}, \"data\": [{\"代码\": \"sh600000\", \"名称\": \"浦发银行\"}, {\"代码\": \"sh600004\", \"名称\": \"白云机场\"}, {\"代码\": \"sh600006\", \"名称\": \"东风股份\"}, {\"代码\": \"sh600007\", \"名称\": \"中国国贸\"}, {\"代码\": \"sh600008\", \"名称\": \"首创环保\"}, {\"代码\": \"sh600009\", \"名称\": \"上海机场\"}, {\"代码\": \"sh600010\", \"名称\": \"包钢股",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "balance",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.58,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --balance 600519 --json",
+        "preview": "未获取到 sh600519 的偿债能力数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "basic",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 5.62,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --basic 600519 --json",
+        "preview": "{\"code\": \"sh600519\", \"name\": \"贵州茅台\", \"open\": \"1255.42\", \"preclose\": \"1255.79\", \"price\": \"1263.00\", \"high\": \"1282.00\", \"low\": \"1255.42\", \"volume\": \"35111\", \"amount\": \"445322\", \"source\": \"腾讯\"}\n",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "board_detail",
+        "status": "stale",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.45,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --detail --mode sub --group-key '半导体' --items-limit 3 --retries 0 --json",
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/detail\",\n    \"mode\": \"ths_industry\",\n    \"groupKey\": \"半导体\",\n    \"sort\": \"change_desc\",\n    \"items_limit\": 3,\n    \"items_offset\": 0,\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"update_time\": \"2026-10-11 09:26:07\",\n    \"data_source\": \"Dan",
+        "stderr_tail": "",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated"
+        ]
+      },
+      {
+        "name": "boards_concept",
+        "status": "stale",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 1.7,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode concept --limit 3 --retries 0 --json",
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"ths_concept\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 395,\n    \"update_time\": \"2026-10-11 09:26:08\",\n    \"data_source\": \"DangInvest\"\n  },\n  \"",
+        "stderr_tail": "",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated"
+        ]
+      },
+      {
+        "name": "boards_major",
+        "status": "stale",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 3.86,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode major --limit 3 --retries 0 --json",
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"industry\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 110,\n    \"update_time\": \"2026-10-11 09:26:06\",\n    \"data_source\": \"DangInvest\"\n  },\n  \"dat",
+        "stderr_tail": "",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated"
+        ]
+      },
+      {
+        "name": "boards_sub",
+        "status": "stale",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 2.87,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode sub --limit 3 --retries 0 --json",
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"ths_industry\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 714,\n    \"update_time\": \"2026-10-11 09:26:07\",\n    \"data_source\": \"DangInvest\"\n  },\n  ",
+        "stderr_tail": "",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated"
+        ]
+      },
+      {
+        "name": "cashflow",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.8,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --cashflow 600519 --json",
+        "preview": "未获取到 sh600519 的现金流量数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "consecutive_limit",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.52,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --consecutive-limit --date 20261009 --top 3 --json",
+        "preview": "[{\"序号\":1,\"代码\":\"000869\",\"名称\":\"张  裕Ａ\",\"涨跌幅\":3.3049039841,\"最新价\":19.38,\"换手率\":4.3305015564,\"昨日连板数\":1,\"所属行业\":\"非白酒\",\"成交额(亿)\":3.76},{\"序号\":2,\"代码\":\"001300\",\"名称\":\"三柏硕\",\"涨跌幅\":9.99259758,\"最新价\":14.86,\"换手率\":3.4094426632,\"昨日连板数\":1,\"所属行业\":\"文娱用品\",\"成交额(亿)\":1.22},{\"序号\":3,\"代码\":\"001336\",\"名称\":\"楚环科技\",\"涨跌幅\":10.0242128372,\"最新价\":22.72,\"换手率\":24.1290359497,\"昨日连板数\":1,\"所属行业\":\"环保",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "deposit-rate",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.5,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --deposit-rate --json",
+        "preview": "未获取到存款基准利率数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "dividend",
+        "status": "ok",
+        "records": 31,
+        "exit_code": 0,
+        "elapsed_sec": 0.63,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --dividend 600519 --year 2025 --json",
+        "preview": "[{\"实施方案公告日期\":1026950400000,\"分红类型\":\"年度分红\",\"送股比例\":null,\"转增比例\":1.0,\"派息比例\":6.0,\"股权登记日\":1027468800000,\"除权日\":1027555200000,\"派息日\":1027987200000,\"股份到账日\":null,\"实施方案分红说明\":\"10转增1股派6元（含税）\",\"报告时间\":\"2001年报\"},{\"实施方案公告日期\":1057622400000,\"分红类型\":\"年度分红\",\"送股比例\":1.0,\"转增比例\":null,\"派息比例\":2.0,\"股权登记日\":1057881600000,\"除权日\":1058140800000,\"派息日\":1058486400000,\"股份到账日\":null,\"实施方案分红",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "dupont",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.89,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --dupont 600519 --json",
+        "preview": "未获取到 sh600519 的杜邦分析数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "events",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 18.65,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_stock_events.py --code 300476 --name '胜宏科技' --limit 5 --max-seconds 20 --json",
+        "preview": "{\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"queried_at\": \"2026-10-11 09:26:08\",\n  \"performance\": {\n    \"category\": \"业绩/预告\",\n    \"forecast\": [],\n    \"express\": [\n      {\n        \"序号\": 2225,\n        \"股票代码\": \"300476\",\n        \"股票简称\": \"胜宏科技\",\n        \"每股收益\": 1.48,\n        \"营业总收入-营业总收入\": 5519485066.85,\n        \"营业总收入-同比增长\": 27.9927826495,\n        \"营业总收入-",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "financials",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.56,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --financials 600519 --json",
+        "preview": "未获取到 sh600519 的综合财务指标（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "fund_flow",
+        "status": "error",
+        "records": 0,
+        "exit_code": 1,
+        "elapsed_sec": 0.49,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --fund-flow 600519 --days 3 --json",
+        "preview": "获取资金流向失败：HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/fflow/daykline/get?lmt=0&klt=101&secid=1.600519&fields1=f1%2Cf2%2Cf3%2Cf7&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf62%2Cf63%2Cf64%2Cf65&ut=b2884a393a59ad64002292a3e90d46a5&_=1791681945893 (Caused by P",
+        "stderr_tail": ""
+      },
+      {
+        "name": "growth",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.59,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --growth 600519 --json",
+        "preview": "未获取到 sh600519 的成长能力数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "history",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.43,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --kline 600519 --count 10 --json",
+        "preview": "[{\"time\":\"2026-09-18\",\"code\":\"sh600519\",\"open\":1262.99,\"high\":1265.88,\"low\":1256.1,\"close\":1257.12,\"preclose\":null,\"volume\":24891.0,\"pctChg\":null},{\"time\":\"2026-09-21\",\"code\":\"sh600519\",\"open\":1259.0,\"high\":1259.95,\"low\":1250.8,\"close\":1252.57,\"preclose\":1257.12,\"volume\":25017.0,\"pctChg\":-0.3619383989},{\"time\":\"2026-09-22\",\"code\":\"sh600519\",\"open\":",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "history_batch",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.6,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --kline-batch 600519,000001,300750 --count 10 --retries 0 --json",
+        "preview": "{\"meta\": {\"requested\": 3, \"success\": 3, \"fail\": 0, \"workers\": 8, \"retries\": 2, \"second_pass_retry\": true, \"freq\": \"1d\", \"count\": 10, \"start\": null, \"end\": null}, \"results\": [{\"code\": \"sh600519\", \"ok\": true, \"source\": \"腾讯\", \"rows\": 10, \"data\": [{\"time\": \"2026-09-18\", \"code\": \"sh600519\", \"open\": 1262.99, \"high\": 1265.88, \"low\": 1256.1, \"close\": 1257.",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "hs300",
+        "status": "ok",
+        "records": 300,
+        "exit_code": 0,
+        "elapsed_sec": 0.55,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --hs300 --json",
+        "preview": "[{\"code\":\"000001\",\"name\":\"平安银行\",\"weight\":0.453},{\"code\":\"000002\",\"name\":\"万科A\",\"weight\":0.117},{\"code\":\"000063\",\"name\":\"中兴通讯\",\"weight\":0.398},{\"code\":\"000100\",\"name\":\"TCL科技\",\"weight\":0.425},{\"code\":\"000157\",\"name\":\"中联重科\",\"weight\":0.12},{\"code\":\"000166\",\"name\":\"申万宏源\",\"weight\":0.159},{\"code\":\"000301\",\"name\":\"东方盛虹\",\"weight\":0.138},{\"code\":\"000333\",\"nam",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "index",
+        "status": "ok",
+        "records": 6,
+        "exit_code": 0,
+        "elapsed_sec": 1.36,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --index --json",
+        "preview": "[\n  {\n    \"名称\": \"上证指数\",\n    \"代码\": \"sh000001\",\n    \"最新价\": 3813.79,\n    \"涨跌额\": 1.89,\n    \"涨跌幅(%)\": 0.05\n  },\n  {\n    \"名称\": \"Ａ股指数\",\n    \"代码\": \"sh000002\",\n    \"最新价\": 3998.45,\n    \"涨跌额\": 1.94,\n    \"涨跌幅(%)\": 0.05\n  },\n  {\n    \"名称\": \"沪深300\",\n    \"代码\": \"sh000300\",\n    \"最新价\": 4317.25,\n    \"涨跌额\": 6.98,\n    \"涨跌幅(%)\": 0.16\n  },\n  {\n    \"名称\": \"科创50\",\n    \"代码\": ",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "industry",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 0.37,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --industry 600519 --json",
+        "preview": "{\n  \"code\": \"sh600519\",\n  \"industry_info\": {\n    \"code\": \"sh600519\",\n    \"name\": \"贵州茅台\",\n    \"industry\": \"酿酒行业\",\n    \"industry_zjh\": \"制造业-酒、饮料和精制茶制造业\",\n    \"source\": \"东方财富\"\n  },\n  \"boards\": [],\n  \"update_time\": \"2026-10-11 09:25:46\"\n}\n",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "intraday",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.52,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --intraday-kline 600519 --freq 5m --json",
+        "preview": "股票 600519 今日（2026-10-11）暂无分钟K线数据\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "kline_1M",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.54,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1M --count 10 --json",
+        "preview": "[{\"时间\":\"2026-01-30T00:00:00.000\",\"开盘\":1385.0,\"收盘\":1445.0,\"最高\":1322.01,\"最低\":1401.0,\"成交量\":117529983.0},{\"时间\":\"2026-02-27T00:00:00.000\",\"开盘\":1425.0,\"收盘\":1568.0,\"最高\":1411.62,\"最低\":1455.02,\"成交量\":80526506.0},{\"时间\":\"2026-03-31T00:00:00.000\",\"开盘\":1450.0,\"收盘\":1498.07,\"最高\":1383.2,\"最低\":1450.0,\"成交量\":78374538.0},{\"时间\":\"2026-04-30T00:00:00.000\",\"开盘\":1464.49,\"收盘\":",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "kline_1d",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.95,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1d --count 10 --json",
+        "preview": "[{\"时间\":\"2026-09-18T00:00:00.000\",\"开盘\":1262.99,\"收盘\":1265.88,\"最高\":1256.1,\"最低\":1257.12,\"成交量\":2489087.0},{\"时间\":\"2026-09-21T00:00:00.000\",\"开盘\":1259.0,\"收盘\":1259.95,\"最高\":1250.8,\"最低\":1252.57,\"成交量\":2501689.0},{\"时间\":\"2026-09-22T00:00:00.000\",\"开盘\":1252.15,\"收盘\":1265.88,\"最高\":1248.1,\"最低\":1253.8,\"成交量\":2457294.0},{\"时间\":\"2026-09-23T00:00:00.000\",\"开盘\":1255.03,\"收盘\":1",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "kline_1w",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.95,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1w --count 10 --json",
+        "preview": "[{\"时间\":\"2026-08-07T00:00:00.000\",\"开盘\":1350.6,\"收盘\":1363.35,\"最高\":1300.01,\"最低\":1309.22,\"成交量\":16672485.0},{\"时间\":\"2026-08-14T00:00:00.000\",\"开盘\":1325.0,\"收盘\":1359.97,\"最高\":1318.08,\"最低\":1341.99,\"成交量\":18702495.0},{\"时间\":\"2026-08-21T00:00:00.000\",\"开盘\":1295.0,\"收盘\":1308.88,\"最高\":1272.01,\"最低\":1272.83,\"成交量\":21350387.0},{\"时间\":\"2026-08-28T00:00:00.000\",\"开盘\":1271.01,\"",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "kline_5m",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.95,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 5m --count 10 --json",
+        "preview": "[{\"时间\":\"2026-10-09T14:15:00.000\",\"开盘\":1267.83,\"收盘\":1268.69,\"最高\":1265.36,\"最低\":1265.36,\"成交量\":65100.0},{\"时间\":\"2026-10-09T14:20:00.000\",\"开盘\":1265.4,\"收盘\":1266.0,\"最高\":1264.5,\"最低\":1266.0,\"成交量\":56750.0},{\"时间\":\"2026-10-09T14:25:00.000\",\"开盘\":1265.89,\"收盘\":1267.55,\"最高\":1265.7,\"最低\":1266.75,\"成交量\":49500.0},{\"时间\":\"2026-10-09T14:30:00.000\",\"开盘\":1266.38,\"收盘\":1266.92",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "lhb",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 1.0,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --lhb --start 20260925 --end 20261009 --top 3 --json",
+        "preview": "[{\"代码\":\"000002\",\"名称\":\"万科A\",\"上榜日\":1790726400000,\"收盘价\":4.26,\"涨跌幅(%)\":4.4118,\"净买额(万)\":7138.46,\"上榜原因\":\"日振幅值达到15%的前5只证券\"},{\"代码\":\"000002\",\"名称\":\"万科A\",\"上榜日\":1790640000000,\"收盘价\":4.08,\"涨跌幅(%)\":9.973,\"净买额(万)\":15960.83,\"上榜原因\":\"日涨幅偏离值达到7%的前5只证券\"},{\"代码\":\"000011\",\"名称\":\"深物业A\",\"上榜日\":1791504000000,\"收盘价\":12.59,\"涨跌幅(%)\":3.8779,\"净买额(万)\":-3409.11,\"上榜原因\":\"日振幅值达到15%的前5只证券",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "limit_stats",
+        "status": "needs_review",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 0.69,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --limit-stats --json",
+        "preview": "{\n  \"日期\": \"2026-10-11\",\n  \"涨停数量\": 69,\n  \"跌停数量\": 8\n}\n",
+        "stderr_tail": "",
+        "findings": [
+          "needs_review: a weekend request is labeled today; underlying trading date is unverified"
+        ]
+      },
+      {
+        "name": "limit_up",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.49,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --limit-up-pool --date 20261009 --top 3 --json",
+        "preview": "[{\"序号\":1,\"代码\":\"002058\",\"名称\":\"紫竹高科\",\"涨跌幅\":9.9909992218,\"最新价\":24.44,\"换手率\":2.8765933514,\"封板资金\":89302489,\"连板数\":4,\"所属行业\":\"电池\",\"成交额(亿)\":1.01},{\"序号\":2,\"代码\":\"600241\",\"名称\":\"时代万恒\",\"涨跌幅\":10.0093545914,\"最新价\":11.76,\"换手率\":1.9918870926,\"封板资金\":229379199,\"连板数\":5,\"所属行业\":\"电池\",\"成交额(亿)\":0.69},{\"序号\":3,\"代码\":\"600825\",\"名称\":\"新华传媒\",\"涨跌幅\":10.0087795258,\"最新价\":12.53,\"换手率\":4.778",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "loan-rate",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.39,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --loan-rate --json",
+        "preview": "未获取到贷款基准利率数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "market_news",
+        "status": "stale",
+        "records": 5,
+        "exit_code": 0,
+        "elapsed_sec": 14.68,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --news --limit 5 --retries 0 --json",
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/news\",\n    \"limit\": 5,\n    \"offset\": 0,\n    \"count\": 5,\n    \"has_more\": true,\n    \"update_time\": \"2026-10-11 09:26:06\",\n    \"data_source\": \"DangInvest\"\n  },\n  \"data\": [\n    {\n      \"id\": 66350065,\n      \"source\": \"futu\",\n      \"published_at\": \"2026-10-04T00:05:01\",\n      \"title\": null,\n  ",
+        "stderr_tail": "",
+        "findings": [
+          "stale: newest news in page is over 24 hours old"
+        ]
+      },
+      {
+        "name": "money-supply",
+        "status": "ok",
+        "records": 395,
+        "exit_code": 0,
+        "elapsed_sec": 2.51,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --money-supply --json",
+        "preview": "[{\"商品\":\"中国M2货币供应年率报告\",\"日期\":886291200000,\"今值\":17.4,\"预测值\":null,\"前值\":null},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":888710400000,\"今值\":16.7,\"预测值\":null,\"前值\":17.4},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":891388800000,\"今值\":15.4,\"预测值\":null,\"前值\":16.7},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":893980800000,\"今值\":14.6,\"预测值\":null,\"前值\":15.4},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":896659200000,\"今值\":15.5,\"预测值\":null,\"前值\":",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "multi_quote",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 1.85,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --multi-quote 600519,000001,300750 --json",
+        "preview": "[\n  {\n    \"代码\": \"600519\",\n    \"最新价\": 1263.0,\n    \"涨跌幅(%)\": 0.0,\n    \"昨收\": 1263.0,\n    \"状态\": \"成功\"\n  },\n  {\n    \"代码\": \"000001\",\n    \"最新价\": 3813.79,\n    \"涨跌幅(%)\": 0.0,\n    \"昨收\": 3813.79,\n    \"状态\": \"成功\"\n  },\n  {\n    \"代码\": \"300750\",\n    \"最新价\": 297.75,\n    \"涨跌幅(%)\": 0.0,\n    \"昨收\": 297.75,\n    \"状态\": \"成功\"\n  }\n]\n",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "north_money",
+        "status": "needs_review",
+        "records": 2,
+        "exit_code": 0,
+        "elapsed_sec": 0.58,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --north-money --json",
+        "preview": "[\n  {\n    \"日期\": \"2026-10-09\",\n    \"板块\": \"沪股通\",\n    \"净买额(亿)\": 0.0,\n    \"净流入(亿)\": 0.0,\n    \"指数涨跌(%)\": 0.05\n  },\n  {\n    \"日期\": \"2026-10-09\",\n    \"板块\": \"深股通\",\n    \"净买额(亿)\": 0.0,\n    \"净流入(亿)\": 0.0,\n    \"指数涨跌(%)\": 0.17\n  }\n]\n",
+        "stderr_tail": "",
+        "findings": [
+          "needs_review: all northbound flow fields are zero; may be upstream placeholders"
+        ]
+      },
+      {
+        "name": "perf-express",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.5,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --perf-express 600519 --json",
+        "preview": "未获取到 sh600519 的业绩快报数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "perf-forecast",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.63,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --perf-forecast 600519 --json",
+        "preview": "未获取到 sh600519 的业绩预告数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "profit",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.56,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --profit 600519 --json",
+        "preview": "未获取到 sh600519 的盈利能力数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "quote",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 1.33,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --quote 600519 --json",
+        "preview": "{\n  \"代码\": \"600519\",\n  \"日期\": \"2026-10-09\",\n  \"最新价\": 1263.0,\n  \"涨跌额\": 0.0,\n  \"涨跌幅(%)\": 0.0,\n  \"今开\": 1255.42,\n  \"最高\": 1282.0,\n  \"最低\": 1255.42,\n  \"昨收\": 1263.0,\n  \"成交量\": 3511051,\n  \"市场状态\": \"休市\",\n  \"数据源\": \"新浪/腾讯\",\n  \"更新时间\": \"2026-10-11 09:25:44\",\n  \"备注\": \"非交易日或休市，显示最近交易日数据\"\n}\n",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "reserve-ratio",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.41,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --reserve-ratio --json",
+        "preview": "未获取到存款准备金率数据（akshare接口暂不可用）\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "sector",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 0.15,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_sector_info.py --no-concepts --timeout 5 600519 --json",
+        "preview": "{\n  \"code\": \"600519\",\n  \"name\": \"贵州茅台\",\n  \"industry\": \"白酒Ⅱ\",\n  \"concepts\": [],\n  \"source\": \"eastmoney\",\n  \"error\": null\n}\n",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "sz50",
+        "status": "ok",
+        "records": 50,
+        "exit_code": 0,
+        "elapsed_sec": 0.49,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --sz50 --json",
+        "preview": "[{\"code\":\"600028\",\"name\":\"中国石化\",\"weight\":0.843},{\"code\":\"600030\",\"name\":\"中信证券\",\"weight\":2.766},{\"code\":\"600031\",\"name\":\"三一重工\",\"weight\":1.137},{\"code\":\"600036\",\"name\":\"招商银行\",\"weight\":5.597},{\"code\":\"600050\",\"name\":\"中国联通\",\"weight\":0.725},{\"code\":\"600089\",\"name\":\"特变电工\",\"weight\":0.959},{\"code\":\"600111\",\"name\":\"北方稀土\",\"weight\":0.979},{\"code\":\"600150\",\"na",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "technical",
+        "status": "quality_error",
+        "records": 50,
+        "exit_code": 0,
+        "elapsed_sec": 0.63,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_technical.py 600519 --count 120 --no-signal --json",
+        "preview": "[{\"time\":\"2026-07-24T00:00:00.000\",\"open\":1305.0,\"close\":1309.21,\"high\":1286.2,\"low\":1297.41,\"volume\":3569892.0,\"MA5\":1318.782,\"MA10\":1282.968,\"MA20\":1243.888,\"MA60\":1290.219,\"MACD_DIF\":13.766,\"MACD_DEA\":0.05,\"MACD\":27.433,\"KDJ_K\":129.608,\"KDJ_D\":152.416,\"KDJ_J\":83.991,\"RSI\":54.642,\"BOLL_UP\":1341.612,\"BOLL_MID\":1243.888,\"BOLL_LOW\":1146.164},{\"time\"",
+        "stderr_tail": "",
+        "findings": [
+          "quality_error: 50 OHLC bars violate price bounds"
+        ]
+      },
+      {
+        "name": "tick",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.63,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --tick 600519 --top 3 --json",
+        "preview": "{\n  \"meta\": {\n    \"code\": \"sh600519\",\n    \"page\": 0,\n    \"total_pages\": 0,\n    \"records\": 70,\n    \"update_time\": \"2026-10-11 09:25:46\",\n    \"data_source\": \"腾讯\"\n  },\n  \"data\": [\n    {\n      \"seq\": 0,\n      \"time\": \"09:25:02\",\n      \"price\": 1255.42,\n      \"change\": 0.01,\n      \"volume\": 195,\n      \"amount\": 24480690.0,\n      \"direction\": \"买\"\n    },\n",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "trade_dates",
+        "status": "ok",
+        "records": 242,
+        "exit_code": 0,
+        "elapsed_sec": 0.77,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --trade-dates --start 2026-01-01 --end 2026-12-31 --json",
+        "preview": "[{\"date\":\"2026-01-05\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-06\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-07\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-08\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-09\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-12\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-13\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-14\",\"is_trading_day\":\"1\"},{\"dat",
+        "stderr_tail": "",
+        "findings": []
+      },
+      {
+        "name": "zz500",
+        "status": "ok",
+        "records": 500,
+        "exit_code": 0,
+        "elapsed_sec": 0.59,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --zz500 --json",
+        "preview": "[{\"code\":\"000009\",\"name\":\"中国宝安\",\"weight\":0.134},{\"code\":\"000021\",\"name\":\"深科技\",\"weight\":0.388},{\"code\":\"000027\",\"name\":\"深圳能源\",\"weight\":0.096},{\"code\":\"000032\",\"name\":\"深桑达A\",\"weight\":0.085},{\"code\":\"000034\",\"name\":\"神州数码\",\"weight\":0.203},{\"code\":\"000039\",\"name\":\"中集集团\",\"weight\":0.17},{\"code\":\"000050\",\"name\":\"深天马A\",\"weight\":0.099},{\"code\":\"000060\",\"name",
+        "stderr_tail": "",
+        "findings": []
+      }
+    ]
+  },
+  "after_full_run": {
+    "checked_at": "2026-10-11T09:33:15.142782+08:00",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "platform": "macOS-26.3.1-arm64-arm-64bit",
+    "elapsed_sec": 21.82,
+    "summary": {
+      "error": 5,
+      "ok": 34,
+      "stale": 5,
+      "non_json": 1,
+      "needs_review": 2,
+      "empty": 2
+    },
+    "checks": [
+      {
+        "name": "ah_stocks",
+        "status": "error",
+        "records": 0,
+        "exit_code": 1,
+        "elapsed_sec": 5.86,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_ah_stocks.py --workers 4 --no-cache --json",
+        "findings": [],
+        "preview": "",
+        "stderr_tail": "ed with url: /api/qt/clist/get?np=1&fltt=1&invt=2&fs=b%3ADLMK0101&fields=f193%2Cf191%2Cf192%2Cf12%2Cf13%2Cf14%2Cf1%2Cf2%2Cf4%2Cf3%2Cf152%2Cf186%2Cf190%2Cf187%2Cf189%2Cf188&fid=f3&pn=1&pz=100&po=1&dect=1&wbp2u=%7C0%7C0%7C0%7Cweb (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))\n"
+      },
+      {
+        "name": "ah_timeline",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 1.92,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_ah_ipo_timeline.py --code 002352 --json",
+        "findings": [],
+        "preview": "{\n  \"query\": {\n    \"since\": 2020,\n    \"workers\": 4,\n    \"no_cache\": false,\n    \"code\": \"002352\",\n    \"name\": null,\n    \"target_mode\": true\n  },\n  \"meta\": {\n    \"generated_at\": \"2026-10-11 09:33:03\",\n    \"total\": 1,\n    \"target_candidates\": 1\n  },\n  \"data\": [\n    {\n      \"name\": \"顺丰控股\",\n      \"a_code\": \"002352\",\n      \"hk_code\": \"06936\",\n      \"list",
+        "stderr_tail": ""
+      },
+      {
+        "name": "all_quote",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.85,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --all-quote --top 3 --json",
+        "findings": [],
+        "preview": "{\n  \"meta\": {\n    \"total\": 5571,\n    \"sort\": \"change_pct_desc\",\n    \"top\": 3,\n    \"update_time\": \"2026-10-11 09:32:56\",\n    \"data_source\": \"腾讯\"\n  },\n  \"data\": [\n    {\n      \"code\": \"sz300369\",\n      \"name\": \"绿盟科技\",\n      \"price\": 10.43,\n      \"prev_close\": 8.69,\n      \"open\": 8.69,\n      \"change_pct\": 20.02,\n      \"volume\": 1056409,\n      \"amount\":",
+        "stderr_tail": ""
+      },
+      {
+        "name": "all_stocks",
+        "status": "ok",
+        "records": 5223,
+        "exit_code": 0,
+        "elapsed_sec": 16.25,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --all-stocks --json",
+        "findings": [],
+        "preview": "{\"meta\": {\"market\": \"all\", \"total\": 5223, \"sources\": [{\"来源\": \"新浪\", \"数量\": 5223}, {\"来源\": \"腾讯\", \"数量\": 5223}]}, \"data\": [{\"代码\": \"sh600000\", \"名称\": \"浦发银行\"}, {\"代码\": \"sh600004\", \"名称\": \"白云机场\"}, {\"代码\": \"sh600006\", \"名称\": \"东风股份\"}, {\"代码\": \"sh600007\", \"名称\": \"中国国贸\"}, {\"代码\": \"sh600008\", \"名称\": \"首创环保\"}, {\"代码\": \"sh600009\", \"名称\": \"上海机场\"}, {\"代码\": \"sh600010\", \"名称\": \"包钢股",
+        "stderr_tail": ""
+      },
+      {
+        "name": "balance",
+        "status": "ok",
+        "records": 103,
+        "exit_code": 0,
+        "elapsed_sec": 0.57,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --balance 600519 --json",
+        "findings": [],
+        "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"每股净资产\":200.9897547636,\"流动比率\":5.5895434943,\"速动比率\":4.2749950642,\"资产负债率(%)\":15.1931121807,\"权益乘数\":1.1791495074,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"2026-04-25 00:00:00\",\"每股净资产\":216.3223499461,\"流动比率\":7.0607288438,\"速动比率\":5.4824847385,\"资产负债率(%)\":12.1227489682,\"权益乘数\":1.137950935",
+        "stderr_tail": ""
+      },
+      {
+        "name": "basic",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 5.57,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --basic 600519 --json",
+        "findings": [],
+        "preview": "{\"code\": \"sh600519\", \"name\": \"贵州茅台\", \"open\": \"1255.42\", \"preclose\": \"1255.79\", \"price\": \"1263.00\", \"high\": \"1282.00\", \"low\": \"1255.42\", \"volume\": \"35111\", \"amount\": \"445322\", \"source\": \"腾讯\"}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "board_detail",
+        "status": "stale",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.6,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --detail --mode sub --group-key '半导体' --items-limit 3 --retries 0 --json",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated"
+        ],
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/detail\",\n    \"mode\": \"ths_industry\",\n    \"groupKey\": \"半导体\",\n    \"sort\": \"change_desc\",\n    \"items_limit\": 3,\n    \"items_offset\": 0,\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"update_time\": \"2026-10-11 09:33:08\",\n    \"data_source\": \"Dan",
+        "stderr_tail": ""
+      },
+      {
+        "name": "boards_concept",
+        "status": "stale",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 1.5,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode concept --limit 3 --retries 0 --json",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated"
+        ],
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"ths_concept\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 395,\n    \"update_time\": \"2026-10-11 09:33:08\",\n    \"data_source\": \"DangInvest\"\n  },\n  \"",
+        "stderr_tail": ""
+      },
+      {
+        "name": "boards_major",
+        "status": "stale",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 4.4,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode major --limit 3 --retries 0 --json",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated"
+        ],
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"industry\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 110,\n    \"update_time\": \"2026-10-11 09:33:10\",\n    \"data_source\": \"DangInvest\"\n  },\n  \"dat",
+        "stderr_tail": ""
+      },
+      {
+        "name": "boards_sub",
+        "status": "stale",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 1.47,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode sub --limit 3 --retries 0 --json",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated"
+        ],
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"ths_industry\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 714,\n    \"update_time\": \"2026-10-11 09:33:07\",\n    \"data_source\": \"DangInvest\"\n  },\n  ",
+        "stderr_tail": ""
+      },
+      {
+        "name": "cashflow",
+        "status": "ok",
+        "records": 103,
+        "exit_code": 0,
+        "elapsed_sec": 1.03,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --cashflow 600519 --json",
+        "findings": [],
+        "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"每股经营现金流\":56.5489085373,\"经营现金净流量与营业收入比率(%)\":0.7793628296,\"现金流量比率\":1.5155030221,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"2026-04-25 00:00:00\",\"每股经营现金流\":21.4888855031,\"经营现金净流量与营业收入比率(%)\":0.4991701825,\"现金流量比率\":0.6997653079,\"数据源\":\"eastmoney\"},{\"报告期\":\"2025-12-31 00:00:00\",\"公告日期\":\"",
+        "stderr_tail": ""
+      },
+      {
+        "name": "company_news",
+        "status": "ok",
+        "records": 5,
+        "exit_code": 0,
+        "elapsed_sec": 0.28,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_company_news.py --code 300476 --name '胜宏科技' --days 30 --limit 5 --json",
+        "findings": [],
+        "preview": "{\n  \"status\": \"ok\",\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"meta\": {\n    \"queried_at\": \"2026-10-11T09:33:08.248083+08:00\",\n    \"fetched_at\": \"2026-10-11T09:33:08.248083+08:00\",\n    \"window_start\": \"2026-09-12T00:00:00+08:00\",\n    \"window_end\": \"2026-10-11T09:33:08.248083+08:00\",\n    \"cache_hit\": false,\n    \"count\": 5,\n    \"matched_before_limit\": 2",
+        "stderr_tail": ""
+      },
+      {
+        "name": "consecutive_limit",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.51,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --consecutive-limit --date 20261009 --top 3 --json",
+        "findings": [],
+        "preview": "[{\"序号\":1,\"代码\":\"000869\",\"名称\":\"张  裕Ａ\",\"涨跌幅\":3.3049039841,\"最新价\":19.38,\"换手率\":4.3305015564,\"昨日连板数\":1,\"所属行业\":\"非白酒\",\"成交额(亿)\":3.76},{\"序号\":2,\"代码\":\"001300\",\"名称\":\"三柏硕\",\"涨跌幅\":9.99259758,\"最新价\":14.86,\"换手率\":3.4094426632,\"昨日连板数\":1,\"所属行业\":\"文娱用品\",\"成交额(亿)\":1.22},{\"序号\":3,\"代码\":\"001336\",\"名称\":\"楚环科技\",\"涨跌幅\":10.0242128372,\"最新价\":22.72,\"换手率\":24.1290359497,\"昨日连板数\":1,\"所属行业\":\"环保",
+        "stderr_tail": ""
+      },
+      {
+        "name": "deposit-rate",
+        "status": "error",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.24,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --deposit-rate --json",
+        "findings": [],
+        "preview": "{\"status\": \"unavailable\", \"error\": \"原存贷款基准利率接口参数无效，当前未接入等价数据源；不可用同业拆借利率或LPR冒充\", \"data\": []}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "dividend",
+        "status": "ok",
+        "records": 31,
+        "exit_code": 0,
+        "elapsed_sec": 0.64,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --dividend 600519 --year 2025 --json",
+        "findings": [],
+        "preview": "[{\"实施方案公告日期\":1026950400000,\"分红类型\":\"年度分红\",\"送股比例\":null,\"转增比例\":1.0,\"派息比例\":6.0,\"股权登记日\":1027468800000,\"除权日\":1027555200000,\"派息日\":1027987200000,\"股份到账日\":null,\"实施方案分红说明\":\"10转增1股派6元（含税）\",\"报告时间\":\"2001年报\"},{\"实施方案公告日期\":1057622400000,\"分红类型\":\"年度分红\",\"送股比例\":1.0,\"转增比例\":null,\"派息比例\":2.0,\"股权登记日\":1057881600000,\"除权日\":1058140800000,\"派息日\":1058486400000,\"股份到账日\":null,\"实施方案分红",
+        "stderr_tail": ""
+      },
+      {
+        "name": "dupont",
+        "status": "ok",
+        "records": 103,
+        "exit_code": 0,
+        "elapsed_sec": 1.21,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --dupont 600519 --json",
+        "findings": [],
+        "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"加权净资产收益率(%)\":16.75,\"销售净利率(%)\":50.7515717487,\"权益乘数\":1.1791495074,\"总资产周转率\":0.3011265651,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"2026-04-25 00:00:00\",\"加权净资产收益率(%)\":10.57,\"销售净利率(%)\":52.2244889889,\"权益乘数\":1.1379509353,\"总资产周转率\":0.1753990825,\"数据源\":\"eastmoney\"},{\"报告期\":\"2025-12-31 00",
+        "stderr_tail": ""
+      },
+      {
+        "name": "events",
+        "status": "ok",
+        "records": 11,
+        "exit_code": 0,
+        "elapsed_sec": 6.31,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_stock_events.py --code 300476 --name '胜宏科技' --limit 5 --max-seconds 20 --json",
+        "findings": [],
+        "preview": "{\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"queried_at\": \"2026-10-11 09:33:06\",\n  \"recent_information\": {\n    \"status\": \"ok\",\n    \"code\": \"300476\",\n    \"name\": \"胜宏科技\",\n    \"meta\": {\n      \"queried_at\": \"2026-10-11T09:33:00.132885+08:00\",\n      \"fetched_at\": \"2026-10-11T09:33:00.132885+08:00\",\n      \"window_start\": \"2026-09-12T00:00:00+08:00\",\n      ",
+        "stderr_tail": ""
+      },
+      {
+        "name": "financials",
+        "status": "ok",
+        "records": 103,
+        "exit_code": 0,
+        "elapsed_sec": 0.73,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --financials 600519 --json",
+        "findings": [],
+        "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"基本每股收益\":35.57,\"每股净资产\":200.9897547636,\"每股经营现金流\":56.5489085373,\"营业总收入\":92278072083.2100067139,\"归母净利润\":44516880421.8600006104,\"扣非净利润\":44464207646.0100021362,\"营收同比增长率(%)\":1.3000994756,\"归母净利润同比增长率(%)\":-1.951594855,\"扣非净利润同比增长率(%)\":-2.0401738838,\"加权净资产收益率(%)\":16.75,\"销售净利率(%)\":50.7515717487,\"销售毛利率",
+        "stderr_tail": ""
+      },
+      {
+        "name": "fund_flow",
+        "status": "error",
+        "records": 0,
+        "exit_code": 1,
+        "elapsed_sec": 0.46,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --fund-flow 600519 --days 3 --json",
+        "findings": [],
+        "preview": "获取资金流向失败：HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/fflow/daykline/get?lmt=0&klt=101&secid=1.600519&fields1=f1%2Cf2%2Cf3%2Cf7&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf62%2Cf63%2Cf64%2Cf65&ut=b2884a393a59ad64002292a3e90d46a5&_=1791682375416 (Caused by P",
+        "stderr_tail": ""
+      },
+      {
+        "name": "growth",
+        "status": "ok",
+        "records": 103,
+        "exit_code": 0,
+        "elapsed_sec": 0.59,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --growth 600519 --json",
+        "findings": [],
+        "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"营收同比增长率(%)\":1.3000994756,\"归母净利润同比增长率(%)\":-1.951594855,\"扣非净利润同比增长率(%)\":-2.0401738838,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"2026-04-25 00:00:00\",\"营收同比增长率(%)\":6.3360092771,\"归母净利润同比增长率(%)\":1.471418295,\"扣非净利润同比增长率(%)\":1.452898254,\"数据源\":\"eastmoney\"},{\"报告期\":\"2025-12-31 00:00:00\"",
+        "stderr_tail": ""
+      },
+      {
+        "name": "history",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.41,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --kline 600519 --count 10 --json",
+        "findings": [],
+        "preview": "[{\"time\":\"2026-09-18\",\"code\":\"sh600519\",\"open\":1262.99,\"high\":1265.88,\"low\":1256.1,\"close\":1257.12,\"preclose\":null,\"volume\":24891.0,\"pctChg\":null},{\"time\":\"2026-09-21\",\"code\":\"sh600519\",\"open\":1259.0,\"high\":1259.95,\"low\":1250.8,\"close\":1252.57,\"preclose\":1257.12,\"volume\":25017.0,\"pctChg\":-0.3619383989},{\"time\":\"2026-09-22\",\"code\":\"sh600519\",\"open\":",
+        "stderr_tail": ""
+      },
+      {
+        "name": "history_batch",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.59,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --kline-batch 600519,000001,300750 --count 10 --retries 0 --json",
+        "findings": [],
+        "preview": "{\"meta\": {\"requested\": 3, \"success\": 3, \"fail\": 0, \"workers\": 8, \"retries\": 2, \"second_pass_retry\": true, \"freq\": \"1d\", \"count\": 10, \"start\": null, \"end\": null}, \"results\": [{\"code\": \"sh600519\", \"ok\": true, \"source\": \"腾讯\", \"rows\": 10, \"data\": [{\"time\": \"2026-09-18\", \"code\": \"sh600519\", \"open\": 1262.99, \"high\": 1265.88, \"low\": 1256.1, \"close\": 1257.",
+        "stderr_tail": ""
+      },
+      {
+        "name": "hs300",
+        "status": "ok",
+        "records": 300,
+        "exit_code": 0,
+        "elapsed_sec": 0.51,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --hs300 --json",
+        "findings": [],
+        "preview": "[{\"code\":\"000001\",\"name\":\"平安银行\",\"weight\":0.453},{\"code\":\"000002\",\"name\":\"万科A\",\"weight\":0.117},{\"code\":\"000063\",\"name\":\"中兴通讯\",\"weight\":0.398},{\"code\":\"000100\",\"name\":\"TCL科技\",\"weight\":0.425},{\"code\":\"000157\",\"name\":\"中联重科\",\"weight\":0.12},{\"code\":\"000166\",\"name\":\"申万宏源\",\"weight\":0.159},{\"code\":\"000301\",\"name\":\"东方盛虹\",\"weight\":0.138},{\"code\":\"000333\",\"nam",
+        "stderr_tail": ""
+      },
+      {
+        "name": "index",
+        "status": "ok",
+        "records": 6,
+        "exit_code": 0,
+        "elapsed_sec": 1.57,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --index --json",
+        "findings": [],
+        "preview": "[\n  {\n    \"名称\": \"上证指数\",\n    \"代码\": \"sh000001\",\n    \"最新价\": 3813.79,\n    \"涨跌额\": 1.89,\n    \"涨跌幅(%)\": 0.05\n  },\n  {\n    \"名称\": \"Ａ股指数\",\n    \"代码\": \"sh000002\",\n    \"最新价\": 3998.45,\n    \"涨跌额\": 1.94,\n    \"涨跌幅(%)\": 0.05\n  },\n  {\n    \"名称\": \"沪深300\",\n    \"代码\": \"sh000300\",\n    \"最新价\": 4317.25,\n    \"涨跌额\": 6.98,\n    \"涨跌幅(%)\": 0.16\n  },\n  {\n    \"名称\": \"科创50\",\n    \"代码\": ",
+        "stderr_tail": ""
+      },
+      {
+        "name": "industry",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 0.34,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --industry 600519 --json",
+        "findings": [],
+        "preview": "{\n  \"code\": \"sh600519\",\n  \"industry_info\": {\n    \"code\": \"sh600519\",\n    \"name\": \"贵州茅台\",\n    \"industry\": \"酿酒行业\",\n    \"industry_zjh\": \"制造业-酒、饮料和精制茶制造业\",\n    \"source\": \"东方财富\"\n  },\n  \"boards\": [],\n  \"update_time\": \"2026-10-11 09:32:56\"\n}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "intraday",
+        "status": "non_json",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.56,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --intraday-kline 600519 --freq 5m --json",
+        "findings": [],
+        "preview": "股票 600519 今日（2026-10-11）暂无分钟K线数据\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "kline_1M",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.59,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1M --count 10 --json",
+        "findings": [],
+        "preview": "[{\"时间\":\"2026-01-30T00:00:00.000\",\"开盘\":1385.0,\"收盘\":1445.0,\"最高\":1322.01,\"最低\":1401.0,\"成交量\":117529983.0},{\"时间\":\"2026-02-27T00:00:00.000\",\"开盘\":1425.0,\"收盘\":1568.0,\"最高\":1411.62,\"最低\":1455.02,\"成交量\":80526506.0},{\"时间\":\"2026-03-31T00:00:00.000\",\"开盘\":1450.0,\"收盘\":1498.07,\"最高\":1383.2,\"最低\":1450.0,\"成交量\":78374538.0},{\"时间\":\"2026-04-30T00:00:00.000\",\"开盘\":1464.49,\"收盘\":",
+        "stderr_tail": ""
+      },
+      {
+        "name": "kline_1d",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.63,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1d --count 10 --json",
+        "findings": [],
+        "preview": "[{\"时间\":\"2026-09-18T00:00:00.000\",\"开盘\":1262.99,\"收盘\":1265.88,\"最高\":1256.1,\"最低\":1257.12,\"成交量\":2489087.0},{\"时间\":\"2026-09-21T00:00:00.000\",\"开盘\":1259.0,\"收盘\":1259.95,\"最高\":1250.8,\"最低\":1252.57,\"成交量\":2501689.0},{\"时间\":\"2026-09-22T00:00:00.000\",\"开盘\":1252.15,\"收盘\":1265.88,\"最高\":1248.1,\"最低\":1253.8,\"成交量\":2457294.0},{\"时间\":\"2026-09-23T00:00:00.000\",\"开盘\":1255.03,\"收盘\":1",
+        "stderr_tail": ""
+      },
+      {
+        "name": "kline_1w",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.66,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1w --count 10 --json",
+        "findings": [],
+        "preview": "[{\"时间\":\"2026-08-07T00:00:00.000\",\"开盘\":1350.6,\"收盘\":1363.35,\"最高\":1300.01,\"最低\":1309.22,\"成交量\":16672485.0},{\"时间\":\"2026-08-14T00:00:00.000\",\"开盘\":1325.0,\"收盘\":1359.97,\"最高\":1318.08,\"最低\":1341.99,\"成交量\":18702495.0},{\"时间\":\"2026-08-21T00:00:00.000\",\"开盘\":1295.0,\"收盘\":1308.88,\"最高\":1272.01,\"最低\":1272.83,\"成交量\":21350387.0},{\"时间\":\"2026-08-28T00:00:00.000\",\"开盘\":1271.01,\"",
+        "stderr_tail": ""
+      },
+      {
+        "name": "kline_5m",
+        "status": "ok",
+        "records": 10,
+        "exit_code": 0,
+        "elapsed_sec": 0.63,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 5m --count 10 --json",
+        "findings": [],
+        "preview": "[{\"时间\":\"2026-10-09T14:15:00.000\",\"开盘\":1267.83,\"收盘\":1268.69,\"最高\":1265.36,\"最低\":1265.36,\"成交量\":65100.0},{\"时间\":\"2026-10-09T14:20:00.000\",\"开盘\":1265.4,\"收盘\":1266.0,\"最高\":1264.5,\"最低\":1266.0,\"成交量\":56750.0},{\"时间\":\"2026-10-09T14:25:00.000\",\"开盘\":1265.89,\"收盘\":1267.55,\"最高\":1265.7,\"最低\":1266.75,\"成交量\":49500.0},{\"时间\":\"2026-10-09T14:30:00.000\",\"开盘\":1266.38,\"收盘\":1266.92",
+        "stderr_tail": ""
+      },
+      {
+        "name": "lhb",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.98,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --lhb --start 20260925 --end 20261009 --top 3 --json",
+        "findings": [],
+        "preview": "[{\"代码\":\"000002\",\"名称\":\"万科A\",\"上榜日\":1790726400000,\"收盘价\":4.26,\"涨跌幅(%)\":4.4118,\"净买额(万)\":7138.46,\"上榜原因\":\"日振幅值达到15%的前5只证券\"},{\"代码\":\"000002\",\"名称\":\"万科A\",\"上榜日\":1790640000000,\"收盘价\":4.08,\"涨跌幅(%)\":9.973,\"净买额(万)\":15960.83,\"上榜原因\":\"日涨幅偏离值达到7%的前5只证券\"},{\"代码\":\"000011\",\"名称\":\"深物业A\",\"上榜日\":1791504000000,\"收盘价\":12.59,\"涨跌幅(%)\":3.8779,\"净买额(万)\":-3409.11,\"上榜原因\":\"日振幅值达到15%的前5只证券",
+        "stderr_tail": ""
+      },
+      {
+        "name": "limit_stats",
+        "status": "needs_review",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 0.66,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --limit-stats --json",
+        "findings": [
+          "needs_review: a weekend request is labeled today; underlying trading date is unverified"
+        ],
+        "preview": "{\n  \"日期\": \"2026-10-11\",\n  \"涨停数量\": 69,\n  \"跌停数量\": 8\n}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "limit_up",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.52,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --limit-up-pool --date 20261009 --top 3 --json",
+        "findings": [],
+        "preview": "[{\"序号\":1,\"代码\":\"002058\",\"名称\":\"紫竹高科\",\"涨跌幅\":9.9909992218,\"最新价\":24.44,\"换手率\":2.8765933514,\"封板资金\":89302489,\"连板数\":4,\"所属行业\":\"电池\",\"成交额(亿)\":1.01},{\"序号\":2,\"代码\":\"600241\",\"名称\":\"时代万恒\",\"涨跌幅\":10.0093545914,\"最新价\":11.76,\"换手率\":1.9918870926,\"封板资金\":229379199,\"连板数\":5,\"所属行业\":\"电池\",\"成交额(亿)\":0.69},{\"序号\":3,\"代码\":\"600825\",\"名称\":\"新华传媒\",\"涨跌幅\":10.0087795258,\"最新价\":12.53,\"换手率\":4.778",
+        "stderr_tail": ""
+      },
+      {
+        "name": "loan-rate",
+        "status": "error",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.23,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --loan-rate --json",
+        "findings": [],
+        "preview": "{\"status\": \"unavailable\", \"error\": \"原存贷款基准利率接口参数无效，当前未接入等价数据源；不可用同业拆借利率或LPR冒充\", \"data\": []}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "market_news",
+        "status": "stale",
+        "records": 5,
+        "exit_code": 0,
+        "elapsed_sec": 12.08,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --news --limit 5 --retries 0 --json",
+        "findings": [
+          "stale: upstream snapshot or feed is outdated",
+          "stale: newest news in page is over 24 hours old"
+        ],
+        "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/news\",\n    \"limit\": 5,\n    \"offset\": 0,\n    \"count\": 5,\n    \"has_more\": true,\n    \"update_time\": \"2026-10-11 09:33:15\",\n    \"data_source\": \"DangInvest\",\n    \"latest_published_at\": \"2026-10-04T00:05:01+08:00\",\n    \"age_seconds\": 638894,\n    \"stale\": true,\n    \"freshness_threshold_seconds\":",
+        "stderr_tail": ""
+      },
+      {
+        "name": "money-supply",
+        "status": "ok",
+        "records": 395,
+        "exit_code": 0,
+        "elapsed_sec": 2.11,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --money-supply --json",
+        "findings": [],
+        "preview": "[{\"商品\":\"中国M2货币供应年率报告\",\"日期\":886291200000,\"今值\":17.4,\"预测值\":null,\"前值\":null},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":888710400000,\"今值\":16.7,\"预测值\":null,\"前值\":17.4},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":891388800000,\"今值\":15.4,\"预测值\":null,\"前值\":16.7},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":893980800000,\"今值\":14.6,\"预测值\":null,\"前值\":15.4},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":896659200000,\"今值\":15.5,\"预测值\":null,\"前值\":",
+        "stderr_tail": ""
+      },
+      {
+        "name": "multi_quote",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.87,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --multi-quote 600519,000001,300750 --json",
+        "findings": [],
+        "preview": "[\n  {\n    \"代码\": \"300750\",\n    \"最新价\": 297.75,\n    \"涨跌幅(%)\": 3.84,\n    \"昨收\": 286.75,\n    \"状态\": \"成功\"\n  },\n  {\n    \"代码\": \"600519\",\n    \"最新价\": 1263.0,\n    \"涨跌幅(%)\": 0.57,\n    \"昨收\": 1255.79,\n    \"状态\": \"成功\"\n  },\n  {\n    \"代码\": \"000001\",\n    \"最新价\": 11.59,\n    \"涨跌幅(%)\": -1.61,\n    \"昨收\": 11.78,\n    \"状态\": \"成功\"\n  }\n]\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "north_money",
+        "status": "needs_review",
+        "records": 2,
+        "exit_code": 0,
+        "elapsed_sec": 0.61,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --north-money --json",
+        "findings": [
+          "needs_review: all northbound flow fields are zero; may be upstream placeholders"
+        ],
+        "preview": "[\n  {\n    \"日期\": \"2026-10-09\",\n    \"板块\": \"沪股通\",\n    \"净买额(亿)\": 0.0,\n    \"净流入(亿)\": 0.0,\n    \"指数涨跌(%)\": 0.05\n  },\n  {\n    \"日期\": \"2026-10-09\",\n    \"板块\": \"深股通\",\n    \"净买额(亿)\": 0.0,\n    \"净流入(亿)\": 0.0,\n    \"指数涨跌(%)\": 0.17\n  }\n]\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "perf-express",
+        "status": "empty",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 0.71,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --perf-express 600519 --json",
+        "findings": [],
+        "preview": "{\"status\": \"empty\", \"code\": \"sh600519\", \"meta\": {\"report_date\": \"20260930\", \"kind\": \"express\"}, \"errors\": [], \"data\": []}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "perf-forecast",
+        "status": "empty",
+        "records": 0,
+        "exit_code": 0,
+        "elapsed_sec": 1.12,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --perf-forecast 600519 --json",
+        "findings": [],
+        "preview": "{\"status\": \"empty\", \"code\": \"sh600519\", \"meta\": {\"report_date\": \"20260930\", \"kind\": \"forecast\"}, \"errors\": [], \"data\": []}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "profit",
+        "status": "ok",
+        "records": 103,
+        "exit_code": 0,
+        "elapsed_sec": 0.59,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --profit 600519 --json",
+        "findings": [],
+        "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"基本每股收益\":35.57,\"归母净利润\":44516880421.8600006104,\"扣非净利润\":44464207646.0100021362,\"归母净利润同比增长率(%)\":-1.951594855,\"扣非净利润同比增长率(%)\":-2.0401738838,\"加权净资产收益率(%)\":16.75,\"销售净利率(%)\":50.7515717487,\"销售毛利率(%)\":89.5552128279,\"总资产净利率(%)\":15.0218339016,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"202",
+        "stderr_tail": ""
+      },
+      {
+        "name": "quote",
+        "status": "ok",
+        "records": 1,
+        "exit_code": 0,
+        "elapsed_sec": 0.98,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --quote 600519 --json",
+        "findings": [],
+        "preview": "{\n  \"代码\": \"600519\",\n  \"日期\": \"2026-10-09\",\n  \"最新价\": 1263.0,\n  \"涨跌额\": 7.21,\n  \"涨跌幅(%)\": 0.57,\n  \"今开\": 1255.42,\n  \"最高\": 1282.0,\n  \"最低\": 1255.42,\n  \"昨收\": 1255.79,\n  \"成交量\": 3511051,\n  \"市场状态\": \"休市\",\n  \"数据源\": \"新浪/腾讯\",\n  \"更新时间\": \"2026-10-11 09:32:54\",\n  \"备注\": \"非交易日或休市，显示最近交易日数据\"\n}\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "reserve-ratio",
+        "status": "ok",
+        "records": 58,
+        "exit_code": 0,
+        "elapsed_sec": 0.54,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --reserve-ratio --json",
+        "findings": [],
+        "preview": "[{\"公布时间\":\"2025年05月07日\",\"生效时间\":\"2025年05月15日\",\"大型金融机构-调整前\":9.5,\"大型金融机构-调整后\":9.0,\"大型金融机构-调整幅度\":-0.5,\"中小金融机构-调整前\":6.5,\"中小金融机构-调整后\":6.0,\"中小金融机构-调整幅度\":-0.5,\"消息公布次日指数涨跌-上证\":0.2791395405,\"消息公布次日指数涨跌-深证\":0.9256671575,\"备注\":\"为落实中央经济工作会议精神和《政府工作报告》部署,实施适度宽松的货币政策,提高宏观调控的前瞻性、针对性、有效性,中国人民银行决定,自2025年5月15日起,下调金融机构存款准备金率0.5个百分点(不含已执行5%存款准备金率的金融机构),下调汽车金融公司和金融租赁公司存款准",
+        "stderr_tail": ""
+      },
+      {
+        "name": "sector",
+        "status": "error",
+        "records": 0,
+        "exit_code": 1,
+        "elapsed_sec": 5.26,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_sector_info.py --no-concepts --timeout 5 600519 --json",
+        "findings": [],
+        "preview": "{\n  \"code\": \"600519\",\n  \"name\": null,\n  \"industry\": null,\n  \"concepts\": [],\n  \"source\": \"eastmoney\",\n  \"error\": \"HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?secid=1.600519&fields=f57%2Cf58%2Cf127&ut=fa5fd1943c7b386f172d6893dbfba10b (Caused by ProxyError('Unable to connect to proxy', Re",
+        "stderr_tail": ""
+      },
+      {
+        "name": "sz50",
+        "status": "ok",
+        "records": 50,
+        "exit_code": 0,
+        "elapsed_sec": 0.47,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --sz50 --json",
+        "findings": [],
+        "preview": "[{\"code\":\"600028\",\"name\":\"中国石化\",\"weight\":0.843},{\"code\":\"600030\",\"name\":\"中信证券\",\"weight\":2.766},{\"code\":\"600031\",\"name\":\"三一重工\",\"weight\":1.137},{\"code\":\"600036\",\"name\":\"招商银行\",\"weight\":5.597},{\"code\":\"600050\",\"name\":\"中国联通\",\"weight\":0.725},{\"code\":\"600089\",\"name\":\"特变电工\",\"weight\":0.959},{\"code\":\"600111\",\"name\":\"北方稀土\",\"weight\":0.979},{\"code\":\"600150\",\"na",
+        "stderr_tail": ""
+      },
+      {
+        "name": "technical",
+        "status": "ok",
+        "records": 50,
+        "exit_code": 0,
+        "elapsed_sec": 0.5,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_technical.py 600519 --count 120 --no-signal --json",
+        "findings": [],
+        "preview": "[{\"time\":\"2026-07-24T00:00:00.000\",\"open\":1305.0,\"close\":1297.41,\"high\":1309.21,\"low\":1286.2,\"volume\":3569892.0,\"MA5\":1305.984,\"MA10\":1271.884,\"MA20\":1233.596,\"MA60\":1276.403,\"MACD_DIF\":14.403,\"MACD_DEA\":1.141,\"MACD\":26.523,\"KDJ_K\":73.977,\"KDJ_D\":78.549,\"KDJ_J\":64.833,\"RSI\":54.512,\"BOLL_UP\":1327.834,\"BOLL_MID\":1233.596,\"BOLL_LOW\":1139.359},{\"time\":",
+        "stderr_tail": ""
+      },
+      {
+        "name": "tick",
+        "status": "ok",
+        "records": 3,
+        "exit_code": 0,
+        "elapsed_sec": 0.54,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --tick 600519 --top 3 --json",
+        "findings": [],
+        "preview": "{\n  \"meta\": {\n    \"code\": \"sh600519\",\n    \"page\": 0,\n    \"total_pages\": 0,\n    \"records\": 70,\n    \"update_time\": \"2026-10-11 09:32:55\",\n    \"data_source\": \"腾讯\"\n  },\n  \"data\": [\n    {\n      \"seq\": 0,\n      \"time\": \"09:25:02\",\n      \"price\": 1255.42,\n      \"change\": 0.01,\n      \"volume\": 195,\n      \"amount\": 24480690.0,\n      \"direction\": \"买\"\n    },\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "trade_dates",
+        "status": "ok",
+        "records": 242,
+        "exit_code": 0,
+        "elapsed_sec": 0.52,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --trade-dates --start 2026-01-01 --end 2026-12-31 --json",
+        "findings": [],
+        "preview": "[{\"date\":\"2026-01-05\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-06\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-07\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-08\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-09\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-12\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-13\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-14\",\"is_trading_day\":\"1\"},{\"dat",
+        "stderr_tail": ""
+      },
+      {
+        "name": "zz500",
+        "status": "ok",
+        "records": 500,
+        "exit_code": 0,
+        "elapsed_sec": 0.64,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --zz500 --json",
+        "findings": [],
+        "preview": "[{\"code\":\"000009\",\"name\":\"中国宝安\",\"weight\":0.134},{\"code\":\"000021\",\"name\":\"深科技\",\"weight\":0.388},{\"code\":\"000027\",\"name\":\"深圳能源\",\"weight\":0.096},{\"code\":\"000032\",\"name\":\"深桑达A\",\"weight\":0.085},{\"code\":\"000034\",\"name\":\"神州数码\",\"weight\":0.203},{\"code\":\"000039\",\"name\":\"中集集团\",\"weight\":0.17},{\"code\":\"000050\",\"name\":\"深天马A\",\"weight\":0.099},{\"code\":\"000060\",\"name",
+        "stderr_tail": ""
+      }
+    ]
+  },
+  "retry": {
+    "checked_at": "2026-10-11T09:33:59.748220+08:00",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "platform": "macOS-26.3.1-arm64-arm-64bit",
+    "elapsed_sec": 5.84,
+    "summary": {
+      "error": 3
+    },
+    "checks": [
+      {
+        "name": "ah_stocks",
+        "status": "error",
+        "records": 0,
+        "exit_code": 1,
+        "elapsed_sec": 5.59,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_ah_stocks.py --workers 4 --no-cache --json",
+        "findings": [],
+        "preview": "",
+        "stderr_tail": "ed with url: /api/qt/clist/get?np=1&fltt=1&invt=2&fs=b%3ADLMK0101&fields=f193%2Cf191%2Cf192%2Cf12%2Cf13%2Cf14%2Cf1%2Cf2%2Cf4%2Cf3%2Cf152%2Cf186%2Cf190%2Cf187%2Cf189%2Cf188&fid=f3&pn=1&pz=100&po=1&dect=1&wbp2u=%7C0%7C0%7C0%7Cweb (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))\n"
+      },
+      {
+        "name": "fund_flow",
+        "status": "error",
+        "records": 0,
+        "exit_code": 1,
+        "elapsed_sec": 0.6,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --fund-flow 600519 --days 3 --json",
+        "findings": [],
+        "preview": "获取资金流向失败：HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/fflow/daykline/get?lmt=0&klt=101&secid=1.600519&fields1=f1%2Cf2%2Cf3%2Cf7&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf62%2Cf63%2Cf64%2Cf65&ut=b2884a393a59ad64002292a3e90d46a5&_=1791682434419 (Caused by P",
+        "stderr_tail": ""
+      },
+      {
+        "name": "sector",
+        "status": "error",
+        "records": 0,
+        "exit_code": 1,
+        "elapsed_sec": 5.22,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_sector_info.py --no-concepts --timeout 5 600519 --json",
+        "findings": [],
+        "preview": "{\n  \"code\": \"600519\",\n  \"name\": null,\n  \"industry\": null,\n  \"concepts\": [],\n  \"source\": \"eastmoney\",\n  \"error\": \"HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?secid=1.600519&fields=f57%2Cf58%2Cf127&ut=fa5fd1943c7b386f172d6893dbfba10b (Caused by ProxyError('Unable to connect to proxy', Re",
+        "stderr_tail": ""
+      }
+    ]
+  },
+  "final_targeted_run": {
+    "checked_at": "2026-10-11T09:36:15.533775+08:00",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "platform": "macOS-26.3.1-arm64-arm-64bit",
+    "elapsed_sec": 6.0,
+    "summary": {
+      "ok": 4
+    },
+    "checks": [
+      {
+        "name": "company_news",
+        "status": "ok",
+        "records": 5,
+        "exit_code": 0,
+        "elapsed_sec": 0.08,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_company_news.py --code 300476 --name '胜宏科技' --days 30 --limit 5 --json",
+        "findings": [],
+        "preview": "{\n  \"status\": \"ok\",\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"meta\": {\n    \"queried_at\": \"2026-10-11T09:36:10.178920+08:00\",\n    \"fetched_at\": \"2026-10-11T09:33:08.248083+08:00\",\n    \"window_start\": \"2026-09-12T00:00:00+08:00\",\n    \"window_end\": \"2026-10-11T09:33:08.248083+08:00\",\n    \"cache_hit\": true,\n    \"count\": 5,\n    \"matched_before_limit\": 20",
+        "stderr_tail": ""
+      },
+      {
+        "name": "dividend",
+        "status": "ok",
+        "records": 2,
+        "exit_code": 0,
+        "elapsed_sec": 0.63,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --dividend 600519 --year 2025 --json",
+        "findings": [],
+        "preview": "[{\"实施方案公告日期\":\"2025-12-11T00:00:00.000\",\"分红类型\":\"季度分红\",\"送股比例\":null,\"转增比例\":null,\"派息比例\":239.57,\"股权登记日\":\"2025-12-18T00:00:00.000\",\"除权日\":\"2025-12-19T00:00:00.000\",\"派息日\":\"2025-12-19T00:00:00.000\",\"股份到账日\":null,\"实施方案分红说明\":\"10派239.57元(含税)\",\"报告时间\":\"2025三季报\"},{\"实施方案公告日期\":\"2026-06-22T00:00:00.000\",\"分红类型\":\"年度分红\",\"送股比例\":null,\"转增比例\":null,\"派息比例\":280.2423,\"股权登记日\":\"2",
+        "stderr_tail": ""
+      },
+      {
+        "name": "events",
+        "status": "ok",
+        "records": 11,
+        "exit_code": 0,
+        "elapsed_sec": 5.99,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_stock_events.py --code 300476 --name '胜宏科技' --limit 5 --max-seconds 20 --json",
+        "findings": [],
+        "preview": "{\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"queried_at\": \"2026-10-11 09:36:15\",\n  \"recent_information\": {\n    \"status\": \"ok\",\n    \"code\": \"300476\",\n    \"name\": \"胜宏科技\",\n    \"meta\": {\n      \"queried_at\": \"2026-10-11T09:36:09.869255+08:00\",\n      \"fetched_at\": \"2026-10-11T09:33:00.132885+08:00\",\n      \"window_start\": \"2026-09-12T00:00:00+08:00\",\n      ",
+        "stderr_tail": ""
+      },
+      {
+        "name": "financials",
+        "status": "ok",
+        "records": 103,
+        "exit_code": 0,
+        "elapsed_sec": 0.56,
+        "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --financials 600519 --json",
+        "findings": [],
+        "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"基本每股收益\":35.57,\"每股净资产\":200.9897547636,\"每股经营现金流\":56.5489085373,\"营业总收入\":92278072083.2100067139,\"归母净利润\":44516880421.8600006104,\"扣非净利润\":44464207646.0100021362,\"营收同比增长率(%)\":1.3000994756,\"归母净利润同比增长率(%)\":-1.951594855,\"扣非净利润同比增长率(%)\":-2.0401738838,\"加权净资产收益率(%)\":16.75,\"销售净利率(%)\":50.7515717487,\"销售毛利率",
+        "stderr_tail": ""
+      }
+    ]
+  },
+  "latest_summary": {
+    "error": 5,
+    "ok": 34,
+    "stale": 5,
+    "non_json": 1,
+    "needs_review": 2,
+    "empty": 2
+  },
+  "latest_checks": [
+    {
+      "name": "ah_stocks",
+      "status": "error",
+      "records": 0,
+      "exit_code": 1,
+      "elapsed_sec": 5.59,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_ah_stocks.py --workers 4 --no-cache --json",
+      "findings": [],
+      "preview": "",
+      "stderr_tail": "ed with url: /api/qt/clist/get?np=1&fltt=1&invt=2&fs=b%3ADLMK0101&fields=f193%2Cf191%2Cf192%2Cf12%2Cf13%2Cf14%2Cf1%2Cf2%2Cf4%2Cf3%2Cf152%2Cf186%2Cf190%2Cf187%2Cf189%2Cf188&fid=f3&pn=1&pz=100&po=1&dect=1&wbp2u=%7C0%7C0%7C0%7Cweb (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))\n"
+    },
+    {
+      "name": "ah_timeline",
+      "status": "ok",
+      "records": 1,
+      "exit_code": 0,
+      "elapsed_sec": 1.92,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_ah_ipo_timeline.py --code 002352 --json",
+      "findings": [],
+      "preview": "{\n  \"query\": {\n    \"since\": 2020,\n    \"workers\": 4,\n    \"no_cache\": false,\n    \"code\": \"002352\",\n    \"name\": null,\n    \"target_mode\": true\n  },\n  \"meta\": {\n    \"generated_at\": \"2026-10-11 09:33:03\",\n    \"total\": 1,\n    \"target_candidates\": 1\n  },\n  \"data\": [\n    {\n      \"name\": \"顺丰控股\",\n      \"a_code\": \"002352\",\n      \"hk_code\": \"06936\",\n      \"list",
+      "stderr_tail": ""
+    },
+    {
+      "name": "all_quote",
+      "status": "ok",
+      "records": 3,
+      "exit_code": 0,
+      "elapsed_sec": 0.85,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --all-quote --top 3 --json",
+      "findings": [],
+      "preview": "{\n  \"meta\": {\n    \"total\": 5571,\n    \"sort\": \"change_pct_desc\",\n    \"top\": 3,\n    \"update_time\": \"2026-10-11 09:32:56\",\n    \"data_source\": \"腾讯\"\n  },\n  \"data\": [\n    {\n      \"code\": \"sz300369\",\n      \"name\": \"绿盟科技\",\n      \"price\": 10.43,\n      \"prev_close\": 8.69,\n      \"open\": 8.69,\n      \"change_pct\": 20.02,\n      \"volume\": 1056409,\n      \"amount\":",
+      "stderr_tail": ""
+    },
+    {
+      "name": "all_stocks",
+      "status": "ok",
+      "records": 5223,
+      "exit_code": 0,
+      "elapsed_sec": 16.25,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --all-stocks --json",
+      "findings": [],
+      "preview": "{\"meta\": {\"market\": \"all\", \"total\": 5223, \"sources\": [{\"来源\": \"新浪\", \"数量\": 5223}, {\"来源\": \"腾讯\", \"数量\": 5223}]}, \"data\": [{\"代码\": \"sh600000\", \"名称\": \"浦发银行\"}, {\"代码\": \"sh600004\", \"名称\": \"白云机场\"}, {\"代码\": \"sh600006\", \"名称\": \"东风股份\"}, {\"代码\": \"sh600007\", \"名称\": \"中国国贸\"}, {\"代码\": \"sh600008\", \"名称\": \"首创环保\"}, {\"代码\": \"sh600009\", \"名称\": \"上海机场\"}, {\"代码\": \"sh600010\", \"名称\": \"包钢股",
+      "stderr_tail": ""
+    },
+    {
+      "name": "balance",
+      "status": "ok",
+      "records": 103,
+      "exit_code": 0,
+      "elapsed_sec": 0.57,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --balance 600519 --json",
+      "findings": [],
+      "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"每股净资产\":200.9897547636,\"流动比率\":5.5895434943,\"速动比率\":4.2749950642,\"资产负债率(%)\":15.1931121807,\"权益乘数\":1.1791495074,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"2026-04-25 00:00:00\",\"每股净资产\":216.3223499461,\"流动比率\":7.0607288438,\"速动比率\":5.4824847385,\"资产负债率(%)\":12.1227489682,\"权益乘数\":1.137950935",
+      "stderr_tail": ""
+    },
+    {
+      "name": "basic",
+      "status": "ok",
+      "records": 1,
+      "exit_code": 0,
+      "elapsed_sec": 5.57,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --basic 600519 --json",
+      "findings": [],
+      "preview": "{\"code\": \"sh600519\", \"name\": \"贵州茅台\", \"open\": \"1255.42\", \"preclose\": \"1255.79\", \"price\": \"1263.00\", \"high\": \"1282.00\", \"low\": \"1255.42\", \"volume\": \"35111\", \"amount\": \"445322\", \"source\": \"腾讯\"}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "board_detail",
+      "status": "stale",
+      "records": 3,
+      "exit_code": 0,
+      "elapsed_sec": 0.6,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --detail --mode sub --group-key '半导体' --items-limit 3 --retries 0 --json",
+      "findings": [
+        "stale: upstream snapshot or feed is outdated"
+      ],
+      "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/detail\",\n    \"mode\": \"ths_industry\",\n    \"groupKey\": \"半导体\",\n    \"sort\": \"change_desc\",\n    \"items_limit\": 3,\n    \"items_offset\": 0,\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"update_time\": \"2026-10-11 09:33:08\",\n    \"data_source\": \"Dan",
+      "stderr_tail": ""
+    },
+    {
+      "name": "boards_concept",
+      "status": "stale",
+      "records": 10,
+      "exit_code": 0,
+      "elapsed_sec": 1.5,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode concept --limit 3 --retries 0 --json",
+      "findings": [
+        "stale: upstream snapshot or feed is outdated"
+      ],
+      "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"ths_concept\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 395,\n    \"update_time\": \"2026-10-11 09:33:08\",\n    \"data_source\": \"DangInvest\"\n  },\n  \"",
+      "stderr_tail": ""
+    },
+    {
+      "name": "boards_major",
+      "status": "stale",
+      "records": 10,
+      "exit_code": 0,
+      "elapsed_sec": 4.4,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode major --limit 3 --retries 0 --json",
+      "findings": [
+        "stale: upstream snapshot or feed is outdated"
+      ],
+      "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"industry\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 110,\n    \"update_time\": \"2026-10-11 09:33:10\",\n    \"data_source\": \"DangInvest\"\n  },\n  \"dat",
+      "stderr_tail": ""
+    },
+    {
+      "name": "boards_sub",
+      "status": "stale",
+      "records": 10,
+      "exit_code": 0,
+      "elapsed_sec": 1.47,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --summary --mode sub --limit 3 --retries 0 --json",
+      "findings": [
+        "stale: upstream snapshot or feed is outdated"
+      ],
+      "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/boards/summary\",\n    \"mode\": \"ths_industry\",\n    \"limit\": 3,\n    \"sort\": \"change_desc\",\n    \"tradeDate\": \"2026-09-30\",\n    \"snapshotTsMs\": 1790751540000,\n    \"stale\": true,\n    \"count\": 10,\n    \"total\": 714,\n    \"update_time\": \"2026-10-11 09:33:07\",\n    \"data_source\": \"DangInvest\"\n  },\n  ",
+      "stderr_tail": ""
+    },
+    {
+      "name": "cashflow",
+      "status": "ok",
+      "records": 103,
+      "exit_code": 0,
+      "elapsed_sec": 1.03,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --cashflow 600519 --json",
+      "findings": [],
+      "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"每股经营现金流\":56.5489085373,\"经营现金净流量与营业收入比率(%)\":0.7793628296,\"现金流量比率\":1.5155030221,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"2026-04-25 00:00:00\",\"每股经营现金流\":21.4888855031,\"经营现金净流量与营业收入比率(%)\":0.4991701825,\"现金流量比率\":0.6997653079,\"数据源\":\"eastmoney\"},{\"报告期\":\"2025-12-31 00:00:00\",\"公告日期\":\"",
+      "stderr_tail": ""
+    },
+    {
+      "name": "company_news",
+      "status": "ok",
+      "records": 5,
+      "exit_code": 0,
+      "elapsed_sec": 0.08,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_company_news.py --code 300476 --name '胜宏科技' --days 30 --limit 5 --json",
+      "findings": [],
+      "preview": "{\n  \"status\": \"ok\",\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"meta\": {\n    \"queried_at\": \"2026-10-11T09:36:10.178920+08:00\",\n    \"fetched_at\": \"2026-10-11T09:33:08.248083+08:00\",\n    \"window_start\": \"2026-09-12T00:00:00+08:00\",\n    \"window_end\": \"2026-10-11T09:33:08.248083+08:00\",\n    \"cache_hit\": true,\n    \"count\": 5,\n    \"matched_before_limit\": 20",
+      "stderr_tail": ""
+    },
+    {
+      "name": "consecutive_limit",
+      "status": "ok",
+      "records": 3,
+      "exit_code": 0,
+      "elapsed_sec": 0.51,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --consecutive-limit --date 20261009 --top 3 --json",
+      "findings": [],
+      "preview": "[{\"序号\":1,\"代码\":\"000869\",\"名称\":\"张  裕Ａ\",\"涨跌幅\":3.3049039841,\"最新价\":19.38,\"换手率\":4.3305015564,\"昨日连板数\":1,\"所属行业\":\"非白酒\",\"成交额(亿)\":3.76},{\"序号\":2,\"代码\":\"001300\",\"名称\":\"三柏硕\",\"涨跌幅\":9.99259758,\"最新价\":14.86,\"换手率\":3.4094426632,\"昨日连板数\":1,\"所属行业\":\"文娱用品\",\"成交额(亿)\":1.22},{\"序号\":3,\"代码\":\"001336\",\"名称\":\"楚环科技\",\"涨跌幅\":10.0242128372,\"最新价\":22.72,\"换手率\":24.1290359497,\"昨日连板数\":1,\"所属行业\":\"环保",
+      "stderr_tail": ""
+    },
+    {
+      "name": "deposit-rate",
+      "status": "error",
+      "records": 0,
+      "exit_code": 0,
+      "elapsed_sec": 0.24,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --deposit-rate --json",
+      "findings": [],
+      "preview": "{\"status\": \"unavailable\", \"error\": \"原存贷款基准利率接口参数无效，当前未接入等价数据源；不可用同业拆借利率或LPR冒充\", \"data\": []}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "dividend",
+      "status": "ok",
+      "records": 2,
+      "exit_code": 0,
+      "elapsed_sec": 0.63,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --dividend 600519 --year 2025 --json",
+      "findings": [],
+      "preview": "[{\"实施方案公告日期\":\"2025-12-11T00:00:00.000\",\"分红类型\":\"季度分红\",\"送股比例\":null,\"转增比例\":null,\"派息比例\":239.57,\"股权登记日\":\"2025-12-18T00:00:00.000\",\"除权日\":\"2025-12-19T00:00:00.000\",\"派息日\":\"2025-12-19T00:00:00.000\",\"股份到账日\":null,\"实施方案分红说明\":\"10派239.57元(含税)\",\"报告时间\":\"2025三季报\"},{\"实施方案公告日期\":\"2026-06-22T00:00:00.000\",\"分红类型\":\"年度分红\",\"送股比例\":null,\"转增比例\":null,\"派息比例\":280.2423,\"股权登记日\":\"2",
+      "stderr_tail": ""
+    },
+    {
+      "name": "dupont",
+      "status": "ok",
+      "records": 103,
+      "exit_code": 0,
+      "elapsed_sec": 1.21,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --dupont 600519 --json",
+      "findings": [],
+      "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"加权净资产收益率(%)\":16.75,\"销售净利率(%)\":50.7515717487,\"权益乘数\":1.1791495074,\"总资产周转率\":0.3011265651,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"2026-04-25 00:00:00\",\"加权净资产收益率(%)\":10.57,\"销售净利率(%)\":52.2244889889,\"权益乘数\":1.1379509353,\"总资产周转率\":0.1753990825,\"数据源\":\"eastmoney\"},{\"报告期\":\"2025-12-31 00",
+      "stderr_tail": ""
+    },
+    {
+      "name": "events",
+      "status": "ok",
+      "records": 11,
+      "exit_code": 0,
+      "elapsed_sec": 5.99,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_stock_events.py --code 300476 --name '胜宏科技' --limit 5 --max-seconds 20 --json",
+      "findings": [],
+      "preview": "{\n  \"code\": \"300476\",\n  \"name\": \"胜宏科技\",\n  \"queried_at\": \"2026-10-11 09:36:15\",\n  \"recent_information\": {\n    \"status\": \"ok\",\n    \"code\": \"300476\",\n    \"name\": \"胜宏科技\",\n    \"meta\": {\n      \"queried_at\": \"2026-10-11T09:36:09.869255+08:00\",\n      \"fetched_at\": \"2026-10-11T09:33:00.132885+08:00\",\n      \"window_start\": \"2026-09-12T00:00:00+08:00\",\n      ",
+      "stderr_tail": ""
+    },
+    {
+      "name": "financials",
+      "status": "ok",
+      "records": 103,
+      "exit_code": 0,
+      "elapsed_sec": 0.56,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --financials 600519 --json",
+      "findings": [],
+      "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"基本每股收益\":35.57,\"每股净资产\":200.9897547636,\"每股经营现金流\":56.5489085373,\"营业总收入\":92278072083.2100067139,\"归母净利润\":44516880421.8600006104,\"扣非净利润\":44464207646.0100021362,\"营收同比增长率(%)\":1.3000994756,\"归母净利润同比增长率(%)\":-1.951594855,\"扣非净利润同比增长率(%)\":-2.0401738838,\"加权净资产收益率(%)\":16.75,\"销售净利率(%)\":50.7515717487,\"销售毛利率",
+      "stderr_tail": ""
+    },
+    {
+      "name": "fund_flow",
+      "status": "error",
+      "records": 0,
+      "exit_code": 1,
+      "elapsed_sec": 0.6,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --fund-flow 600519 --days 3 --json",
+      "findings": [],
+      "preview": "获取资金流向失败：HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/fflow/daykline/get?lmt=0&klt=101&secid=1.600519&fields1=f1%2Cf2%2Cf3%2Cf7&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf62%2Cf63%2Cf64%2Cf65&ut=b2884a393a59ad64002292a3e90d46a5&_=1791682434419 (Caused by P",
+      "stderr_tail": ""
+    },
+    {
+      "name": "growth",
+      "status": "ok",
+      "records": 103,
+      "exit_code": 0,
+      "elapsed_sec": 0.59,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --growth 600519 --json",
+      "findings": [],
+      "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"营收同比增长率(%)\":1.3000994756,\"归母净利润同比增长率(%)\":-1.951594855,\"扣非净利润同比增长率(%)\":-2.0401738838,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"2026-04-25 00:00:00\",\"营收同比增长率(%)\":6.3360092771,\"归母净利润同比增长率(%)\":1.471418295,\"扣非净利润同比增长率(%)\":1.452898254,\"数据源\":\"eastmoney\"},{\"报告期\":\"2025-12-31 00:00:00\"",
+      "stderr_tail": ""
+    },
+    {
+      "name": "history",
+      "status": "ok",
+      "records": 10,
+      "exit_code": 0,
+      "elapsed_sec": 0.41,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --kline 600519 --count 10 --json",
+      "findings": [],
+      "preview": "[{\"time\":\"2026-09-18\",\"code\":\"sh600519\",\"open\":1262.99,\"high\":1265.88,\"low\":1256.1,\"close\":1257.12,\"preclose\":null,\"volume\":24891.0,\"pctChg\":null},{\"time\":\"2026-09-21\",\"code\":\"sh600519\",\"open\":1259.0,\"high\":1259.95,\"low\":1250.8,\"close\":1252.57,\"preclose\":1257.12,\"volume\":25017.0,\"pctChg\":-0.3619383989},{\"time\":\"2026-09-22\",\"code\":\"sh600519\",\"open\":",
+      "stderr_tail": ""
+    },
+    {
+      "name": "history_batch",
+      "status": "ok",
+      "records": 3,
+      "exit_code": 0,
+      "elapsed_sec": 0.59,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --kline-batch 600519,000001,300750 --count 10 --retries 0 --json",
+      "findings": [],
+      "preview": "{\"meta\": {\"requested\": 3, \"success\": 3, \"fail\": 0, \"workers\": 8, \"retries\": 2, \"second_pass_retry\": true, \"freq\": \"1d\", \"count\": 10, \"start\": null, \"end\": null}, \"results\": [{\"code\": \"sh600519\", \"ok\": true, \"source\": \"腾讯\", \"rows\": 10, \"data\": [{\"time\": \"2026-09-18\", \"code\": \"sh600519\", \"open\": 1262.99, \"high\": 1265.88, \"low\": 1256.1, \"close\": 1257.",
+      "stderr_tail": ""
+    },
+    {
+      "name": "hs300",
+      "status": "ok",
+      "records": 300,
+      "exit_code": 0,
+      "elapsed_sec": 0.51,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --hs300 --json",
+      "findings": [],
+      "preview": "[{\"code\":\"000001\",\"name\":\"平安银行\",\"weight\":0.453},{\"code\":\"000002\",\"name\":\"万科A\",\"weight\":0.117},{\"code\":\"000063\",\"name\":\"中兴通讯\",\"weight\":0.398},{\"code\":\"000100\",\"name\":\"TCL科技\",\"weight\":0.425},{\"code\":\"000157\",\"name\":\"中联重科\",\"weight\":0.12},{\"code\":\"000166\",\"name\":\"申万宏源\",\"weight\":0.159},{\"code\":\"000301\",\"name\":\"东方盛虹\",\"weight\":0.138},{\"code\":\"000333\",\"nam",
+      "stderr_tail": ""
+    },
+    {
+      "name": "index",
+      "status": "ok",
+      "records": 6,
+      "exit_code": 0,
+      "elapsed_sec": 1.57,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --index --json",
+      "findings": [],
+      "preview": "[\n  {\n    \"名称\": \"上证指数\",\n    \"代码\": \"sh000001\",\n    \"最新价\": 3813.79,\n    \"涨跌额\": 1.89,\n    \"涨跌幅(%)\": 0.05\n  },\n  {\n    \"名称\": \"Ａ股指数\",\n    \"代码\": \"sh000002\",\n    \"最新价\": 3998.45,\n    \"涨跌额\": 1.94,\n    \"涨跌幅(%)\": 0.05\n  },\n  {\n    \"名称\": \"沪深300\",\n    \"代码\": \"sh000300\",\n    \"最新价\": 4317.25,\n    \"涨跌额\": 6.98,\n    \"涨跌幅(%)\": 0.16\n  },\n  {\n    \"名称\": \"科创50\",\n    \"代码\": ",
+      "stderr_tail": ""
+    },
+    {
+      "name": "industry",
+      "status": "ok",
+      "records": 1,
+      "exit_code": 0,
+      "elapsed_sec": 0.34,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --industry 600519 --json",
+      "findings": [],
+      "preview": "{\n  \"code\": \"sh600519\",\n  \"industry_info\": {\n    \"code\": \"sh600519\",\n    \"name\": \"贵州茅台\",\n    \"industry\": \"酿酒行业\",\n    \"industry_zjh\": \"制造业-酒、饮料和精制茶制造业\",\n    \"source\": \"东方财富\"\n  },\n  \"boards\": [],\n  \"update_time\": \"2026-10-11 09:32:56\"\n}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "intraday",
+      "status": "non_json",
+      "records": 0,
+      "exit_code": 0,
+      "elapsed_sec": 0.56,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --intraday-kline 600519 --freq 5m --json",
+      "findings": [],
+      "preview": "股票 600519 今日（2026-10-11）暂无分钟K线数据\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "kline_1M",
+      "status": "ok",
+      "records": 10,
+      "exit_code": 0,
+      "elapsed_sec": 0.59,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1M --count 10 --json",
+      "findings": [],
+      "preview": "[{\"时间\":\"2026-01-30T00:00:00.000\",\"开盘\":1385.0,\"收盘\":1445.0,\"最高\":1322.01,\"最低\":1401.0,\"成交量\":117529983.0},{\"时间\":\"2026-02-27T00:00:00.000\",\"开盘\":1425.0,\"收盘\":1568.0,\"最高\":1411.62,\"最低\":1455.02,\"成交量\":80526506.0},{\"时间\":\"2026-03-31T00:00:00.000\",\"开盘\":1450.0,\"收盘\":1498.07,\"最高\":1383.2,\"最低\":1450.0,\"成交量\":78374538.0},{\"时间\":\"2026-04-30T00:00:00.000\",\"开盘\":1464.49,\"收盘\":",
+      "stderr_tail": ""
+    },
+    {
+      "name": "kline_1d",
+      "status": "ok",
+      "records": 10,
+      "exit_code": 0,
+      "elapsed_sec": 0.63,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1d --count 10 --json",
+      "findings": [],
+      "preview": "[{\"时间\":\"2026-09-18T00:00:00.000\",\"开盘\":1262.99,\"收盘\":1265.88,\"最高\":1256.1,\"最低\":1257.12,\"成交量\":2489087.0},{\"时间\":\"2026-09-21T00:00:00.000\",\"开盘\":1259.0,\"收盘\":1259.95,\"最高\":1250.8,\"最低\":1252.57,\"成交量\":2501689.0},{\"时间\":\"2026-09-22T00:00:00.000\",\"开盘\":1252.15,\"收盘\":1265.88,\"最高\":1248.1,\"最低\":1253.8,\"成交量\":2457294.0},{\"时间\":\"2026-09-23T00:00:00.000\",\"开盘\":1255.03,\"收盘\":1",
+      "stderr_tail": ""
+    },
+    {
+      "name": "kline_1w",
+      "status": "ok",
+      "records": 10,
+      "exit_code": 0,
+      "elapsed_sec": 0.66,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 1w --count 10 --json",
+      "findings": [],
+      "preview": "[{\"时间\":\"2026-08-07T00:00:00.000\",\"开盘\":1350.6,\"收盘\":1363.35,\"最高\":1300.01,\"最低\":1309.22,\"成交量\":16672485.0},{\"时间\":\"2026-08-14T00:00:00.000\",\"开盘\":1325.0,\"收盘\":1359.97,\"最高\":1318.08,\"最低\":1341.99,\"成交量\":18702495.0},{\"时间\":\"2026-08-21T00:00:00.000\",\"开盘\":1295.0,\"收盘\":1308.88,\"最高\":1272.01,\"最低\":1272.83,\"成交量\":21350387.0},{\"时间\":\"2026-08-28T00:00:00.000\",\"开盘\":1271.01,\"",
+      "stderr_tail": ""
+    },
+    {
+      "name": "kline_5m",
+      "status": "ok",
+      "records": 10,
+      "exit_code": 0,
+      "elapsed_sec": 0.63,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --kline 600519 --freq 5m --count 10 --json",
+      "findings": [],
+      "preview": "[{\"时间\":\"2026-10-09T14:15:00.000\",\"开盘\":1267.83,\"收盘\":1268.69,\"最高\":1265.36,\"最低\":1265.36,\"成交量\":65100.0},{\"时间\":\"2026-10-09T14:20:00.000\",\"开盘\":1265.4,\"收盘\":1266.0,\"最高\":1264.5,\"最低\":1266.0,\"成交量\":56750.0},{\"时间\":\"2026-10-09T14:25:00.000\",\"开盘\":1265.89,\"收盘\":1267.55,\"最高\":1265.7,\"最低\":1266.75,\"成交量\":49500.0},{\"时间\":\"2026-10-09T14:30:00.000\",\"开盘\":1266.38,\"收盘\":1266.92",
+      "stderr_tail": ""
+    },
+    {
+      "name": "lhb",
+      "status": "ok",
+      "records": 3,
+      "exit_code": 0,
+      "elapsed_sec": 0.98,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --lhb --start 20260925 --end 20261009 --top 3 --json",
+      "findings": [],
+      "preview": "[{\"代码\":\"000002\",\"名称\":\"万科A\",\"上榜日\":1790726400000,\"收盘价\":4.26,\"涨跌幅(%)\":4.4118,\"净买额(万)\":7138.46,\"上榜原因\":\"日振幅值达到15%的前5只证券\"},{\"代码\":\"000002\",\"名称\":\"万科A\",\"上榜日\":1790640000000,\"收盘价\":4.08,\"涨跌幅(%)\":9.973,\"净买额(万)\":15960.83,\"上榜原因\":\"日涨幅偏离值达到7%的前5只证券\"},{\"代码\":\"000011\",\"名称\":\"深物业A\",\"上榜日\":1791504000000,\"收盘价\":12.59,\"涨跌幅(%)\":3.8779,\"净买额(万)\":-3409.11,\"上榜原因\":\"日振幅值达到15%的前5只证券",
+      "stderr_tail": ""
+    },
+    {
+      "name": "limit_stats",
+      "status": "needs_review",
+      "records": 1,
+      "exit_code": 0,
+      "elapsed_sec": 0.66,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --limit-stats --json",
+      "findings": [
+        "needs_review: a weekend request is labeled today; underlying trading date is unverified"
+      ],
+      "preview": "{\n  \"日期\": \"2026-10-11\",\n  \"涨停数量\": 69,\n  \"跌停数量\": 8\n}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "limit_up",
+      "status": "ok",
+      "records": 3,
+      "exit_code": 0,
+      "elapsed_sec": 0.52,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --limit-up-pool --date 20261009 --top 3 --json",
+      "findings": [],
+      "preview": "[{\"序号\":1,\"代码\":\"002058\",\"名称\":\"紫竹高科\",\"涨跌幅\":9.9909992218,\"最新价\":24.44,\"换手率\":2.8765933514,\"封板资金\":89302489,\"连板数\":4,\"所属行业\":\"电池\",\"成交额(亿)\":1.01},{\"序号\":2,\"代码\":\"600241\",\"名称\":\"时代万恒\",\"涨跌幅\":10.0093545914,\"最新价\":11.76,\"换手率\":1.9918870926,\"封板资金\":229379199,\"连板数\":5,\"所属行业\":\"电池\",\"成交额(亿)\":0.69},{\"序号\":3,\"代码\":\"600825\",\"名称\":\"新华传媒\",\"涨跌幅\":10.0087795258,\"最新价\":12.53,\"换手率\":4.778",
+      "stderr_tail": ""
+    },
+    {
+      "name": "loan-rate",
+      "status": "error",
+      "records": 0,
+      "exit_code": 0,
+      "elapsed_sec": 0.23,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --loan-rate --json",
+      "findings": [],
+      "preview": "{\"status\": \"unavailable\", \"error\": \"原存贷款基准利率接口参数无效，当前未接入等价数据源；不可用同业拆借利率或LPR冒充\", \"data\": []}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "market_news",
+      "status": "stale",
+      "records": 5,
+      "exit_code": 0,
+      "elapsed_sec": 12.08,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_danginvest.py --news --limit 5 --retries 0 --json",
+      "findings": [
+        "stale: upstream snapshot or feed is outdated",
+        "stale: newest news in page is over 24 hours old"
+      ],
+      "preview": "{\n  \"meta\": {\n    \"url\": \"https://dang-invest.com/api/market/news\",\n    \"limit\": 5,\n    \"offset\": 0,\n    \"count\": 5,\n    \"has_more\": true,\n    \"update_time\": \"2026-10-11 09:33:15\",\n    \"data_source\": \"DangInvest\",\n    \"latest_published_at\": \"2026-10-04T00:05:01+08:00\",\n    \"age_seconds\": 638894,\n    \"stale\": true,\n    \"freshness_threshold_seconds\":",
+      "stderr_tail": ""
+    },
+    {
+      "name": "money-supply",
+      "status": "ok",
+      "records": 395,
+      "exit_code": 0,
+      "elapsed_sec": 2.11,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --money-supply --json",
+      "findings": [],
+      "preview": "[{\"商品\":\"中国M2货币供应年率报告\",\"日期\":886291200000,\"今值\":17.4,\"预测值\":null,\"前值\":null},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":888710400000,\"今值\":16.7,\"预测值\":null,\"前值\":17.4},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":891388800000,\"今值\":15.4,\"预测值\":null,\"前值\":16.7},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":893980800000,\"今值\":14.6,\"预测值\":null,\"前值\":15.4},{\"商品\":\"中国M2货币供应年率报告\",\"日期\":896659200000,\"今值\":15.5,\"预测值\":null,\"前值\":",
+      "stderr_tail": ""
+    },
+    {
+      "name": "multi_quote",
+      "status": "ok",
+      "records": 3,
+      "exit_code": 0,
+      "elapsed_sec": 0.87,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --multi-quote 600519,000001,300750 --json",
+      "findings": [],
+      "preview": "[\n  {\n    \"代码\": \"300750\",\n    \"最新价\": 297.75,\n    \"涨跌幅(%)\": 3.84,\n    \"昨收\": 286.75,\n    \"状态\": \"成功\"\n  },\n  {\n    \"代码\": \"600519\",\n    \"最新价\": 1263.0,\n    \"涨跌幅(%)\": 0.57,\n    \"昨收\": 1255.79,\n    \"状态\": \"成功\"\n  },\n  {\n    \"代码\": \"000001\",\n    \"最新价\": 11.59,\n    \"涨跌幅(%)\": -1.61,\n    \"昨收\": 11.78,\n    \"状态\": \"成功\"\n  }\n]\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "north_money",
+      "status": "needs_review",
+      "records": 2,
+      "exit_code": 0,
+      "elapsed_sec": 0.61,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --north-money --json",
+      "findings": [
+        "needs_review: all northbound flow fields are zero; may be upstream placeholders"
+      ],
+      "preview": "[\n  {\n    \"日期\": \"2026-10-09\",\n    \"板块\": \"沪股通\",\n    \"净买额(亿)\": 0.0,\n    \"净流入(亿)\": 0.0,\n    \"指数涨跌(%)\": 0.05\n  },\n  {\n    \"日期\": \"2026-10-09\",\n    \"板块\": \"深股通\",\n    \"净买额(亿)\": 0.0,\n    \"净流入(亿)\": 0.0,\n    \"指数涨跌(%)\": 0.17\n  }\n]\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "perf-express",
+      "status": "empty",
+      "records": 0,
+      "exit_code": 0,
+      "elapsed_sec": 0.71,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --perf-express 600519 --json",
+      "findings": [],
+      "preview": "{\"status\": \"empty\", \"code\": \"sh600519\", \"meta\": {\"report_date\": \"20260930\", \"kind\": \"express\"}, \"errors\": [], \"data\": []}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "perf-forecast",
+      "status": "empty",
+      "records": 0,
+      "exit_code": 0,
+      "elapsed_sec": 1.12,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --perf-forecast 600519 --json",
+      "findings": [],
+      "preview": "{\"status\": \"empty\", \"code\": \"sh600519\", \"meta\": {\"report_date\": \"20260930\", \"kind\": \"forecast\"}, \"errors\": [], \"data\": []}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "profit",
+      "status": "ok",
+      "records": 103,
+      "exit_code": 0,
+      "elapsed_sec": 0.59,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --profit 600519 --json",
+      "findings": [],
+      "preview": "[{\"报告期\":\"2026-06-30 00:00:00\",\"公告日期\":\"2026-08-15 00:00:00\",\"基本每股收益\":35.57,\"归母净利润\":44516880421.8600006104,\"扣非净利润\":44464207646.0100021362,\"归母净利润同比增长率(%)\":-1.951594855,\"扣非净利润同比增长率(%)\":-2.0401738838,\"加权净资产收益率(%)\":16.75,\"销售净利率(%)\":50.7515717487,\"销售毛利率(%)\":89.5552128279,\"总资产净利率(%)\":15.0218339016,\"数据源\":\"eastmoney\"},{\"报告期\":\"2026-03-31 00:00:00\",\"公告日期\":\"202",
+      "stderr_tail": ""
+    },
+    {
+      "name": "quote",
+      "status": "ok",
+      "records": 1,
+      "exit_code": 0,
+      "elapsed_sec": 0.98,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --quote 600519 --json",
+      "findings": [],
+      "preview": "{\n  \"代码\": \"600519\",\n  \"日期\": \"2026-10-09\",\n  \"最新价\": 1263.0,\n  \"涨跌额\": 7.21,\n  \"涨跌幅(%)\": 0.57,\n  \"今开\": 1255.42,\n  \"最高\": 1282.0,\n  \"最低\": 1255.42,\n  \"昨收\": 1255.79,\n  \"成交量\": 3511051,\n  \"市场状态\": \"休市\",\n  \"数据源\": \"新浪/腾讯\",\n  \"更新时间\": \"2026-10-11 09:32:54\",\n  \"备注\": \"非交易日或休市，显示最近交易日数据\"\n}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "reserve-ratio",
+      "status": "ok",
+      "records": 58,
+      "exit_code": 0,
+      "elapsed_sec": 0.54,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --reserve-ratio --json",
+      "findings": [],
+      "preview": "[{\"公布时间\":\"2025年05月07日\",\"生效时间\":\"2025年05月15日\",\"大型金融机构-调整前\":9.5,\"大型金融机构-调整后\":9.0,\"大型金融机构-调整幅度\":-0.5,\"中小金融机构-调整前\":6.5,\"中小金融机构-调整后\":6.0,\"中小金融机构-调整幅度\":-0.5,\"消息公布次日指数涨跌-上证\":0.2791395405,\"消息公布次日指数涨跌-深证\":0.9256671575,\"备注\":\"为落实中央经济工作会议精神和《政府工作报告》部署,实施适度宽松的货币政策,提高宏观调控的前瞻性、针对性、有效性,中国人民银行决定,自2025年5月15日起,下调金融机构存款准备金率0.5个百分点(不含已执行5%存款准备金率的金融机构),下调汽车金融公司和金融租赁公司存款准",
+      "stderr_tail": ""
+    },
+    {
+      "name": "sector",
+      "status": "error",
+      "records": 0,
+      "exit_code": 1,
+      "elapsed_sec": 5.22,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_sector_info.py --no-concepts --timeout 5 600519 --json",
+      "findings": [],
+      "preview": "{\n  \"code\": \"600519\",\n  \"name\": null,\n  \"industry\": null,\n  \"concepts\": [],\n  \"source\": \"eastmoney\",\n  \"error\": \"HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?secid=1.600519&fields=f57%2Cf58%2Cf127&ut=fa5fd1943c7b386f172d6893dbfba10b (Caused by ProxyError('Unable to connect to proxy', Re",
+      "stderr_tail": ""
+    },
+    {
+      "name": "sz50",
+      "status": "ok",
+      "records": 50,
+      "exit_code": 0,
+      "elapsed_sec": 0.47,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --sz50 --json",
+      "findings": [],
+      "preview": "[{\"code\":\"600028\",\"name\":\"中国石化\",\"weight\":0.843},{\"code\":\"600030\",\"name\":\"中信证券\",\"weight\":2.766},{\"code\":\"600031\",\"name\":\"三一重工\",\"weight\":1.137},{\"code\":\"600036\",\"name\":\"招商银行\",\"weight\":5.597},{\"code\":\"600050\",\"name\":\"中国联通\",\"weight\":0.725},{\"code\":\"600089\",\"name\":\"特变电工\",\"weight\":0.959},{\"code\":\"600111\",\"name\":\"北方稀土\",\"weight\":0.979},{\"code\":\"600150\",\"na",
+      "stderr_tail": ""
+    },
+    {
+      "name": "technical",
+      "status": "ok",
+      "records": 50,
+      "exit_code": 0,
+      "elapsed_sec": 0.5,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_technical.py 600519 --count 120 --no-signal --json",
+      "findings": [],
+      "preview": "[{\"time\":\"2026-07-24T00:00:00.000\",\"open\":1305.0,\"close\":1297.41,\"high\":1309.21,\"low\":1286.2,\"volume\":3569892.0,\"MA5\":1305.984,\"MA10\":1271.884,\"MA20\":1233.596,\"MA60\":1276.403,\"MACD_DIF\":14.403,\"MACD_DEA\":1.141,\"MACD\":26.523,\"KDJ_K\":73.977,\"KDJ_D\":78.549,\"KDJ_J\":64.833,\"RSI\":54.512,\"BOLL_UP\":1327.834,\"BOLL_MID\":1233.596,\"BOLL_LOW\":1139.359},{\"time\":",
+      "stderr_tail": ""
+    },
+    {
+      "name": "tick",
+      "status": "ok",
+      "records": 3,
+      "exit_code": 0,
+      "elapsed_sec": 0.54,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_realtime.py --tick 600519 --top 3 --json",
+      "findings": [],
+      "preview": "{\n  \"meta\": {\n    \"code\": \"sh600519\",\n    \"page\": 0,\n    \"total_pages\": 0,\n    \"records\": 70,\n    \"update_time\": \"2026-10-11 09:32:55\",\n    \"data_source\": \"腾讯\"\n  },\n  \"data\": [\n    {\n      \"seq\": 0,\n      \"time\": \"09:25:02\",\n      \"price\": 1255.42,\n      \"change\": 0.01,\n      \"volume\": 195,\n      \"amount\": 24480690.0,\n      \"direction\": \"买\"\n    },\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "trade_dates",
+      "status": "ok",
+      "records": 242,
+      "exit_code": 0,
+      "elapsed_sec": 0.52,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --trade-dates --start 2026-01-01 --end 2026-12-31 --json",
+      "findings": [],
+      "preview": "[{\"date\":\"2026-01-05\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-06\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-07\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-08\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-09\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-12\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-13\",\"is_trading_day\":\"1\"},{\"date\":\"2026-01-14\",\"is_trading_day\":\"1\"},{\"dat",
+      "stderr_tail": ""
+    },
+    {
+      "name": "zz500",
+      "status": "ok",
+      "records": 500,
+      "exit_code": 0,
+      "elapsed_sec": 0.64,
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Users/calm/dev/git_repo/ai-stock/stock-data/a-share-skill/a-share-data/scripts/fetch_history.py --zz500 --json",
+      "findings": [],
+      "preview": "[{\"code\":\"000009\",\"name\":\"中国宝安\",\"weight\":0.134},{\"code\":\"000021\",\"name\":\"深科技\",\"weight\":0.388},{\"code\":\"000027\",\"name\":\"深圳能源\",\"weight\":0.096},{\"code\":\"000032\",\"name\":\"深桑达A\",\"weight\":0.085},{\"code\":\"000034\",\"name\":\"神州数码\",\"weight\":0.203},{\"code\":\"000039\",\"name\":\"中集集团\",\"weight\":0.17},{\"code\":\"000050\",\"name\":\"深天马A\",\"weight\":0.099},{\"code\":\"000060\",\"name",
+      "stderr_tail": ""
+    }
+  ],
+  "company_samples": [
+    {
+      "sample": "000001",
+      "code": "000001",
+      "name": "平安银行",
+      "status": "ok",
+      "meta": {
+        "queried_at": "2026-10-11T09:33:26.375041+08:00",
+        "fetched_at": "2026-10-11T09:33:26.375041+08:00",
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T09:33:26.375041+08:00",
+        "cache_hit": false,
+        "count": 2,
+        "matched_before_limit": 2,
+        "latest_news_at": "2026-10-08T21:06:57+08:00",
+        "latest_announcement_at": null,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "empty",
+            "fetched": 0,
+            "truncated": false,
+            "elapsed_sec": 0.15
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.25
+          },
+          {
+            "source": "eastmoney_news:000001",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.24
+          },
+          {
+            "source": "eastmoney_news:平安银行",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.23
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；分类为标题关键词匹配。",
+          "relevance=mention 表示正文提及，可能是行业综述；不能当成公司独有事件。",
+          "empty 表示已响应源在查询窗口内无匹配；partial/unavailable 不代表公司没有事件。"
+        ]
+      },
+      "titles": [
+        {
+          "published_at": "2026-10-08T21:06:57+08:00",
+          "kind": "news",
+          "title": "AI治理迈向新阶段，平安银行大动作",
+          "url": "http://finance.eastmoney.com/a/202610083890005845.html"
+        },
+        {
+          "published_at": "2026-10-08T20:54:59+08:00",
+          "kind": "news",
+          "title": "平安银行发布AI管理办法",
+          "url": "http://bank.eastmoney.com/a/202610083889874694.html"
+        }
+      ]
+    },
+    {
+      "sample": "002364-30d",
+      "code": "002364",
+      "name": "中恒电气",
+      "status": "ok",
+      "meta": {
+        "queried_at": "2026-10-11T09:37:01.223456+08:00",
+        "fetched_at": "2026-10-11T09:37:01.223456+08:00",
+        "window_start": "2026-09-12T00:00:00+08:00",
+        "window_end": "2026-10-11T09:37:01.223456+08:00",
+        "cache_hit": false,
+        "count": 2,
+        "matched_before_limit": 2,
+        "latest_news_at": null,
+        "latest_announcement_at": "2026-09-17T00:00:00+08:00",
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 2,
+            "truncated": false,
+            "elapsed_sec": 0.16
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.6
+          },
+          {
+            "source": "eastmoney_news:002364",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.26
+          },
+          {
+            "source": "eastmoney_news:中恒电气",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.25
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；分类为标题关键词匹配。",
+          "relevance=mention 表示正文提及，可能是行业综述；不能当成公司独有事件。",
+          "empty 表示已查询页在窗口内无匹配；分页受限、partial/unavailable 都不能证明公司没有事件。"
+        ]
+      },
+      "titles": [
+        {
+          "published_at": "2026-09-17T00:00:00+08:00",
+          "kind": "announcement",
+          "title": "关于第三期员工持股计划非交易过户完成的公告",
+          "url": "https://static.cninfo.com.cn/finalpage/2026-09-17/1225568257.PDF"
+        },
+        {
+          "published_at": "2026-09-17T00:00:00+08:00",
+          "kind": "announcement",
+          "title": "第三期员工持股计划首次持有人会议决议公告",
+          "url": "https://static.cninfo.com.cn/finalpage/2026-09-17/1225568256.PDF"
+        }
+      ]
+    },
+    {
+      "sample": "002364",
+      "code": "002364",
+      "name": "中恒电气",
+      "status": "empty",
+      "meta": {
+        "queried_at": "2026-10-11T09:33:25.968862+08:00",
+        "fetched_at": "2026-10-11T09:33:25.968862+08:00",
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T09:33:25.968862+08:00",
+        "cache_hit": false,
+        "count": 0,
+        "matched_before_limit": 0,
+        "latest_news_at": null,
+        "latest_announcement_at": null,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "empty",
+            "fetched": 0,
+            "truncated": false,
+            "elapsed_sec": 0.23
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.32
+          },
+          {
+            "source": "eastmoney_news:002364",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.23
+          },
+          {
+            "source": "eastmoney_news:中恒电气",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.24
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；分类为标题关键词匹配。",
+          "relevance=mention 表示正文提及，可能是行业综述；不能当成公司独有事件。",
+          "empty 表示已响应源在查询窗口内无匹配；partial/unavailable 不代表公司没有事件。"
+        ]
+      },
+      "titles": []
+    },
+    {
+      "sample": "300418-30d",
+      "code": "300418",
+      "name": "昆仑万维",
+      "status": "ok",
+      "meta": {
+        "queried_at": "2026-10-11T09:37:01.223456+08:00",
+        "fetched_at": "2026-10-11T09:37:01.223456+08:00",
+        "window_start": "2026-09-12T00:00:00+08:00",
+        "window_end": "2026-10-11T09:37:01.223456+08:00",
+        "cache_hit": false,
+        "count": 4,
+        "matched_before_limit": 4,
+        "latest_news_at": "2026-09-30T17:08:00+08:00",
+        "latest_announcement_at": null,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "empty",
+            "fetched": 0,
+            "truncated": false,
+            "elapsed_sec": 0.21
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.26
+          },
+          {
+            "source": "eastmoney_news:300418",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.26
+          },
+          {
+            "source": "eastmoney_news:昆仑万维",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.27
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；分类为标题关键词匹配。",
+          "relevance=mention 表示正文提及，可能是行业综述；不能当成公司独有事件。",
+          "empty 表示已查询页在窗口内无匹配；分页受限、partial/unavailable 都不能证明公司没有事件。"
+        ]
+      },
+      "titles": [
+        {
+          "published_at": "2026-09-30T17:08:00+08:00",
+          "kind": "news",
+          "title": "昆仑万维在北京成立天工智枢科技公司",
+          "url": "http://finance.eastmoney.com/a/202609303887753726.html"
+        },
+        {
+          "published_at": "2026-09-30T11:00:28+08:00",
+          "kind": "news",
+          "title": "昆仑万维在北京成立天工智枢科技公司，注册资本1000万元",
+          "url": "http://finance.eastmoney.com/a/202609303887544394.html"
+        },
+        {
+          "published_at": "2026-09-30T09:05:33+08:00",
+          "kind": "news",
+          "title": "昆仑万维成立天工智枢科技新公司",
+          "url": "http://finance.eastmoney.com/a/202609303887242755.html"
+        }
+      ]
+    },
+    {
+      "sample": "300418",
+      "code": "300418",
+      "name": "昆仑万维",
+      "status": "empty",
+      "meta": {
+        "queried_at": "2026-10-11T09:33:26.321968+08:00",
+        "fetched_at": "2026-10-11T09:33:26.321968+08:00",
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T09:33:26.321968+08:00",
+        "cache_hit": false,
+        "count": 0,
+        "matched_before_limit": 0,
+        "latest_news_at": null,
+        "latest_announcement_at": null,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "empty",
+            "fetched": 0,
+            "truncated": false,
+            "elapsed_sec": 0.16
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.23
+          },
+          {
+            "source": "eastmoney_news:300418",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.25
+          },
+          {
+            "source": "eastmoney_news:昆仑万维",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.25
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；分类为标题关键词匹配。",
+          "relevance=mention 表示正文提及，可能是行业综述；不能当成公司独有事件。",
+          "empty 表示已响应源在查询窗口内无匹配；partial/unavailable 不代表公司没有事件。"
+        ]
+      },
+      "titles": []
+    },
+    {
+      "sample": "300476",
+      "code": "300476",
+      "name": "胜宏科技",
+      "status": "ok",
+      "meta": {
+        "queried_at": "2026-10-11T09:33:26.322139+08:00",
+        "fetched_at": "2026-10-11T09:33:26.322139+08:00",
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T09:33:26.322139+08:00",
+        "cache_hit": false,
+        "count": 4,
+        "matched_before_limit": 4,
+        "latest_news_at": "2026-10-09T19:06:48+08:00",
+        "latest_announcement_at": "2026-10-08T00:00:00+08:00",
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "ok",
+            "fetched": 1,
+            "truncated": false,
+            "elapsed_sec": 0.14
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.22
+          },
+          {
+            "source": "eastmoney_news:300476",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.19
+          },
+          {
+            "source": "eastmoney_news:胜宏科技",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.15
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；分类为标题关键词匹配。",
+          "relevance=mention 表示正文提及，可能是行业综述；不能当成公司独有事件。",
+          "empty 表示已响应源在查询窗口内无匹配；partial/unavailable 不代表公司没有事件。"
+        ]
+      },
+      "titles": [
+        {
+          "published_at": "2026-10-09T19:06:48+08:00",
+          "kind": "news",
+          "title": "胜宏科技：持续突破高阶HDI技术 加快布局AI高端PCB产能",
+          "url": "http://finance.eastmoney.com/a/202610093891392184.html"
+        },
+        {
+          "published_at": "2026-10-08T00:00:00+08:00",
+          "kind": "announcement",
+          "title": "H股公告-证券变动月报表",
+          "url": "https://static.cninfo.com.cn/finalpage/2026-10-08/1225595390.PDF"
+        },
+        {
+          "published_at": "2026-10-07T12:11:16+08:00",
+          "kind": "news",
+          "title": "尚未购买公司股份，胜宏科技披露2026年第一期A股员工持股计划进展",
+          "url": "http://finance.eastmoney.com/a/202610073888866291.html"
+        }
+      ]
+    },
+    {
+      "sample": "601899",
+      "code": "601899",
+      "name": "紫金矿业",
+      "status": "ok",
+      "meta": {
+        "queried_at": "2026-10-11T09:33:25.968876+08:00",
+        "fetched_at": "2026-10-11T09:33:25.968876+08:00",
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T09:33:25.968876+08:00",
+        "cache_hit": false,
+        "count": 7,
+        "matched_before_limit": 7,
+        "latest_news_at": "2026-10-09T16:58:00+08:00",
+        "latest_announcement_at": null,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "empty",
+            "fetched": 0,
+            "truncated": false,
+            "elapsed_sec": 0.2
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.24
+          },
+          {
+            "source": "eastmoney_news:601899",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.26
+          },
+          {
+            "source": "eastmoney_news:紫金矿业",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.23
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；分类为标题关键词匹配。",
+          "relevance=mention 表示正文提及，可能是行业综述；不能当成公司独有事件。",
+          "empty 表示已响应源在查询窗口内无匹配；partial/unavailable 不代表公司没有事件。"
+        ]
+      },
+      "titles": [
+        {
+          "published_at": "2026-10-09T16:58:00+08:00",
+          "kind": "news",
+          "title": "有色金属行业资金流入榜：紫金矿业、洛阳钼业等净流入资金居前",
+          "url": "http://finance.eastmoney.com/a/202610093891309442.html"
+        },
+        {
+          "published_at": "2026-10-09T14:51:06+08:00",
+          "kind": "news",
+          "title": "金铜大涨！现货黄金站上4200美元，有色板块冲高！紫金矿业涨超5%，西部黄金涨停，有色ETF汇添富(159652)标的指数大涨近3%",
+          "url": "http://stock.eastmoney.com/a/202610093891222434.html"
+        },
+        {
+          "published_at": "2026-10-09T13:41:08+08:00",
+          "kind": "news",
+          "title": "三大指数探底回升，上证50ETF华夏（510050）盘中翻红，持仓股紫金矿业领涨4.80%",
+          "url": "http://stock.eastmoney.com/a/202610093891101131.html"
+        }
+      ]
+    },
+    {
+      "sample": "603993",
+      "code": "603993",
+      "name": "洛阳钼业",
+      "status": "ok",
+      "meta": {
+        "queried_at": "2026-10-11T09:33:25.968862+08:00",
+        "fetched_at": "2026-10-11T09:33:25.968862+08:00",
+        "window_start": "2026-10-05T00:00:00+08:00",
+        "window_end": "2026-10-11T09:33:25.968862+08:00",
+        "cache_hit": false,
+        "count": 8,
+        "matched_before_limit": 8,
+        "latest_news_at": "2026-10-10T15:54:50+08:00",
+        "latest_announcement_at": null,
+        "sources": [
+          {
+            "source": "cninfo",
+            "status": "empty",
+            "fetched": 0,
+            "truncated": false,
+            "elapsed_sec": 0.18
+          },
+          {
+            "source": "eastmoney_announcements",
+            "status": "ok",
+            "fetched": 200,
+            "truncated": true,
+            "elapsed_sec": 0.22
+          },
+          {
+            "source": "eastmoney_news:603993",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.24
+          },
+          {
+            "source": "eastmoney_news:洛阳钼业",
+            "status": "ok",
+            "fetched": 100,
+            "truncated": true,
+            "elapsed_sec": 0.26
+          }
+        ],
+        "coverage_limited": true,
+        "notes": [
+          "新闻 summary 为检索摘要，公告仅提供标题与原文链接；分类为标题关键词匹配。",
+          "relevance=mention 表示正文提及，可能是行业综述；不能当成公司独有事件。",
+          "empty 表示已响应源在查询窗口内无匹配；partial/unavailable 不代表公司没有事件。"
+        ]
+      },
+      "titles": [
+        {
+          "published_at": "2026-10-10T15:54:50+08:00",
+          "kind": "news",
+          "title": "15亿元！洛阳市首笔民营企业科技创新债券落地洛阳钼业",
+          "url": "http://bank.eastmoney.com/a/202610103891928122.html"
+        },
+        {
+          "published_at": "2026-10-10T06:49:15+08:00",
+          "kind": "news",
+          "title": "洛阳钼业：智能化赋能绿色转型 深挖矿产全链条价值",
+          "url": "http://finance.eastmoney.com/a/202610103891645167.html"
+        },
+        {
+          "published_at": "2026-10-09T16:58:00+08:00",
+          "kind": "news",
+          "title": "有色金属行业资金流入榜：紫金矿业、洛阳钼业等净流入资金居前",
+          "url": "http://finance.eastmoney.com/a/202610093891309442.html"
+        }
+      ]
+    }
+  ]
+}

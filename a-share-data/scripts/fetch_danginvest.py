@@ -87,7 +87,7 @@ def _get_json(
     retries: int = 2,
     timeout: int = 20,
 ) -> Dict[str, Any]:
-    session = _build_session(retries)
+    session = _build_session(0)
     last_error: Optional[Exception] = None
     attempts = retries + 1
     for attempt in range(attempts):
@@ -143,12 +143,30 @@ def cmd_news(limit: int, offset: int, retries: int, output_json: bool) -> None:
         "update_time": _now_meta(),
         "data_source": "DangInvest",
     }
+    # Query time is not publication time. Expose freshness even when HTTP is OK.
+    from zoneinfo import ZoneInfo
+    tz = ZoneInfo("Asia/Shanghai")
+    dates = []
+    for item in items:
+        try:
+            stamp = datetime.fromisoformat(str(item.get("published_at", "")).replace("Z", "+00:00"))
+            dates.append(stamp.replace(tzinfo=tz) if stamp.tzinfo is None else stamp.astimezone(tz))
+        except (ValueError, TypeError):
+            pass
+    latest = max(dates) if dates else None
+    age = max(0, (datetime.now(tz) - latest).total_seconds()) if latest else None
+    meta.update({"latest_published_at": latest.isoformat() if latest else None,
+                 "age_seconds": round(age) if age is not None else None,
+                 "stale": age > 86400 if age is not None else None,
+                 "freshness_threshold_seconds": 86400})
     if output_json:
         print(json.dumps({"meta": meta, "data": items}, ensure_ascii=False, indent=2))
         return
 
     display_n = min(len(items), 20)
     print(f"【市场新闻】{meta['update_time']}  共 {len(items)} 条  数据源：DangInvest")
+    if meta["stale"]:
+        print(f"注意：本页最新资讯发表于 {meta['latest_published_at']}，已超过24小时；不能当成最新快讯。")
     for i, item in enumerate(items[:display_n]):
         item = item or {}
         published_at = item.get("published_at", "")
@@ -193,6 +211,8 @@ def cmd_summary(mode: str, limit: int, sort: str, retries: int, output_json: boo
         f"【板块概览】{meta['tradeDate']}  mode={api_mode}  sort={api_sort}  "
         f"返回 {len(items)}/{meta['total']}  数据源：DangInvest"
     )
+    if meta["stale"]:
+        print("注意：上游标记 stale=true，以下为旧快照，不能当成今日热门板块。")
     for i, item in enumerate(items[:display_n]):
         item = item or {}
         label = item.get("groupLabel", "")
@@ -273,6 +293,8 @@ def cmd_detail(
         f"【板块成分】{meta['tradeDate']}  {group_label}  mode={api_mode}  sort={api_sort}  "
         f"数量={trade_count} 市值(亿)={mc_yi} 成交(亿)={to_yi} 涨跌幅={sign}{change_str}"
     )
+    if meta["stale"]:
+        print("注意：上游标记 stale=true，以下为旧快照。")
 
     display_n = min(len(items), 20)
     for i, item in enumerate(items[:display_n]):

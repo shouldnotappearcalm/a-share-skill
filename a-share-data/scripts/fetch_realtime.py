@@ -28,6 +28,9 @@ A股实时行情数据脚本
 
 import argparse
 import json
+import queue
+import threading
+import time as monotonic_time
 import sys
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -38,7 +41,11 @@ import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import akshare as ak
+def _ak():
+    # Quote/K-line requests do not need to import the entire AKShare package.
+    import akshare
+    return akshare
+
 
 
 HEADERS = {
@@ -94,8 +101,13 @@ def _build_session() -> requests.Session:
     return session
 
 
+_HTTP_LOCAL = threading.local()
+
+
 def _http_get_json(url: str, params: dict = None, timeout: int = 10):
-    session = _build_session()
+    if not hasattr(_HTTP_LOCAL, "session"):
+        _HTTP_LOCAL.session = _build_session()
+    session = _HTTP_LOCAL.session
     resp = session.get(url, params=params, timeout=timeout)
     resp.raise_for_status()
     return resp.json()
@@ -116,8 +128,7 @@ def normalize_code(code: str) -> str:
     if code.lower().startswith(('sh', 'sz')):
         return code.lower()
     if code.isdigit():
-        if code in INDEX_CODE_MAP:
-            return INDEX_CODE_MAP[code]
+        # Bare six-digit codes are stocks; indices must use an explicit market.
         if code.startswith('6'):
             return f"sh{code}"
         elif code.startswith(('0', '2', '3')):
@@ -213,14 +224,14 @@ def get_price(code: str, frequency: str = '1d', count: int = 60) -> pd.DataFrame
         if frequency == '1d':
             try:
                 if _is_index_symbol(normalized):
-                    ak_df = ak.index_zh_a_hist(symbol=normalized[2:], period='daily')
+                    ak_df = _ak().index_zh_a_hist(symbol=normalized[2:], period='daily')
                     if ak_df is not None and not ak_df.empty:
                         ak_df = ak_df.tail(count).copy()
                         ak_df = ak_df.rename(columns={'日期': 'time', '开盘': 'open', '最高': 'high', '最低': 'low', '收盘': 'close', '成交量': 'volume'})
                     else:
                         ak_df = None
                 else:
-                    ak_df = ak.stock_zh_a_daily(symbol=normalized, adjust='')
+                    ak_df = _ak().stock_zh_a_daily(symbol=normalized, adjust='')
                 if ak_df is not None and not ak_df.empty:
                     ak_df = ak_df.tail(count).copy()
                     if 'date' in ak_df.columns:
@@ -340,11 +351,11 @@ def cmd_quote(code: str, output_json: bool):
         prev_close = df_day.iloc[-1]['close']
 
     today_data = None
-    df_min = get_price(normalized, frequency='5m', count=320)
+    df_min = get_price(normalized, frequency='5m', count=320) if today.weekday() < 5 else None
     if df_min is not None and not df_min.empty:
         today_data = _aggregate_intraday_data(df_min, today, now=now, freq_minutes=5)
 
-    if today_data is None:
+    if today_data is None and today.weekday() < 5:
         df_min15 = get_price(normalized, frequency='15m', count=320)
         if df_min15 is not None and not df_min15.empty:
             today_data = _aggregate_intraday_data(df_min15, today, now=now, freq_minutes=15)
@@ -359,6 +370,9 @@ def cmd_quote(code: str, output_json: bool):
         date_label = '今日'
     else:
         latest_row = df_day.iloc[-1]
+        # The displayed bar is the last trading day. Compare it with the bar
+        # before it, rather than comparing the closing price with itself.
+        prev_close = df_day.iloc[-2]['close']
         latest_price = latest_row['close']
         today_open = latest_row['open']
         today_high = latest_row['high']
@@ -457,30 +471,27 @@ def cmd_intraday_kline(code: str, freq: str, output_json: bool):
 
 
 def cmd_multi_quote(codes_str: str, output_json: bool):
-    codes = [c.strip() for c in codes_str.split(',') if c.strip()]
-    if not codes:
-        print("请提供股票代码，用逗号分隔")
-        sys.exit(1)
-    if len(codes) > 10:
-        print("批量查询最多支持10只股票")
-        sys.exit(1)
-
+    codes = list(dict.fromkeys(c.strip() for c in codes_str.split(',') if c.strip()))
+    if not codes or len(codes) > 10:
+        raise ValueError("请提供1–10只股票代码，用逗号分隔")
     today = date.today()
     results = []
+    finished = queue.Queue()
 
-    for code in codes:
+    def fetch_one(code):
+        local_results = []
         normalized = normalize_code(code)
         try:
             df_day = get_price(normalized, frequency='1d', count=120)
             if df_day is None or df_day.empty or len(df_day) < 2:
-                results.append({"代码": code, "最新价": "N/A", "涨跌幅(%)": None, "昨收": "N/A", "状态": "无数据"})
-                continue
+                local_results.append({"代码": code, "最新价": "N/A", "涨跌幅(%)": None, "昨收": "N/A", "状态": "无数据"})
+                return
 
             last_date = df_day.index[-1].date()
             prev_close = df_day.iloc[-2]['close'] if last_date == today else df_day.iloc[-1]['close']
 
             latest_price = None
-            df_min = get_price(normalized, frequency='5m', count=320)
+            df_min = get_price(normalized, frequency='5m', count=320) if today.weekday() < 5 else None
             if df_min is not None and not df_min.empty:
                 df_t = df_min[df_min.index.date == today]
                 if not df_t.empty:
@@ -488,9 +499,10 @@ def cmd_multi_quote(codes_str: str, output_json: bool):
 
             if latest_price is None:
                 latest_price = df_day.iloc[-1]['close']
+                prev_close = df_day.iloc[-2]['close']
 
             change_pct = ((latest_price - prev_close) / prev_close * 100) if prev_close > 0 else 0
-            results.append({
+            local_results.append({
                 "代码": code,
                 "最新价": round(latest_price, 2),
                 "涨跌幅(%)": round(change_pct, 2),
@@ -498,7 +510,23 @@ def cmd_multi_quote(codes_str: str, output_json: bool):
                 "状态": "成功",
             })
         except Exception as e:
-            results.append({"代码": code, "最新价": "N/A", "涨跌幅(%)": None, "昨收": "N/A", "状态": f"失败: {e}"})
+            local_results.append({"代码": code, "最新价": "N/A", "涨跌幅(%)": None, "昨收": "N/A", "状态": f"失败: {e}"})
+
+        finally:
+            finished.put((code, local_results))
+
+    deadline = monotonic_time.monotonic() + 30
+    for code in codes:
+        threading.Thread(target=fetch_one, args=(code,), daemon=True).start()
+    pending = set(codes)
+    while pending:
+        try:
+            code, rows = finished.get(timeout=max(0, deadline - monotonic_time.monotonic()))
+        except queue.Empty:
+            break
+        pending.remove(code)
+        results.extend(rows)
+    results.extend({"代码": code, "最新价": "N/A", "涨跌幅(%)": None, "昨收": "N/A", "状态": "超时（整批30秒）"} for code in codes if code in pending)
 
     results.sort(key=lambda x: x["涨跌幅(%)"] if x["涨跌幅(%)"] is not None else float('-inf'), reverse=True)
 
@@ -512,7 +540,7 @@ def cmd_multi_quote(codes_str: str, output_json: bool):
 
 def cmd_index(output_json: bool):
     try:
-        df = ak.stock_zh_index_spot_sina()
+        df = _ak().stock_zh_index_spot_sina()
         major = ["sh000001", "sh000002", "sz399001", "sz399006", "sh000300", "sh000688"]
         df = df[df["代码"].isin(major)].copy()
         results = []
@@ -538,7 +566,7 @@ def cmd_index(output_json: bool):
 
 def cmd_hot_sectors(top: int, output_json: bool):
     try:
-        df = ak.stock_board_concept_name_em()
+        df = _ak().stock_board_concept_name_em()
         df = df.sort_values(by="涨跌幅", ascending=False).head(top)
         results = []
         for i, (_, row) in enumerate(df.iterrows(), 1):
@@ -563,7 +591,7 @@ def cmd_hot_sectors(top: int, output_json: bool):
 
 def cmd_north_money(output_json: bool):
     try:
-        df = ak.stock_hsgt_fund_flow_summary_em()
+        df = _ak().stock_hsgt_fund_flow_summary_em()
         df_north = df[df["资金方向"] == "北向"].copy()
         results = []
         for _, row in df_north.iterrows():
@@ -592,7 +620,7 @@ def cmd_lhb(start: str, end: str, top: int, output_json: bool):
     if not start:
         start = (datetime.now() - timedelta(days=3)).strftime("%Y%m%d")
     try:
-        df = ak.stock_lhb_detail_em(start_date=start, end_date=end)
+        df = _ak().stock_lhb_detail_em(start_date=start, end_date=end)
         if df is None or df.empty:
             print(f"未找到 {start}~{end} 的龙虎榜数据（可能当日数据尚未发布或该日期无龙虎榜数据）")
             return
@@ -623,12 +651,12 @@ def cmd_lhb(start: str, end: str, top: int, output_json: bool):
 def cmd_limit_stats(output_json: bool):
     today = datetime.now().strftime("%Y%m%d")
     try:
-        df_up = ak.stock_zt_pool_em(date=today)
+        df_up = _ak().stock_zt_pool_em(date=today)
         up_count = len(df_up) if df_up is not None else 0
     except Exception:
         up_count = 0
     try:
-        df_down = ak.stock_zt_pool_dtgc_em(date=today)
+        df_down = _ak().stock_zt_pool_dtgc_em(date=today)
         down_count = len(df_down) if df_down is not None else 0
     except Exception:
         down_count = 0
@@ -644,7 +672,7 @@ def cmd_limit_up_pool(date_str: str, top: int, output_json: bool):
     if not date_str:
         date_str = datetime.now().strftime("%Y%m%d")
     try:
-        df = ak.stock_zt_pool_em(date=date_str)
+        df = _ak().stock_zt_pool_em(date=date_str)
         if df is None or df.empty:
             print(f"未找到 {date_str} 的涨停股数据")
             return
@@ -669,7 +697,7 @@ def cmd_fund_flow(code: str, days: int, output_json: bool):
     market = "sh" if normalized.startswith("sh") else "sz"
     clean = normalized[2:]
     try:
-        df = ak.stock_individual_fund_flow(stock=clean, market=market)
+        df = _ak().stock_individual_fund_flow(stock=clean, market=market)
         if df is None or df.empty:
             print(f"未找到 {code} 的资金流向数据")
             return
@@ -1149,7 +1177,7 @@ def cmd_consecutive_limit(date_str: str, top: int, output_json: bool):
     if not date_str:
         date_str = datetime.now().strftime("%Y%m%d")
     try:
-        df = ak.stock_zt_pool_previous_em(date=date_str)
+        df = _ak().stock_zt_pool_previous_em(date=date_str)
         if df is None or df.empty:
             print(f"未找到 {date_str} 的连板股数据")
             return

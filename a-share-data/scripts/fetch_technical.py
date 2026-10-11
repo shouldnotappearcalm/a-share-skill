@@ -31,9 +31,11 @@ def fetch_kline(code: str, freq: str, count: int) -> pd.DataFrame:
     if df is None or df.empty:
         print(f"未找到 {code} 的K线数据", file=sys.stderr)
         sys.exit(1)
+    # Sina and Tencent return OHLC columns in different orders. Preserve names
+    # so high/low/close cannot silently exchange values and corrupt indicators.
     df = df.reset_index()
-    df.columns = ["time", "open", "close", "high", "low", "volume"]
-    return df
+    df = df.rename(columns={df.columns[0]: "time"})
+    return df[["time", "open", "close", "high", "low", "volume"]]
 
 
 def calc_indicators(df: pd.DataFrame, indicators: list) -> pd.DataFrame:
